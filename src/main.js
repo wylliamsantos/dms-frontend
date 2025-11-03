@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './routes/router';
 import { I18nProvider } from '@/i18n';
+import { AuthProvider } from '@/context/AuthContext';
 import './styles/global.css';
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -19,4 +20,4 @@ if (!container) {
     throw new Error('Root element not found');
 }
 const root = createRoot(container);
-root.render(_jsx(StrictMode, { children: _jsx(QueryClientProvider, { client: queryClient, children: _jsx(I18nProvider, { children: _jsx(RouterProvider, { router: router }) }) }) }));
+root.render(_jsx(StrictMode, { children: _jsx(QueryClientProvider, { client: queryClient, children: _jsx(I18nProvider, { children: _jsx(AuthProvider, { children: _jsx(RouterProvider, { router: router }) }) }) }) }));

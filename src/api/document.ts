@@ -10,6 +10,7 @@ import {
 
 export async function listCategories(): Promise<DocumentCategory[]> {
   const response = await documentApi.get<DocumentCategory[]>('/v1/categories/all');
+  console.debug('[API] listCategories response', response.status, response.data);
   return response.data;
 }
 

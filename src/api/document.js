@@ -1,6 +1,7 @@
 import { documentApi } from './client';
 export async function listCategories() {
     const response = await documentApi.get('/v1/categories/all');
+    console.debug('[API] listCategories response', response.status, response.data);
     return response.data;
 }
 export async function fetchDocumentInformation(documentId, version) {

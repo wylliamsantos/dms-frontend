@@ -5,6 +5,7 @@ import { RouterProvider } from 'react-router-dom';
 
 import { router } from './routes/router';
 import { I18nProvider } from '@/i18n';
+import { AuthProvider } from '@/context/AuthContext';
 import './styles/global.css';
 
 const queryClient = new QueryClient({
@@ -28,7 +29,9 @@ root.render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
-        <RouterProvider router={router} />
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </I18nProvider>
     </QueryClientProvider>
   </StrictMode>

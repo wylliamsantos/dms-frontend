@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
-import { setAuthToken, setTransactionId } from '@/api/client';
+import { setTransactionId } from '@/api/client';
 import { useCategories } from '@/hooks/useCategories';
 import { useSearchByCpf } from '@/hooks/useSearchByCpf';
 import { DocumentTable } from '@/components/DocumentTable';
@@ -36,9 +36,6 @@ export function SearchPage() {
     const searchMutation = useSearchByCpf();
     useEffect(() => {
         setTransactionId(env.defaultTransactionId);
-        if (env.defaultAuthorization) {
-            setAuthToken(env.defaultAuthorization);
-        }
     }, []);
     const submitWithPage = (pageNumber, formValues) => {
         const values = formValues ?? getValues();
@@ -58,7 +55,12 @@ export function SearchPage() {
     const onSubmit = handleSubmit((values) => {
         submitWithPage(0, values);
     });
-    const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
+    const categories = useMemo(() => {
+        if (categoriesQuery.data) {
+            console.debug('[SearchPage] categories result', categoriesQuery.data);
+        }
+        return categoriesQuery.data ?? [];
+    }, [categoriesQuery.data]);
     const selectedCategories = watch('categories');
     useEffect(() => {
         if (categories.length && !selectedCategories?.length) {

@@ -8,6 +8,7 @@ import { LoadingState } from '@/components/LoadingState';
 import { useCategories } from '@/hooks/useCategories';
 import { useCreateCategory, useUpdateCategory } from '@/hooks/useCategoryMutations';
 import { CategoryPayload, DocumentCategory } from '@/types/document';
+import { useAuth } from '@/context/AuthContext';
 
 type FormMode = 'create' | 'edit' | 'duplicate';
 
@@ -62,6 +63,7 @@ export function CategoryManagementPage() {
   const createMutation = useCreateCategory();
   const updateMutation = useUpdateCategory();
   const { t } = useTranslation();
+  const { hasRole } = useAuth();
 
   const [formMode, setFormMode] = useState<FormMode | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<DocumentCategory | null>(null);
@@ -160,6 +162,15 @@ export function CategoryManagementPage() {
       }
     });
   };
+
+  if (!hasRole('ROLE_ADMIN')) {
+    return (
+      <ErrorState
+        title="Acesso negado"
+        description="Você não tem permissão para gerenciar categorias."
+      />
+    );
+  }
 
   if (categoriesQuery.isLoading) {
     return <LoadingState message={t('search.loadingCategories')} />;

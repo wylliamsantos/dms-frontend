@@ -183,6 +183,12 @@ const resources = {
                     identifier: 'Identificador'
                 }
             },
+            login: {
+                title: 'DMS Console',
+                description: 'Acesse o sistema para consultar e administrar documentos.',
+                button: 'Entrar',
+                redirecting: 'Redirecionando para o provedor de identidade...'
+            },
             categoriesPage: {
                 title: 'Categorias de documentos',
                 subtitle: 'Mantenha a taxonomia de categorias alinhada com os metadados exigidos pelo negócio.',
@@ -437,6 +443,12 @@ const resources = {
                     identifier: 'Identifier'
                 }
             },
+            login: {
+                title: 'DMS Console',
+                description: 'Sign in to browse and manage documents.',
+                button: 'Sign in',
+                redirecting: 'Redirecting to the identity provider...'
+            },
             categoriesPage: {
                 title: 'Document categories',
                 subtitle: 'Keep the category taxonomy aligned with the business-required metadata.',
@@ -690,6 +702,12 @@ const resources = {
                     version: 'Versión actual',
                     identifier: 'Identificador'
                 }
+            },
+            login: {
+                title: 'DMS Console',
+                description: 'Inicie sesión para consultar y administrar documentos.',
+                button: 'Ingresar',
+                redirecting: 'Redirigiendo al proveedor de identidad...'
             },
             categoriesPage: {
                 title: 'Categorías de documentos',

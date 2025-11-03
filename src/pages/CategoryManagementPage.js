@@ -7,6 +7,7 @@ import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
 import { useCategories } from '@/hooks/useCategories';
 import { useCreateCategory, useUpdateCategory } from '@/hooks/useCategoryMutations';
+import { useAuth } from '@/context/AuthContext';
 const defaultSchema = {};
 const isCategoryActive = (category) => {
     if (!category) {
@@ -43,6 +44,7 @@ export function CategoryManagementPage() {
     const createMutation = useCreateCategory();
     const updateMutation = useUpdateCategory();
     const { t } = useTranslation();
+    const { hasRole } = useAuth();
     const [formMode, setFormMode] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [feedback, setFeedback] = useState(null);
@@ -123,6 +125,9 @@ export function CategoryManagementPage() {
             }
         });
     };
+    if (!hasRole('ROLE_ADMIN')) {
+        return (_jsx(ErrorState, { title: "Acesso negado", description: "Voc\u00EA n\u00E3o tem permiss\u00E3o para gerenciar categorias." }));
+    }
     if (categoriesQuery.isLoading) {
         return _jsx(LoadingState, { message: t('search.loadingCategories') });
     }

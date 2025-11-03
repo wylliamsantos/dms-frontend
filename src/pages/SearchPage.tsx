@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
 
-import { setAuthToken, setTransactionId } from '@/api/client';
+import { setTransactionId } from '@/api/client';
 import { useCategories } from '@/hooks/useCategories';
 import { useSearchByCpf } from '@/hooks/useSearchByCpf';
 import { DocumentTable } from '@/components/DocumentTable';
@@ -55,9 +55,6 @@ export function SearchPage() {
 
   useEffect(() => {
     setTransactionId(env.defaultTransactionId);
-    if (env.defaultAuthorization) {
-      setAuthToken(env.defaultAuthorization);
-    }
   }, []);
 
   const submitWithPage = (pageNumber: number, formValues?: FiltersForm) => {
@@ -81,7 +78,12 @@ export function SearchPage() {
     submitWithPage(0, values);
   });
 
-  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
+  const categories = useMemo(() => {
+    if (categoriesQuery.data) {
+      console.debug('[SearchPage] categories result', categoriesQuery.data);
+    }
+    return categoriesQuery.data ?? [];
+  }, [categoriesQuery.data]);
   const selectedCategories = watch('categories');
 
   useEffect(() => {

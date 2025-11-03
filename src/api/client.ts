@@ -24,7 +24,7 @@ export const searchApi = axios.create({
   headers: defaultHeaders()
 });
 
-export function setAuthToken(token: string) {
+export function setAuthToken(token?: string | null) {
   if (token) {
     documentApi.defaults.headers.Authorization = token;
     searchApi.defaults.headers.Authorization = token;
