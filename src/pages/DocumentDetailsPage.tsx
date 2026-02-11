@@ -55,13 +55,16 @@ export function DocumentDetailsPage() {
   );
 
   useEffect(() => {
-    if (informationQuery.data?.entry) {
-      setEntry(informationQuery.data.entry);
-      if (!activeVersion) {
-        setActiveVersion(informationQuery.data.entry.version);
-      }
+    const infoEntry = informationQuery.data?.entry;
+    if (!infoEntry) {
+      return;
     }
-  }, [informationQuery.data?.entry?.id, informationQuery.data?.entry?.version]);
+
+    setEntry(infoEntry);
+    if (!activeVersion) {
+      setActiveVersion(infoEntry.version);
+    }
+  }, [informationQuery.data?.entry, activeVersion]);
 
   useEffect(() => {
     if (!preferBinaryPreview) {
@@ -83,7 +86,7 @@ export function DocumentDetailsPage() {
     return () => {
       URL.revokeObjectURL(url);
     };
-  }, [binaryQuery.data, contentMimeType, preferBinaryPreview]);
+  }, [binaryQuery.data, contentMimeType, preferBinaryPreview, objectUrl]);
 
   const versionItems = useMemo(() => versionsQuery.data?.list?.content ?? [], [versionsQuery.data?.list?.content]);
 

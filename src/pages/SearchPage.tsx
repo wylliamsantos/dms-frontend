@@ -14,7 +14,7 @@ import { formatCpf, unmaskCpf } from '@/utils/format';
 import { PageResponse, SearchEntry } from '@/types/document';
 
 const PAGE_SIZE = 10;
-const DEFAULT_VERSION_TYPE: 'ALL' = 'ALL';
+const DEFAULT_VERSION_TYPE = 'ALL' as const;
 
 interface FiltersForm {
   cpf: string;

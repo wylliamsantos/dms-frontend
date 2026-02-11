@@ -46,8 +46,11 @@ const buildPayloadFromCategory = (
 const extractErrorMessage = (error: unknown, fallback: string) => {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data;
-    if (data && typeof data === 'object' && 'message' in data && typeof (data as any).message === 'string') {
-      return (data as any).message as string;
+    if (data && typeof data === 'object') {
+      const dataRecord = data as Record<string, unknown>;
+      if (typeof dataRecord.message === 'string') {
+        return dataRecord.message;
+      }
     }
   }
 

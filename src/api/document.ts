@@ -4,7 +4,6 @@ import {
   DocumentCategory,
   DocumentId,
   DocumentInformationResponse,
-  DmsDocumentSearchResponse,
   VersionsResponse
 } from '@/types/document';
 
