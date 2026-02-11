@@ -40,7 +40,7 @@ const extractSchemaRequiredEntries = (
 
   const properties =
     schema && typeof (schema as Record<string, unknown>).properties === 'object'
-      ? ((schema as Record<string, unknown>).properties as Record<string, any>)
+      ? ((schema as Record<string, unknown>).properties as Record<string, Record<string, unknown>>)
       : {};
 
   return required.map((field) => {
@@ -257,11 +257,12 @@ export function DocumentUploadPage() {
     if (axios.isAxiosError(error)) {
       const data = error.response?.data;
       if (data && typeof data === 'object') {
-        if ('mensagem' in data && typeof (data as any).mensagem === 'string') {
-          return (data as any).mensagem as string;
+        const dataRecord = data as Record<string, unknown>;
+        if (typeof dataRecord.mensagem === 'string') {
+          return dataRecord.mensagem;
         }
-        if ('message' in data && typeof (data as any).message === 'string') {
-          return (data as any).message as string;
+        if (typeof dataRecord.message === 'string') {
+          return dataRecord.message;
         }
       }
     }
@@ -469,7 +470,6 @@ export function DocumentUploadPage() {
                 <div className="metadata-section">
                   <h3 className="metadata-section__title">{t('upload.metadata.requiredTitle')}</h3>
                   {requiredMetadata.map(({ field, index }) => {
-                    const keyError = errors.metadata?.[index]?.key?.message as string | undefined;
                     const valueError = errors.metadata?.[index]?.value?.message as string | undefined;
                     return (
                       <div key={field.id} className="metadata-extra__row">
