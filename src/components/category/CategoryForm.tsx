@@ -1,16 +1,25 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useTranslation } from '@/i18n';
 
 import { CategoryPayload, DocumentCategory, DocumentGroup } from '@/types/document';
 
 const documentGroups: DocumentGroup[] = ['PERSONAL', 'LEGAL', 'CUSTOM'];
+type SchemaFieldType = 'string' | 'number' | 'boolean';
 
 interface CategoryTypeFormValues {
   name: string;
   description?: string;
   validityInDays?: string;
   requiredAttributes?: string;
+}
+
+interface SchemaFieldFormValues {
+  key: string;
+  type: SchemaFieldType;
+  required: boolean;
+  pattern?: string;
+  example?: string;
 }
 
 interface CategoryFormValues {
@@ -24,6 +33,7 @@ interface CategoryFormValues {
   schemaText: string;
   active: boolean;
   types: CategoryTypeFormValues[];
+  schemaFields: SchemaFieldFormValues[];
 }
 
 type FormMode = 'create' | 'edit' | 'duplicate';
@@ -46,7 +56,8 @@ const emptyFormValues: CategoryFormValues = {
   validityInDays: '',
   schemaText: '{\n  \n}',
   active: true,
-  types: []
+  types: [],
+  schemaFields: []
 };
 
 const toSchemaText = (schema?: Record<string, unknown>) => {
@@ -55,12 +66,58 @@ const toSchemaText = (schema?: Record<string, unknown>) => {
       return '{\n  \n}';
     }
     return JSON.stringify(schema, null, 2);
-  } catch (error) {
+  } catch {
     return '{\n  \n}';
   }
 };
 
 const toString = (value?: number | null) => (typeof value === 'number' ? String(value) : '');
+
+function schemaToFields(schema?: Record<string, unknown>): SchemaFieldFormValues[] {
+  if (!schema || typeof schema !== 'object') return [];
+
+  const properties = (schema.properties as Record<string, Record<string, unknown>> | undefined) ?? {};
+  const required = new Set<string>(((schema.required as string[] | undefined) ?? []).map((item) => item.toLowerCase()));
+
+  return Object.entries(properties).map(([key, prop]) => ({
+    key,
+    type: ((prop.type as SchemaFieldType) ?? 'string'),
+    required: required.has(key.toLowerCase()),
+    pattern: typeof prop.pattern === 'string' ? prop.pattern : '',
+    example: prop.example !== undefined ? String(prop.example) : ''
+  }));
+}
+
+function fieldsToSchema(fields: SchemaFieldFormValues[]): Record<string, unknown> {
+  const valid = fields.filter((field) => field.key.trim().length > 0);
+  const properties: Record<string, unknown> = {};
+  const required: string[] = [];
+
+  for (const field of valid) {
+    const key = field.key.trim();
+    const prop: Record<string, unknown> = { type: field.type };
+    if (field.pattern?.trim()) prop.pattern = field.pattern.trim();
+    if (field.example?.trim()) {
+      if (field.type === 'number') {
+        const n = Number(field.example.trim());
+        prop.example = Number.isFinite(n) ? n : field.example.trim();
+      } else if (field.type === 'boolean') {
+        prop.example = field.example.trim().toLowerCase() === 'true';
+      } else {
+        prop.example = field.example.trim();
+      }
+    }
+
+    properties[key] = prop;
+    if (field.required) required.push(key);
+  }
+
+  return {
+    type: 'object',
+    properties,
+    required
+  };
+}
 
 const buildDefaultValues = (
   category: DocumentCategory | null | undefined,
@@ -72,6 +129,7 @@ const buildDefaultValues = (
   }
 
   const duplicateSuffix = mode === 'duplicate' ? copySuffix : '';
+  const schema = (category.schema as Record<string, unknown> | undefined) ?? {};
 
   return {
     name: (category.name ?? '') + duplicateSuffix,
@@ -81,8 +139,9 @@ const buildDefaultValues = (
     uniqueAttributes: category.uniqueAttributes ?? '',
     businessKeyField: category.businessKeyField ?? '',
     validityInDays: toString(category.validityInDays as number | undefined),
-    schemaText: toSchemaText(category.schema as Record<string, unknown> | undefined),
+    schemaText: toSchemaText(schema),
     active: category.active ?? true,
+    schemaFields: schemaToFields(schema),
     types:
       category.types?.map((type) => ({
         name: type.name ?? '',
@@ -94,23 +153,21 @@ const buildDefaultValues = (
 };
 
 const sanitizeNumber = (value?: string) => {
-  if (!value) {
-    return undefined;
-  }
+  if (!value) return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
 const sanitizeString = (value?: string) => {
-  if (!value) {
-    return undefined;
-  }
+  if (!value) return undefined;
   const trimmed = value.trim();
   return trimmed.length ? trimmed : undefined;
 };
 
 export function CategoryForm({ mode, initialData, onSubmit, onCancel, isSubmitting }: CategoryFormProps) {
   const { t, i18n } = useTranslation();
+  const [advancedSchemaMode, setAdvancedSchemaMode] = useState(false);
+
   const defaultValues = useMemo(
     () => buildDefaultValues(initialData, mode, t('categoryForm.copySuffix')),
     [initialData, mode, t, i18n.language]
@@ -121,9 +178,11 @@ export function CategoryForm({ mode, initialData, onSubmit, onCancel, isSubmitti
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
     setError,
-    clearErrors
+    clearErrors,
+    setValue
   } = useForm<CategoryFormValues>({
     defaultValues
   });
@@ -132,22 +191,36 @@ export function CategoryForm({ mode, initialData, onSubmit, onCancel, isSubmitti
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'types'
-  });
+  const { fields, append, remove } = useFieldArray({ control, name: 'types' });
+  const {
+    fields: schemaFields,
+    append: appendSchemaField,
+    remove: removeSchemaField
+  } = useFieldArray({ control, name: 'schemaFields' });
+
+  const watchedSchemaFields = watch('schemaFields');
+
+  useEffect(() => {
+    if (advancedSchemaMode) return;
+    const schemaObject = fieldsToSchema(watchedSchemaFields ?? []);
+    setValue('schemaText', JSON.stringify(schemaObject, null, 2), { shouldDirty: true });
+  }, [advancedSchemaMode, watchedSchemaFields, setValue]);
 
   const submitForm = handleSubmit((values) => {
     let schemaObject: Record<string, unknown> = {};
 
-    if (values.schemaText && values.schemaText.trim().length) {
-      try {
-        clearErrors('schemaText');
-        schemaObject = JSON.parse(values.schemaText);
-      } catch (error) {
-        setError('schemaText', { type: 'manual', message: t('categoryForm.errors.invalidJson') });
-        return;
+    if (advancedSchemaMode) {
+      if (values.schemaText && values.schemaText.trim().length) {
+        try {
+          clearErrors('schemaText');
+          schemaObject = JSON.parse(values.schemaText);
+        } catch {
+          setError('schemaText', { type: 'manual', message: t('categoryForm.errors.invalidJson') });
+          return;
+        }
       }
+    } else {
+      schemaObject = fieldsToSchema(values.schemaFields ?? []);
     }
 
     const payload: CategoryPayload = {
@@ -224,9 +297,10 @@ export function CategoryForm({ mode, initialData, onSubmit, onCancel, isSubmitti
             id="category-unique-attributes"
             className="text-input"
             placeholder={t('categoryForm.fields.uniqueAttributesPlaceholder')}
-            {...register('uniqueAttributes')}
+            {...register('uniqueAttributes', { required: 'Unique attributes é obrigatório' })}
           />
           <span className="input-hint">{t('categoryForm.fields.uniqueAttributesHint')}</span>
+          {errors.uniqueAttributes ? <span className="input-error">{errors.uniqueAttributes.message}</span> : null}
         </div>
 
         <div className="input-group">
@@ -257,12 +331,73 @@ export function CategoryForm({ mode, initialData, onSubmit, onCancel, isSubmitti
         />
       </div>
 
-      <div className="input-group">
-        <label htmlFor="category-schema">{t('categoryForm.fields.schema')}</label>
-        <textarea id="category-schema" className="text-input" rows={6} {...register('schemaText')} />
-        <span className="input-hint">{t('categoryForm.fields.schemaHint')}</span>
-        {errors.schemaText ? <span className="input-error">{errors.schemaText.message}</span> : null}
-      </div>
+      <div className="metadata-divider" />
+
+      <section className="metadata-section">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+          <h3 className="metadata-section__title" style={{ margin: 0 }}>Schema Builder</h3>
+          <button
+            type="button"
+            className="button button--ghost"
+            onClick={() => setAdvancedSchemaMode((current) => !current)}
+          >
+            {advancedSchemaMode ? 'Usar builder visual' : 'Modo avançado (JSON)'}
+          </button>
+        </div>
+
+        {!advancedSchemaMode ? (
+          <>
+            <p className="input-hint">Defina os campos e gere o schema automaticamente.</p>
+
+            {schemaFields.length === 0 ? (
+              <span className="metadata-empty">Nenhum campo de schema adicionado.</span>
+            ) : null}
+
+            {schemaFields.map((field, index) => (
+              <div key={field.id} className="metadata-extra__row">
+                <div className="metadata-extra__inputs">
+                  <input className="text-input" placeholder="Campo" {...register(`schemaFields.${index}.key` as const)} />
+                  <select className="select-input" {...register(`schemaFields.${index}.type` as const)}>
+                    <option value="string">string</option>
+                    <option value="number">number</option>
+                    <option value="boolean">boolean</option>
+                  </select>
+                  <input className="text-input" placeholder="Regex (opcional)" {...register(`schemaFields.${index}.pattern` as const)} />
+                  <input className="text-input" placeholder="Exemplo (opcional)" {...register(`schemaFields.${index}.example` as const)} />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: '120px' }}>
+                    <input type="checkbox" {...register(`schemaFields.${index}.required` as const)} /> Obrigatório
+                  </label>
+                </div>
+                <div className="metadata-extra__actions">
+                  <button type="button" className="link-button" onClick={() => removeSchemaField(index)}>
+                    Remover
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              className="button button--ghost"
+              onClick={() => appendSchemaField({ key: '', type: 'string', required: false, pattern: '', example: '' })}
+            >
+              Adicionar campo do schema
+            </button>
+
+            <div className="input-group">
+              <label htmlFor="category-schema-preview">JSON gerado (somente leitura)</label>
+              <textarea id="category-schema-preview" className="text-input" rows={8} {...register('schemaText')} readOnly />
+            </div>
+          </>
+        ) : (
+          <div className="input-group">
+            <label htmlFor="category-schema">{t('categoryForm.fields.schema')}</label>
+            <textarea id="category-schema" className="text-input" rows={8} {...register('schemaText')} />
+            <span className="input-hint">{t('categoryForm.fields.schemaHint')}</span>
+            {errors.schemaText ? <span className="input-error">{errors.schemaText.message}</span> : null}
+          </div>
+        )}
+      </section>
 
       <div className="metadata-divider" />
 
@@ -277,27 +412,10 @@ export function CategoryForm({ mode, initialData, onSubmit, onCancel, isSubmitti
         {fields.map((field, index) => (
           <div key={field.id} className="metadata-extra__row">
             <div className="metadata-extra__inputs">
-              <input
-                className="text-input"
-                placeholder={t('categoryForm.fields.typeNamePlaceholder')}
-                {...register(`types.${index}.name` as const, { required: false })}
-              />
-              <input
-                className="text-input"
-                placeholder={t('categoryForm.fields.typeDescriptionPlaceholder')}
-                {...register(`types.${index}.description` as const)}
-              />
-              <input
-                className="text-input"
-                placeholder={t('categoryForm.fields.typeValidityPlaceholder')}
-                inputMode="numeric"
-                {...register(`types.${index}.validityInDays` as const)}
-              />
-              <input
-                className="text-input"
-                placeholder={t('categoryForm.fields.typeAttributesPlaceholder')}
-                {...register(`types.${index}.requiredAttributes` as const)}
-              />
+              <input className="text-input" placeholder={t('categoryForm.fields.typeNamePlaceholder')} {...register(`types.${index}.name` as const)} />
+              <input className="text-input" placeholder={t('categoryForm.fields.typeDescriptionPlaceholder')} {...register(`types.${index}.description` as const)} />
+              <input className="text-input" placeholder={t('categoryForm.fields.typeValidityPlaceholder')} inputMode="numeric" {...register(`types.${index}.validityInDays` as const)} />
+              <input className="text-input" placeholder={t('categoryForm.fields.typeAttributesPlaceholder')} {...register(`types.${index}.requiredAttributes` as const)} />
             </div>
             <div className="metadata-extra__actions">
               <button type="button" className="link-button" onClick={() => remove(index)}>
