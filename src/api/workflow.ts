@@ -15,6 +15,8 @@ export interface PendingDocumentItem {
   workflowStatus: string;
   currentVersion: string;
   author: string;
+  businessKeyType?: string;
+  businessKeyValue?: string;
   updatedAt: string;
 }
 
