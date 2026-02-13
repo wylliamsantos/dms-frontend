@@ -6,6 +6,7 @@ import { DocumentDetailsPage } from '@/pages/DocumentDetailsPage';
 import { DocumentUploadPage } from '@/pages/DocumentUploadPage';
 import { CategoryManagementPage } from '@/pages/CategoryManagementPage';
 import { SearchPage } from '@/pages/SearchPage';
+import { WorkflowPendingPage } from '@/pages/WorkflowPendingPage';
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
       {
         path: 'categories',
         element: <CategoryManagementPage />
+      },
+      {
+        path: 'workflow/pending',
+        element: <WorkflowPendingPage />
       }
     ]
   }

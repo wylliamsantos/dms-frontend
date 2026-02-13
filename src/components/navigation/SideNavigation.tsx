@@ -13,6 +13,7 @@ export function SideNavigation() {
     location.pathname === '/' ||
     (location.pathname.startsWith('/documents/') && location.pathname !== '/documents/new');
   const isCategoryActive = location.pathname.startsWith('/categories');
+  const isWorkflowActive = location.pathname.startsWith('/workflow');
   const canManageCategories = hasRole('ROLE_ADMIN');
 
   return (
@@ -49,6 +50,14 @@ export function SideNavigation() {
                 className={({ isActive }) => (isActive || isCategoryActive ? 'active' : undefined)}
               >
                 {t('navigation.manageCategories')}
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/workflow/pending"
+                className={({ isActive }) => (isActive || isWorkflowActive ? 'active' : undefined)}
+              >
+                Pendências
               </NavLink>
             </li>
           </ul>
