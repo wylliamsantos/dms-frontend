@@ -19,6 +19,7 @@ interface CategoryFormValues {
   description?: string;
   documentGroup?: DocumentGroup | '';
   uniqueAttributes?: string;
+  businessKeyField: string;
   validityInDays?: string;
   schemaText: string;
   active: boolean;
@@ -41,6 +42,7 @@ const emptyFormValues: CategoryFormValues = {
   description: '',
   documentGroup: '',
   uniqueAttributes: '',
+  businessKeyField: '',
   validityInDays: '',
   schemaText: '{\n  \n}',
   active: true,
@@ -77,6 +79,7 @@ const buildDefaultValues = (
     description: category.description ?? '',
     documentGroup: category.documentGroup ?? '',
     uniqueAttributes: category.uniqueAttributes ?? '',
+    businessKeyField: category.businessKeyField ?? '',
     validityInDays: toString(category.validityInDays as number | undefined),
     schemaText: toSchemaText(category.schema as Record<string, unknown> | undefined),
     active: category.active ?? true,
@@ -153,6 +156,7 @@ export function CategoryForm({ mode, initialData, onSubmit, onCancel, isSubmitti
       description: sanitizeString(values.description),
       documentGroup: values.documentGroup || undefined,
       uniqueAttributes: sanitizeString(values.uniqueAttributes),
+      businessKeyField: values.businessKeyField.trim(),
       validityInDays: sanitizeNumber(values.validityInDays),
       schema: schemaObject,
       types: values.types
@@ -223,6 +227,17 @@ export function CategoryForm({ mode, initialData, onSubmit, onCancel, isSubmitti
             {...register('uniqueAttributes')}
           />
           <span className="input-hint">{t('categoryForm.fields.uniqueAttributesHint')}</span>
+        </div>
+
+        <div className="input-group">
+          <label htmlFor="category-business-key-field">Business key field</label>
+          <input
+            id="category-business-key-field"
+            className="text-input"
+            placeholder="Ex.: cpf, placa, renavam"
+            {...register('businessKeyField', { required: 'Business key field é obrigatório' })}
+          />
+          {errors.businessKeyField ? <span className="input-error">{errors.businessKeyField.message}</span> : null}
         </div>
 
         <div className="input-group">

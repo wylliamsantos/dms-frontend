@@ -36,6 +36,7 @@ const buildPayloadFromCategory = (
   description: category.description,
   documentGroup: category.documentGroup,
   uniqueAttributes: category.uniqueAttributes,
+  businessKeyField: category.businessKeyField,
   validityInDays: category.validityInDays as number | undefined,
   schema: (category.schema as Record<string, unknown> | undefined) ?? defaultSchema,
   types: category.types ?? [],
