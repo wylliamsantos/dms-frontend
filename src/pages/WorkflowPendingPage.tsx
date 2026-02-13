@@ -11,6 +11,13 @@ import {
 
 const PAGE_SIZE = 20;
 
+function statusBadgeClass(status?: string) {
+  if (status === 'APPROVED') return 'badge badge--success';
+  if (status === 'REJECTED') return 'badge badge--danger';
+  if (status === 'PENDING_REVIEW') return 'badge badge--warning';
+  return 'badge badge--muted';
+}
+
 export function WorkflowPendingPage() {
   const [category, setCategory] = useState('');
   const [author, setAuthor] = useState('');
@@ -38,6 +45,7 @@ export function WorkflowPendingPage() {
 
   const items = pendingQuery.data?.content ?? [];
   const totalPages = pendingQuery.data?.totalPages ?? 0;
+  const totalElements = pendingQuery.data?.totalElements ?? 0;
 
   const categories = useMemo(() => {
     const unique = new Set(items.map((item) => item.category).filter(Boolean));
@@ -87,6 +95,9 @@ export function WorkflowPendingPage() {
           <p style={{ margin: '0.5rem 0 0', color: '#475569' }}>
             Revise e aprove/reprove documentos em PENDING_REVIEW.
           </p>
+          <div style={{ marginTop: '0.75rem' }}>
+            <span className="badge badge--warning">{totalElements} pendente(s)</span>
+          </div>
         </header>
 
         <div className="form-grid form-grid--two" style={{ marginBottom: '1rem' }}>
@@ -125,19 +136,26 @@ export function WorkflowPendingPage() {
           </div>
         </div>
 
-        {feedback ? <div className="card" style={{ marginBottom: '1rem' }}>{feedback}</div> : null}
+        {feedback ? (
+          <div className="card" style={{ marginBottom: '1rem', backgroundColor: '#f8fafc' }}>
+            {feedback}
+          </div>
+        ) : null}
 
         {reviewMutation.isError ? (
           <ErrorState title="Ação de revisão falhou" description="Não foi possível completar a ação." />
         ) : null}
 
         {items.length === 0 ? (
-          <div className="card">Nenhum documento pendente com os filtros atuais.</div>
+          <div className="card" style={{ backgroundColor: '#f8fafc' }}>
+            Nenhum documento pendente com os filtros atuais.
+          </div>
         ) : (
           <table className="table">
             <thead>
               <tr>
                 <th>Documento</th>
+                <th>Status</th>
                 <th>Categoria</th>
                 <th>Versão</th>
                 <th>Autor</th>
@@ -148,7 +166,15 @@ export function WorkflowPendingPage() {
             <tbody>
               {items.map((item) => (
                 <tr key={item.documentId}>
-                  <td>{item.filename || item.documentId}</td>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                      <strong>{item.filename || item.documentId}</strong>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{item.documentId}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={statusBadgeClass(item.workflowStatus)}>{item.workflowStatus ?? '-'}</span>
+                  </td>
                   <td>{item.category}</td>
                   <td>{item.currentVersion || '-'}</td>
                   <td>{item.author || '-'}</td>
@@ -161,7 +187,7 @@ export function WorkflowPendingPage() {
                         disabled={reviewMutation.isPending}
                         onClick={() => handleApprove(item)}
                       >
-                        Aprovar
+                        {reviewMutation.isPending ? 'Processando...' : 'Aprovar'}
                       </button>
                       <button
                         type="button"
@@ -190,7 +216,9 @@ export function WorkflowPendingPage() {
               >
                 Anterior
               </button>
-              <span className="pagination__page">Página {page + 1} de {totalPages}</span>
+              <span className="pagination__page">
+                Página {page + 1} de {totalPages}
+              </span>
               <button
                 type="button"
                 className="button button--ghost"
