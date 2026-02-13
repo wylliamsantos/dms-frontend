@@ -159,6 +159,7 @@ export function WorkflowPendingPage() {
                 <th>Categoria</th>
                 <th>Versão</th>
                 <th>Autor</th>
+                <th>Chave</th>
                 <th>Atualizado em</th>
                 <th>Ações</th>
               </tr>
@@ -178,6 +179,11 @@ export function WorkflowPendingPage() {
                   <td>{item.category}</td>
                   <td>{item.currentVersion || '-'}</td>
                   <td>{item.author || '-'}</td>
+                  <td>
+                    {item.businessKeyType && item.businessKeyValue
+                      ? `${item.businessKeyType}: ${item.businessKeyValue}`
+                      : '-'}
+                  </td>
                   <td>{item.updatedAt ? new Date(item.updatedAt).toLocaleString('pt-BR') : '-'}</td>
                   <td>
                     <div className="table-actions">

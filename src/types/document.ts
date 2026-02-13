@@ -19,6 +19,7 @@ export interface DocumentCategory {
   description?: string;
   documentGroup?: DocumentGroup;
   uniqueAttributes?: string;
+  businessKeyField?: string;
   validityInDays?: number;
   schema?: Record<string, unknown>;
   types?: DocumentCategoryType[];
