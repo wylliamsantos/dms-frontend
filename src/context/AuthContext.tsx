@@ -39,7 +39,7 @@ const initialState: AuthState = {
   roles: []
 };
 
-const tenantClaimKeys = ['tenant_id', 'org_id', 'workspace_id'] as const;
+const tenantClaimKey = 'tenant_id' as const;
 
 function resolveTenantId(token?: string | null): string | null {
   if (!token) {
@@ -61,12 +61,10 @@ function resolveTenantId(token?: string | null): string | null {
     );
 
     const claims = JSON.parse(json) as Record<string, unknown>;
+    const value = claims[tenantClaimKey];
 
-    for (const key of tenantClaimKeys) {
-      const value = claims[key];
-      if (typeof value === 'string' && value.trim().length > 0) {
-        return value.trim();
-      }
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value.trim();
     }
   } catch (error) {
     console.warn('[Auth] Failed to resolve tenant claim from token', error);
