@@ -9,7 +9,7 @@ import {
   useState
 } from 'react';
 
-import { setAuthToken } from '@/api/client';
+import { setAuthToken, setTenantId } from '@/api/client';
 import { authAdapter, type AuthSession } from '@/auth/OidcAdapter';
 import { env } from '@/utils/env';
 
@@ -39,6 +39,42 @@ const initialState: AuthState = {
   roles: []
 };
 
+const tenantClaimKeys = ['tenant_id', 'org_id', 'workspace_id'] as const;
+
+function resolveTenantId(token?: string | null): string | null {
+  if (!token) {
+    return env.defaultTenantId || null;
+  }
+
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) {
+      return env.defaultTenantId || null;
+    }
+
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(
+      atob(normalized)
+        .split('')
+        .map((char) => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`)
+        .join('')
+    );
+
+    const claims = JSON.parse(json) as Record<string, unknown>;
+
+    for (const key of tenantClaimKeys) {
+      const value = claims[key];
+      if (typeof value === 'string' && value.trim().length > 0) {
+        return value.trim();
+      }
+    }
+  } catch (error) {
+    console.warn('[Auth] Failed to resolve tenant claim from token', error);
+  }
+
+  return env.defaultTenantId || null;
+}
+
 function applySessionToState(session: AuthSession): AuthState {
   return {
     isAuthenticated: session.isAuthenticated,
@@ -60,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       setAuthToken(session.token ? `Bearer ${session.token}` : undefined);
+      setTenantId(resolveTenantId(session.token));
       setState(applySessionToState(session));
       if (session.isAuthenticated) {
         loginInvokedRef.current = false;
@@ -86,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch((error) => {
         console.error('[Auth] Failed to initialize authentication', error);
         setAuthToken(undefined);
+        setTenantId(env.defaultTenantId || undefined);
         if (isActive) {
           setState({ isAuthenticated: false, isLoading: false, token: null, roles: [] });
         }
@@ -114,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch((error) => {
         console.error('[Auth] logout failed', error);
         setAuthToken(undefined);
+        setTenantId(env.defaultTenantId || undefined);
         setState(initialState);
       });
   }, []);

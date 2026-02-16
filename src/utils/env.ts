@@ -44,6 +44,7 @@ export const env = {
   searchApiBaseUrl: requireEnv('VITE_SEARCH_API_BASE_URL'),
   defaultTransactionId: requireEnv('VITE_DEFAULT_TRANSACTION_ID', 'web-console'),
   defaultAuthorization: import.meta.env.VITE_DEFAULT_AUTH_BEARER ?? '',
+  defaultTenantId: optionalEnv('VITE_DEFAULT_TENANT_ID') ?? '',
   idpAuthority: requireEnv('VITE_IDP_AUTHORITY', legacyKeycloakAuthority),
   idpClientId: requireEnv('VITE_IDP_CLIENT_ID', fallbackClientId),
   idpClientSecret: optionalEnv('VITE_IDP_CLIENT_SECRET') ?? '',

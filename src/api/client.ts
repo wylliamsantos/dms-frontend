@@ -11,6 +11,10 @@ const defaultHeaders = () => {
     headers.Authorization = env.defaultAuthorization;
   }
 
+  if (env.defaultTenantId) {
+    headers['X-Tenant-Id'] = env.defaultTenantId;
+  }
+
   return headers;
 };
 
@@ -37,4 +41,14 @@ export function setAuthToken(token?: string | null) {
 export function setTransactionId(transactionId: string) {
   documentApi.defaults.headers.TransactionId = transactionId;
   searchApi.defaults.headers.TransactionId = transactionId;
+}
+
+export function setTenantId(tenantId?: string | null) {
+  if (tenantId) {
+    documentApi.defaults.headers['X-Tenant-Id'] = tenantId;
+    searchApi.defaults.headers['X-Tenant-Id'] = tenantId;
+  } else {
+    delete documentApi.defaults.headers['X-Tenant-Id'];
+    delete searchApi.defaults.headers['X-Tenant-Id'];
+  }
 }
