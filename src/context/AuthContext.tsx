@@ -49,7 +49,7 @@ function resolveTenantId(token?: string | null): string | null {
   try {
     const payload = token.split('.')[1];
     if (!payload) {
-      return env.defaultTenantId || null;
+      return null;
     }
 
     const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
@@ -70,7 +70,7 @@ function resolveTenantId(token?: string | null): string | null {
     console.warn('[Auth] Failed to resolve tenant claim from token', error);
   }
 
-  return env.defaultTenantId || null;
+  return null;
 }
 
 function applySessionToState(session: AuthSession): AuthState {
@@ -94,7 +94,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       setAuthToken(session.token ? `Bearer ${session.token}` : undefined);
-      setTenantId(resolveTenantId(session.token));
+      const resolvedTenantId = resolveTenantId(session.token);
+      if (session.isAuthenticated && !resolvedTenantId) {
+        console.warn('[Auth] Authenticated session without tenant_id claim; clearing X-Tenant-Id header');
+      }
+      setTenantId(resolvedTenantId);
       setState(applySessionToState(session));
       if (session.isAuthenticated) {
         loginInvokedRef.current = false;
