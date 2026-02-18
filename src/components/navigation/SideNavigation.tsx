@@ -15,6 +15,7 @@ export function SideNavigation() {
     (location.pathname.startsWith('/documents/') && location.pathname !== '/documents/new');
   const isCategoryActive = location.pathname.startsWith('/categories');
   const isWorkflowActive = location.pathname.startsWith('/workflow');
+  const isOnboardingActive = location.pathname.startsWith('/onboarding');
   const canManageCategories = hasAnyRole([...PERMISSIONS.manageCategories]);
   const canReviewWorkflow = hasAnyRole([...PERMISSIONS.reviewWorkflow]);
   const canUploadDocument = hasAnyRole([...PERMISSIONS.uploadDocument]);
@@ -43,6 +44,14 @@ export function SideNavigation() {
               </NavLink>
             </li>
           ) : null}
+          <li>
+            <NavLink
+              to="/onboarding"
+              className={({ isActive }) => (isActive || isOnboardingActive ? 'active' : undefined)}
+            >
+              Onboarding
+            </NavLink>
+          </li>
         </ul>
       </div>
       {canManageCategories || canReviewWorkflow ? (
