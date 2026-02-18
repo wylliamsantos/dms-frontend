@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 
-import { APP_ROLES, PERMISSIONS } from '@/auth/roles';
+import { PERMISSIONS } from '@/auth/roles';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n';
 
