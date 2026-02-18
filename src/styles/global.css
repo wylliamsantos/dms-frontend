@@ -74,6 +74,30 @@ button {
   padding-bottom: 0.25rem;
 }
 
+.app-header__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.app-header__user {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.app-header__logout {
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
+
+.app-header__logout:hover {
+  background: #334155;
+}
+
 .app-header__version {
   font-size: 0.75rem;
   opacity: 0.7;
