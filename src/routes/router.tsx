@@ -1,7 +1,9 @@
 import { createBrowserRouter } from 'react-router-dom';
 
+import { RoleGuard } from '@/components/RoleGuard';
 import { MainLayout } from '@/components/MainLayout';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { PERMISSIONS } from '@/auth/roles';
 import { DocumentDetailsPage } from '@/pages/DocumentDetailsPage';
 import { DocumentUploadPage } from '@/pages/DocumentUploadPage';
 import { CategoryManagementPage } from '@/pages/CategoryManagementPage';
@@ -19,23 +21,58 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <SearchPage />
+        element: (
+          <RoleGuard
+            allowedRoles={[...PERMISSIONS.search]}
+            description="Você não tem permissão para consultar documentos."
+          >
+            <SearchPage />
+          </RoleGuard>
+        )
       },
       {
         path: 'documents/new',
-        element: <DocumentUploadPage />
+        element: (
+          <RoleGuard
+            allowedRoles={[...PERMISSIONS.uploadDocument]}
+            description="Você não tem permissão para enviar documentos."
+          >
+            <DocumentUploadPage />
+          </RoleGuard>
+        )
       },
       {
         path: 'documents/:documentId',
-        element: <DocumentDetailsPage />
+        element: (
+          <RoleGuard
+            allowedRoles={[...PERMISSIONS.search]}
+            description="Você não tem permissão para consultar documentos."
+          >
+            <DocumentDetailsPage />
+          </RoleGuard>
+        )
       },
       {
         path: 'categories',
-        element: <CategoryManagementPage />
+        element: (
+          <RoleGuard
+            allowedRoles={[...PERMISSIONS.manageCategories]}
+            description="Você não tem permissão para gerenciar categorias."
+          >
+            <CategoryManagementPage />
+          </RoleGuard>
+        )
       },
       {
         path: 'workflow/pending',
-        element: <WorkflowPendingPage />
+        element: (
+          <RoleGuard
+            allowedRoles={[...PERMISSIONS.reviewWorkflow]}
+            description="Você não tem permissão para revisar pendências."
+          >
+            <WorkflowPendingPage />
+          </RoleGuard>
+        )
       }
     ]
   }

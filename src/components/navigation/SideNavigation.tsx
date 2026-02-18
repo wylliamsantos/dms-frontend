@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 
+import { APP_ROLES, PERMISSIONS } from '@/auth/roles';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n';
 
@@ -8,13 +9,15 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 export function SideNavigation() {
   const location = useLocation();
   const { t } = useTranslation();
-  const { hasRole } = useAuth();
+  const { hasAnyRole } = useAuth();
   const isSearchActive =
     location.pathname === '/' ||
     (location.pathname.startsWith('/documents/') && location.pathname !== '/documents/new');
   const isCategoryActive = location.pathname.startsWith('/categories');
   const isWorkflowActive = location.pathname.startsWith('/workflow');
-  const canManageCategories = hasRole('ROLE_ADMIN');
+  const canManageCategories = hasAnyRole([...PERMISSIONS.manageCategories]);
+  const canReviewWorkflow = hasAnyRole([...PERMISSIONS.reviewWorkflow]);
+  const canUploadDocument = hasAnyRole([...PERMISSIONS.uploadDocument]);
 
   return (
     <nav className="side-nav">
@@ -30,36 +33,42 @@ export function SideNavigation() {
               {t('navigation.consult')}
             </NavLink>
           </li>
-          <li>
-            <NavLink
-              to="/documents/new"
-              className={({ isActive }) => (isActive ? 'active' : undefined)}
-            >
-              {t('navigation.newDocument')}
-            </NavLink>
-          </li>
+          {canUploadDocument ? (
+            <li>
+              <NavLink
+                to="/documents/new"
+                className={({ isActive }) => (isActive ? 'active' : undefined)}
+              >
+                {t('navigation.newDocument')}
+              </NavLink>
+            </li>
+          ) : null}
         </ul>
       </div>
-      {canManageCategories ? (
+      {canManageCategories || canReviewWorkflow ? (
         <div className="side-nav__section">
           <span className="side-nav__label">{t('navigation.categories')}</span>
           <ul className="side-nav__list">
-            <li>
-              <NavLink
-                to="/categories"
-                className={({ isActive }) => (isActive || isCategoryActive ? 'active' : undefined)}
-              >
-                {t('navigation.manageCategories')}
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/workflow/pending"
-                className={({ isActive }) => (isActive || isWorkflowActive ? 'active' : undefined)}
-              >
-                Pendências
-              </NavLink>
-            </li>
+            {canManageCategories ? (
+              <li>
+                <NavLink
+                  to="/categories"
+                  className={({ isActive }) => (isActive || isCategoryActive ? 'active' : undefined)}
+                >
+                  {t('navigation.manageCategories')}
+                </NavLink>
+              </li>
+            ) : null}
+            {canReviewWorkflow ? (
+              <li>
+                <NavLink
+                  to="/workflow/pending"
+                  className={({ isActive }) => (isActive || isWorkflowActive ? 'active' : undefined)}
+                >
+                  Pendências
+                </NavLink>
+              </li>
+            ) : null}
           </ul>
         </div>
       ) : null}

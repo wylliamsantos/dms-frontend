@@ -8,6 +8,7 @@ import { LoadingState } from '@/components/LoadingState';
 import { useCategories } from '@/hooks/useCategories';
 import { useCreateCategory, useUpdateCategory } from '@/hooks/useCategoryMutations';
 import { CategoryPayload, DocumentCategory } from '@/types/document';
+import { PERMISSIONS } from '@/auth/roles';
 import { useAuth } from '@/context/AuthContext';
 
 type FormMode = 'create' | 'edit' | 'duplicate';
@@ -67,7 +68,7 @@ export function CategoryManagementPage() {
   const createMutation = useCreateCategory();
   const updateMutation = useUpdateCategory();
   const { t } = useTranslation();
-  const { hasRole } = useAuth();
+  const { hasAnyRole } = useAuth();
 
   const [formMode, setFormMode] = useState<FormMode | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<DocumentCategory | null>(null);
@@ -167,7 +168,7 @@ export function CategoryManagementPage() {
     });
   };
 
-  if (!hasRole('ROLE_ADMIN')) {
+  if (!hasAnyRole([...PERMISSIONS.manageCategories])) {
     return (
       <ErrorState
         title="Acesso negado"
