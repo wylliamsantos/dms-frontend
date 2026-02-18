@@ -79,7 +79,7 @@ export const router = createBrowserRouter([
         path: 'onboarding',
         element: (
           <RoleGuard
-            allowedRoles={[...PERMISSIONS.search]}
+            allowedRoles={[...PERMISSIONS.manageCategories]}
             description="Você não tem permissão para acessar o onboarding."
           >
             <OnboardingPage />

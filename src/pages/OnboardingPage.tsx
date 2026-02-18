@@ -1,6 +1,61 @@
+import axios from 'axios';
+import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { bootstrapOnboarding, OnboardingBootstrapResponse } from '@/api/document';
+
+const DEFAULT_CATEGORY = 'GERAL';
+
+const extractErrorMessage = (error: unknown) => {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data;
+    if (data && typeof data === 'object' && 'message' in data) {
+      const message = (data as Record<string, unknown>).message;
+      if (typeof message === 'string') {
+        return message;
+      }
+    }
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Não foi possível inicializar o onboarding no backend.';
+};
+
 export function OnboardingPage() {
+  const [initialCategoryName, setInitialCategoryName] = useState(DEFAULT_CATEGORY);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bootstrapResult, setBootstrapResult] = useState<OnboardingBootstrapResponse | null>(null);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+
+  const handleBootstrap = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const normalizedCategory = initialCategoryName.trim();
+
+    if (!normalizedCategory) {
+      setBootstrapError('Informe o nome da categoria inicial.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setBootstrapError(null);
+
+    try {
+      const response = await bootstrapOnboarding({
+        initialCategoryName: normalizedCategory,
+        createDefaultCategory: true
+      });
+      setBootstrapResult(response);
+    } catch (error) {
+      setBootstrapResult(null);
+      setBootstrapError(extractErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section className="page-section">
       <header className="page-header">
@@ -13,16 +68,58 @@ export function OnboardingPage() {
 
       <div className="category-page__content" style={{ gap: '1rem' }}>
         <article className="card">
-          <h2>1) Conferir acesso e papéis</h2>
+          <h2>1) Inicializar tenant no backend</h2>
           <p>
-            Valide login do owner/admin e confirme que os perfis mínimos (owner, admin, reviewer,
-            viewer) estão provisionados no tenant.
+            Execute o bootstrap para validar o owner autenticado e criar automaticamente a primeira
+            categoria caso o tenant ainda esteja vazio.
           </p>
+
+          <form onSubmit={handleBootstrap} style={{ display: 'grid', gap: '0.75rem', maxWidth: '28rem' }}>
+            <label htmlFor="initialCategoryName" style={{ fontWeight: 600 }}>
+              Categoria inicial
+            </label>
+            <input
+              id="initialCategoryName"
+              type="text"
+              value={initialCategoryName}
+              onChange={(event) => setInitialCategoryName(event.target.value)}
+              placeholder="Ex.: GERAL"
+              disabled={isSubmitting}
+            />
+            <button className="button button--primary" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Inicializando…' : 'Executar bootstrap'}
+            </button>
+          </form>
+
+          {bootstrapResult ? (
+            <div className="card card--success" style={{ marginTop: '1rem' }}>
+              <strong>Bootstrap concluído</strong>
+              <ul style={{ margin: '0.5rem 0 0 1rem' }}>
+                <li>Tenant: {bootstrapResult.tenantId}</li>
+                <li>Owner: {bootstrapResult.ownerUsername}</li>
+                <li>
+                  Categorias: {bootstrapResult.categoriesBefore} → {bootstrapResult.categoriesAfter}
+                </li>
+                <li>
+                  Categoria criada:{' '}
+                  {bootstrapResult.createdDefaultCategory
+                    ? bootstrapResult.createdCategoryName ?? 'sim'
+                    : 'não (tenant já possuía categorias)'}
+                </li>
+              </ul>
+            </div>
+          ) : null}
+
+          {bootstrapError ? (
+            <div className="card card--error" style={{ marginTop: '1rem' }}>
+              {bootstrapError}
+            </div>
+          ) : null}
         </article>
 
         <article className="card">
-          <h2>2) Criar categorias base</h2>
-          <p>Cadastre as categorias necessárias para iniciar a operação e o schema mínimo.</p>
+          <h2>2) Revisar categorias base</h2>
+          <p>Cadastre/ajuste as categorias necessárias para iniciar a operação e o schema mínimo.</p>
           <Link to="/categories">Ir para gerenciamento de categorias</Link>
         </article>
 
