@@ -110,6 +110,11 @@ function parseAuthParams(url: URL): URLSearchParams {
   return new URLSearchParams();
 }
 
+function normalizeRole(role: string): string {
+  const normalized = role.trim().toUpperCase();
+  return normalized.startsWith('ROLE_') ? normalized : `ROLE_${normalized}`;
+}
+
 function extractRolesFromToken(token?: string | null): string[] {
   if (!token) {
     return [];
@@ -120,10 +125,10 @@ function extractRolesFromToken(token?: string | null): string[] {
       resource_access?: Record<string, { roles?: string[] }>;
     };
     const roles = new Set<string>();
-    payload.realm_access?.roles?.forEach((role) => roles.add(role));
+    payload.realm_access?.roles?.forEach((role) => roles.add(normalizeRole(role)));
     if (payload.resource_access) {
       Object.values(payload.resource_access).forEach((resource) => {
-        resource.roles?.forEach((role) => roles.add(role));
+        resource.roles?.forEach((role) => roles.add(normalizeRole(role)));
       });
     }
     return Array.from(roles);
