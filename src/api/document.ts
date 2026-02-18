@@ -96,3 +96,22 @@ export async function fetchCategory(id: string) {
   const response = await documentApi.get<DocumentCategory>(`/v1/categories/${id}`);
   return response.data;
 }
+
+export interface OnboardingBootstrapPayload {
+  initialCategoryName: string;
+  createDefaultCategory?: boolean;
+}
+
+export interface OnboardingBootstrapResponse {
+  tenantId: string;
+  ownerUsername: string;
+  categoriesBefore: number;
+  categoriesAfter: number;
+  createdDefaultCategory: boolean;
+  createdCategoryName?: string;
+}
+
+export async function bootstrapOnboarding(payload: OnboardingBootstrapPayload) {
+  const response = await documentApi.post<OnboardingBootstrapResponse>('/v1/onboarding/bootstrap', payload);
+  return response.data;
+}

@@ -9,6 +9,7 @@ import { DocumentUploadPage } from '@/pages/DocumentUploadPage';
 import { CategoryManagementPage } from '@/pages/CategoryManagementPage';
 import { SearchPage } from '@/pages/SearchPage';
 import { WorkflowPendingPage } from '@/pages/WorkflowPendingPage';
+import { OnboardingPage } from '@/pages/OnboardingPage';
 
 export const router = createBrowserRouter([
   {
@@ -71,6 +72,17 @@ export const router = createBrowserRouter([
             description="Você não tem permissão para revisar pendências."
           >
             <WorkflowPendingPage />
+          </RoleGuard>
+        )
+      },
+      {
+        path: 'onboarding',
+        element: (
+          <RoleGuard
+            allowedRoles={[...PERMISSIONS.manageCategories]}
+            description="Você não tem permissão para acessar o onboarding."
+          >
+            <OnboardingPage />
           </RoleGuard>
         )
       }
