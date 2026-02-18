@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
+import { PERMISSIONS } from '@/auth/roles';
 import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
+import { useAuth } from '@/context/AuthContext';
 import {
   listPendingWorkflow,
   PendingDocumentItem,
@@ -19,6 +21,7 @@ function statusBadgeClass(status?: string) {
 }
 
 export function WorkflowPendingPage() {
+  const { hasAnyRole } = useAuth();
   const [category, setCategory] = useState('');
   const [author, setAuthor] = useState('');
   const [page, setPage] = useState(0);
@@ -72,6 +75,15 @@ export function WorkflowPendingPage() {
     });
     setFeedback(`Documento ${item.documentId} reprovado.`);
   };
+
+  if (!hasAnyRole([...PERMISSIONS.reviewWorkflow])) {
+    return (
+      <ErrorState
+        title="Acesso negado"
+        description="Você não tem permissão para revisar pendências."
+      />
+    );
+  }
 
   if (pendingQuery.isLoading) {
     return <LoadingState message="Carregando fila de pendências" />;

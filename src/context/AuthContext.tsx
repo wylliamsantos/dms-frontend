@@ -11,6 +11,7 @@ import {
 
 import { setAuthToken, setTenantId } from '@/api/client';
 import { authAdapter, type AuthSession } from '@/auth/OidcAdapter';
+import { hasAnyRole } from '@/auth/roles';
 import { env } from '@/utils/env';
 
 interface AuthContextValue {
@@ -21,6 +22,7 @@ interface AuthContextValue {
   logout: () => void;
   roles: string[];
   hasRole: (role: string) => boolean;
+  hasAnyRole: (roles: string[]) => boolean;
 }
 
 interface AuthState {
@@ -167,7 +169,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       roles: state.roles,
-      hasRole: (role: string) => state.roles.includes(role)
+      hasRole: (role: string) => state.roles.includes(role),
+      hasAnyRole: (roles: string[]) => hasAnyRole(state.roles, roles)
     }),
     [state.isAuthenticated, state.isLoading, state.token, state.roles, login, logout]
   );
