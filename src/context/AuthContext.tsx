@@ -18,6 +18,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   token: string | null;
+  userName: string | null;
   login: () => void;
   logout: () => void;
   roles: string[];
@@ -30,6 +31,7 @@ interface AuthState {
   isLoading: boolean;
   token: string | null;
   roles: string[];
+  userName: string | null;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -38,14 +40,15 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: true,
   token: null,
-  roles: []
+  roles: [],
+  userName: null
 };
 
 const tenantClaimKey = 'tenant_id' as const;
 
-function resolveTenantId(token?: string | null): string | null {
+function parseTokenClaims(token?: string | null): Record<string, unknown> | null {
   if (!token) {
-    return env.defaultTenantId || null;
+    return null;
   }
 
   try {
@@ -62,14 +65,38 @@ function resolveTenantId(token?: string | null): string | null {
         .join('')
     );
 
-    const claims = JSON.parse(json) as Record<string, unknown>;
-    const value = claims[tenantClaimKey];
-
-    if (typeof value === 'string' && value.trim().length > 0) {
-      return value.trim();
-    }
+    return JSON.parse(json) as Record<string, unknown>;
   } catch (error) {
-    console.warn('[Auth] Failed to resolve tenant claim from token', error);
+    console.warn('[Auth] Failed to parse token claims', error);
+    return null;
+  }
+}
+
+function resolveTenantId(token?: string | null): string | null {
+  const claims = parseTokenClaims(token);
+  if (!claims) {
+    return env.defaultTenantId || null;
+  }
+
+  const value = claims[tenantClaimKey];
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value.trim();
+  }
+
+  return null;
+}
+
+function resolveUserName(token?: string | null): string | null {
+  const claims = parseTokenClaims(token);
+  if (!claims) {
+    return null;
+  }
+
+  const candidates = [claims.preferred_username, claims.name, claims.email];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
   }
 
   return null;
@@ -80,7 +107,8 @@ function applySessionToState(session: AuthSession): AuthState {
     isAuthenticated: session.isAuthenticated,
     isLoading: false,
     token: session.token ?? null,
-    roles: session.roles ?? []
+    roles: session.roles ?? [],
+    userName: resolveUserName(session.token)
   };
 }
 
@@ -129,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthToken(undefined);
         setTenantId(env.defaultTenantId || undefined);
         if (isActive) {
-          setState({ isAuthenticated: false, isLoading: false, token: null, roles: [] });
+          setState({ isAuthenticated: false, isLoading: false, token: null, roles: [], userName: null });
         }
       });
 
@@ -166,13 +194,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: state.isAuthenticated,
       isLoading: state.isLoading,
       token: state.token,
+      userName: state.userName,
       login,
       logout,
       roles: state.roles,
       hasRole: (role: string) => state.roles.includes(role),
       hasAnyRole: (roles: string[]) => hasAnyRole(state.roles, roles)
     }),
-    [state.isAuthenticated, state.isLoading, state.token, state.roles, login, logout]
+    [state.isAuthenticated, state.isLoading, state.token, state.roles, state.userName, login, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
