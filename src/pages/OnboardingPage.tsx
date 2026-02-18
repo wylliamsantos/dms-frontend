@@ -128,7 +128,7 @@ export function OnboardingPage() {
           <p>
             Faça um upload inicial para validar ponta-a-ponta (ingestão, indexação e consulta).
           </p>
-          <Link to="/documents/new">Ir para novo documento</Link>
+          <Link to="/documents/new?onboarding=1">Ir para novo documento</Link>
         </article>
 
         <article className="card">

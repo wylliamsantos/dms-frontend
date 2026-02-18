@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useEffect, useMemo } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
 
 import { ErrorState } from '@/components/ErrorState';
@@ -120,6 +120,8 @@ interface UploadFormValues {
 
 export function DocumentUploadPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isOnboardingFlow = searchParams.get('onboarding') === '1';
   const categoriesQuery = useCategories();
   const uploadMutation = useUploadDocument();
   const uploadProgress = typeof uploadMutation.progress === 'number' ? uploadMutation.progress : 0;
@@ -140,7 +142,7 @@ export function DocumentUploadPage() {
       author: '',
       comment: '',
       filename: '',
-      isFinal: false,
+      isFinal: isOnboardingFlow,
       cpf: '',
       metadata: [{ key: '', value: '', required: false }],
       document: undefined
@@ -308,7 +310,7 @@ export function DocumentUploadPage() {
             author: '',
             comment: '',
             filename: '',
-            isFinal: false,
+            isFinal: isOnboardingFlow,
             cpf: '',
             metadata: [{ key: '', value: '', required: false }],
             document: undefined
@@ -626,7 +628,7 @@ export function DocumentUploadPage() {
                         author: '',
                         comment: '',
                         filename: '',
-                        isFinal: false,
+                        isFinal: isOnboardingFlow,
                         cpf: '',
                         metadata: [{ key: '', value: '', required: false }],
                         document: undefined
