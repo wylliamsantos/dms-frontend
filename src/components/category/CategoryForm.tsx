@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from '@/i18n';
 
 import { CategoryPayload, DocumentCategory, DocumentGroup } from '@/types/document';
@@ -86,6 +86,18 @@ function schemaToFields(schema?: Record<string, unknown>): SchemaFieldFormValues
     pattern: typeof prop.pattern === 'string' ? prop.pattern : '',
     example: prop.example !== undefined ? String(prop.example) : ''
   }));
+}
+
+function ensureBusinessKeyRequired(fields: SchemaFieldFormValues[], businessKeyField?: string): SchemaFieldFormValues[] {
+  const key = businessKeyField?.trim();
+  if (!key) return fields;
+
+  const index = fields.findIndex((field) => field.key.trim().toLowerCase() === key.toLowerCase());
+  if (index >= 0) {
+    return fields.map((field, i) => (i === index ? { ...field, required: true } : field));
+  }
+
+  return [...fields, { key, type: 'string', required: true, pattern: '', example: '' }];
 }
 
 function fieldsToSchema(fields: SchemaFieldFormValues[]): Record<string, unknown> {
@@ -178,7 +190,6 @@ export function CategoryForm({ mode, initialData, onSubmit, onCancel, isSubmitti
     control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
     setError,
     clearErrors,
@@ -198,13 +209,15 @@ export function CategoryForm({ mode, initialData, onSubmit, onCancel, isSubmitti
     remove: removeSchemaField
   } = useFieldArray({ control, name: 'schemaFields' });
 
-  const watchedSchemaFields = watch('schemaFields');
+  const watchedSchemaFields = useWatch({ control, name: 'schemaFields' }) ?? [];
+  const watchedBusinessKeyField = useWatch({ control, name: 'businessKeyField' }) ?? '';
 
   useEffect(() => {
     if (advancedSchemaMode) return;
-    const schemaObject = fieldsToSchema(watchedSchemaFields ?? []);
-    setValue('schemaText', JSON.stringify(schemaObject, null, 2), { shouldDirty: true });
-  }, [advancedSchemaMode, watchedSchemaFields, setValue]);
+    const normalizedFields = ensureBusinessKeyRequired(watchedSchemaFields, watchedBusinessKeyField);
+    const schemaObject = fieldsToSchema(normalizedFields);
+    setValue('schemaText', JSON.stringify(schemaObject, null, 2), { shouldDirty: true, shouldValidate: false });
+  }, [advancedSchemaMode, watchedSchemaFields, watchedBusinessKeyField, setValue]);
 
   const submitForm = handleSubmit((values) => {
     let schemaObject: Record<string, unknown> = {};
@@ -219,8 +232,24 @@ export function CategoryForm({ mode, initialData, onSubmit, onCancel, isSubmitti
           return;
         }
       }
+
+      const key = values.businessKeyField.trim();
+      if (key) {
+        const required = Array.isArray(schemaObject.required) ? [...(schemaObject.required as string[])] : [];
+        if (!required.some((item) => item?.toLowerCase?.() === key.toLowerCase())) {
+          required.push(key);
+        }
+
+        const properties = (schemaObject.properties as Record<string, unknown> | undefined) ?? {};
+        if (!properties[key]) {
+          properties[key] = { type: 'string' };
+        }
+
+        schemaObject = { ...schemaObject, type: 'object', properties, required };
+      }
     } else {
-      schemaObject = fieldsToSchema(values.schemaFields ?? []);
+      const normalizedFields = ensureBusinessKeyRequired(values.schemaFields ?? [], values.businessKeyField);
+      schemaObject = fieldsToSchema(normalizedFields);
     }
 
     const payload: CategoryPayload = {
