@@ -43,6 +43,7 @@ export interface DmsEntry {
   category?: string;
   version?: string;
   versionType?: string;
+  workflowStatus?: string;
   content?: DmsContent;
   properties?: Record<string, unknown>;
 }
@@ -80,6 +81,7 @@ export interface SearchEntry {
   };
   version?: string;
   versionType?: string;
+  workflowStatus?: string;
 }
 
 export interface PageResponse<T> {

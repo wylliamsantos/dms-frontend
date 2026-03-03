@@ -207,6 +207,23 @@ export function DocumentDetailsPage() {
             minWidth: '18rem'
           }}
         >
+          {entry?.workflowStatus ? (
+            <div style={{ color: '#475569', fontSize: '0.95rem' }}>
+              <span
+                style={{
+                  display: 'block',
+                  fontSize: '0.75rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: '#94a3b8'
+                }}
+              >
+                Status workflow
+              </span>
+              <strong style={{ color: '#0f172a' }}>{entry.workflowStatus}</strong>
+            </div>
+          ) : null}
+
           {currentVersionLabel ? (
             <div style={{ color: '#475569', fontSize: '0.95rem' }}>
               <span

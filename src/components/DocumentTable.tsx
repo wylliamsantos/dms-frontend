@@ -24,6 +24,7 @@ export function DocumentTable({ items, onSelect, footer }: DocumentTableProps) {
             <tr>
               <th>{t('table.columns.document')}</th>
               <th>{t('table.columns.category')}</th>
+              <th>Status</th>
               <th>{t('table.columns.lastVersion')}</th>
               <th>{t('table.columns.updatedAt')}</th>
               <th></th>
@@ -37,6 +38,11 @@ export function DocumentTable({ items, onSelect, footer }: DocumentTableProps) {
                   <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{entry.location}</div>
                 </td>
                 <td>{entry.nodeType}</td>
+                <td>
+                  <span className={entry.workflowStatus === 'PENDING_REVIEW' ? 'badge badge--warning' : entry.workflowStatus === 'APPROVED' ? 'badge badge--success' : entry.workflowStatus === 'REJECTED' ? 'badge badge--danger' : 'badge badge--muted'}>
+                    {entry.workflowStatus ?? 'DRAFT'}
+                  </span>
+                </td>
                 <td>
                   <span className="badge badge--muted">{entry.versionType ?? 'MAJOR'}</span>
                   <span style={{ marginLeft: '0.5rem' }}>{entry.version ?? '-'}</span>
