@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
@@ -125,6 +125,7 @@ export function DocumentUploadPage() {
   const uploadMutation = useUploadDocument();
   const uploadProgress = typeof uploadMutation.progress === 'number' ? uploadMutation.progress : 0;
   const { t, i18n } = useTranslation();
+  const [clientValidationError, setClientValidationError] = useState<string | null>(null);
 
   const {
     register,
@@ -278,7 +279,13 @@ export function DocumentUploadPage() {
       return;
     }
 
+    setClientValidationError(null);
     const metadataPayload = buildMetadataPayload(values);
+    if (!metadataPayload) {
+      setClientValidationError(`Preencha o identificador principal da categoria (${businessKeyLabel}).`);
+      return;
+    }
+
     const filename = values.filename || file.name;
 
     uploadMutation.mutate(
@@ -317,9 +324,20 @@ export function DocumentUploadPage() {
       .forEach((entry) => {
         const key = entry.key.trim();
         const value = entry.value.trim();
-        const isBusinessKey = normalizeMetadataKey(key) === normalizeMetadataKey(businessKeyField);
-        metadata[key] = isBusinessKey && normalizeMetadataKey(key) === 'cpf' ? unmaskCpf(value) : value;
+        metadata[key] = value;
       });
+
+    const normalizedBusinessKey = normalizeMetadataKey(businessKeyField);
+    const businessKeyEntry = values.metadata.find(
+      (entry) => normalizeMetadataKey(entry.key) === normalizedBusinessKey && !!entry.value?.trim()
+    );
+
+    if (!businessKeyEntry) {
+      return null;
+    }
+
+    const rawBusinessValue = businessKeyEntry.value.trim();
+    metadata[businessKeyField] = normalizedBusinessKey === 'cpf' ? unmaskCpf(rawBusinessValue) : rawBusinessValue;
 
     if (!Object.keys(metadata).length) {
       return '{}';
@@ -441,6 +459,7 @@ export function DocumentUploadPage() {
           <div>
             <h2 style={{ margin: '1.5rem 0 0.75rem' }}>{t('upload.metadata.sectionTitle')}</h2>
             <p style={{ margin: '0 0 1rem', color: '#475569' }}>{t('upload.metadata.description')}</p>
+            {clientValidationError ? <p className="input-error" style={{ marginTop: 0 }}>{clientValidationError}</p> : null}
 
             <div className="metadata-extra">
               {requiredMetadata.length ? (
