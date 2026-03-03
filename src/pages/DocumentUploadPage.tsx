@@ -9,7 +9,7 @@ import { LoadingState } from '@/components/LoadingState';
 import { useCategories } from '@/hooks/useCategories';
 import { useUploadDocument } from '@/hooks/useUploadDocument';
 import { DocumentCategory, DocumentId } from '@/types/document';
-import { formatCpf, unmaskCpf } from '@/utils/format';
+import { unmaskCpf } from '@/utils/format';
 
 interface MetadataEntryForm {
   key: string;
@@ -113,7 +113,7 @@ interface UploadFormValues {
   comment?: string;
   filename?: string;
   isFinal: boolean;
-  cpf: string;
+  businessKeyValue: string;
   metadata: MetadataEntryForm[];
   document?: FileList;
 }
@@ -143,7 +143,7 @@ export function DocumentUploadPage() {
       comment: '',
       filename: '',
       isFinal: isOnboardingFlow,
-      cpf: '',
+      businessKeyValue: '',
       metadata: [{ key: '', value: '', required: false }],
       document: undefined
     }
@@ -165,6 +165,13 @@ export function DocumentUploadPage() {
     const items = categoriesQuery.data ?? [];
     return items.filter((category) => category.active !== false);
   }, [categoriesQuery.data]);
+
+  const selectedCategory = useMemo(
+    () => categories.find((item) => item.name === categoryValue),
+    [categories, categoryValue]
+  );
+  const businessKeyField = selectedCategory?.businessKeyField?.trim() || 'cpf';
+  const businessKeyLabel = businessKeyField.toUpperCase();
 
   useEffect(() => {
     const file = documentFiles?.[0];
@@ -239,14 +246,8 @@ export function DocumentUploadPage() {
     });
   }, [categories, categoryValue, metadataValues, metadataFieldArray, t, i18n.language]);
 
-  const cpfRegister = register('cpf', {
-    required: t('upload.validation.cpfRequired'),
-    onChange: (event) => {
-      const formatted = formatCpf(event.target.value);
-      if (formatted !== event.target.value) {
-        setValue('cpf', formatted, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
-      }
-    }
+  const businessKeyRegister = register('businessKeyValue', {
+    required: t('upload.validation.requiredField')
   });
 
   const uploadErrorMessage = useMemo(() => {
@@ -311,7 +312,7 @@ export function DocumentUploadPage() {
             comment: '',
             filename: '',
             isFinal: isOnboardingFlow,
-            cpf: '',
+            businessKeyValue: '',
             metadata: [{ key: '', value: '', required: false }],
             document: undefined
           });
@@ -322,9 +323,10 @@ export function DocumentUploadPage() {
 
   const buildMetadataPayload = (values: UploadFormValues) => {
     const metadata: Record<string, unknown> = {};
-    const cpfValue = unmaskCpf(values.cpf);
-    if (cpfValue) {
-      metadata.cpf = cpfValue;
+    const rawBusinessKeyValue = values.businessKeyValue?.trim();
+    if (rawBusinessKeyValue) {
+      const field = businessKeyField.toLowerCase();
+      metadata[field] = field === 'cpf' ? unmaskCpf(rawBusinessKeyValue) : rawBusinessKeyValue;
     }
 
     values.metadata
@@ -432,15 +434,15 @@ export function DocumentUploadPage() {
 
           <div className="form-grid form-grid--two">
             <div className="input-group">
-              <label htmlFor="cpf">{t('upload.fields.cpf')}</label>
+              <label htmlFor="businessKeyValue">{businessKeyLabel}</label>
               <input
-                id="cpf"
+                id="businessKeyValue"
                 className="text-input"
-                inputMode="numeric"
-                placeholder={t('search.cpfPlaceholder')}
-                {...cpfRegister}
+                inputMode="text"
+                placeholder={`Informe ${businessKeyLabel}`}
+                {...businessKeyRegister}
               />
-              {errors.cpf ? <span className="input-error">{errors.cpf.message as string}</span> : null}
+              {errors.businessKeyValue ? <span className="input-error">{errors.businessKeyValue.message as string}</span> : null}
             </div>
             <div className="input-group input-group--inline">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -629,7 +631,7 @@ export function DocumentUploadPage() {
                         comment: '',
                         filename: '',
                         isFinal: isOnboardingFlow,
-                        cpf: '',
+                        businessKeyValue: '',
                         metadata: [{ key: '', value: '', required: false }],
                         document: undefined
                       });
