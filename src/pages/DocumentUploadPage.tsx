@@ -248,6 +248,8 @@ export function DocumentUploadPage() {
     const error = uploadMutation.error;
 
     if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const retryAfter = error.response?.headers?.['retry-after'];
       const data = error.response?.data;
       if (data && typeof data === 'object') {
         const dataRecord = data as Record<string, unknown>;
@@ -257,6 +259,14 @@ export function DocumentUploadPage() {
         if (typeof dataRecord.message === 'string') {
           return dataRecord.message;
         }
+      }
+
+      if (status === 429) {
+        return `Limite de requisições temporariamente atingido. Tente novamente em ${retryAfter ?? 60}s.`;
+      }
+
+      if (status === 417) {
+        return 'Não foi possível concluir o envio por regra de negócio (limite/plano/validação).';
       }
     }
 
