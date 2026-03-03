@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
@@ -172,6 +172,7 @@ export function DocumentUploadPage() {
   );
   const businessKeyField = selectedCategory?.businessKeyField?.trim() || 'cpf';
   const businessKeyLabel = businessKeyField.toUpperCase();
+  const metadataSyncSignatureRef = useRef('');
 
   useEffect(() => {
     const file = documentFiles?.[0];
@@ -189,62 +190,56 @@ export function DocumentUploadPage() {
   }, [categories, categoryValue, setValue]);
 
   useEffect(() => {
-    if (!categories.length || !categoryValue) {
-      return;
-    }
-
-    const category = categories.find((item) => item.name === categoryValue);
-    if (!category) {
-      return;
-    }
-
-    const requiredEntries = buildRequiredMetadataEntries(category, t);
-    if (!requiredEntries.length) {
+    if (!selectedCategory) {
       return;
     }
 
     const currentMetadata = metadataValues ?? [];
-    const requiredKeys = new Set(requiredEntries.map((entry) => normalizeMetadataKey(entry.key)));
+    const requiredEntries = buildRequiredMetadataEntries(selectedCategory, t);
 
-    requiredEntries.forEach((entry) => {
-      const existingIndex = currentMetadata.findIndex((field) =>
-        normalizeMetadataKey(field?.key) === normalizeMetadataKey(entry.key)
+    const nextRequired = requiredEntries.map((entry) => {
+      const existing = currentMetadata.find(
+        (field) => normalizeMetadataKey(field?.key) === normalizeMetadataKey(entry.key)
       );
 
-      if (existingIndex >= 0) {
-        const currentField = currentMetadata[existingIndex];
-        if (!currentField) {
-          return;
-        }
-
-        if (!currentField.required || currentField.hint !== entry.hint || currentField.key !== entry.key) {
-          metadataFieldArray.update(existingIndex, {
-            ...currentField,
-            key: entry.key,
-            required: true,
-            hint: entry.hint
-          });
-        }
-      } else {
-        metadataFieldArray.append(entry, { shouldFocus: false });
-      }
+      return {
+        key: entry.key,
+        value: existing?.value ?? '',
+        required: true,
+        hint: entry.hint
+      };
     });
 
-    currentMetadata.forEach((field, index) => {
-      const normalized = normalizeMetadataKey(field?.key);
-      if (!field) {
-        return;
-      }
+    const optionalEntries = currentMetadata
+      .filter((field) => field && !field.required)
+      .map((field) => ({
+        key: field.key,
+        value: field.value,
+        required: false,
+        hint: undefined
+      }));
 
-      if (field.required && !requiredKeys.has(normalized)) {
-        metadataFieldArray.update(index, {
-          ...field,
-          required: false,
-          hint: undefined
-        });
-      }
-    });
-  }, [categories, categoryValue, metadataValues, metadataFieldArray, t, i18n.language]);
+    const nextMetadata = [...nextRequired, ...optionalEntries];
+    const normalizedNextMetadata = nextMetadata.length
+      ? nextMetadata
+      : [{ key: '', value: '', required: false, hint: undefined }];
+
+    const signature = JSON.stringify(
+      normalizedNextMetadata.map((entry) => ({
+        key: entry.key,
+        value: entry.value,
+        required: !!entry.required,
+        hint: entry.hint ?? ''
+      }))
+    );
+
+    if (signature === metadataSyncSignatureRef.current) {
+      return;
+    }
+
+    metadataSyncSignatureRef.current = signature;
+    metadataFieldArray.replace(normalizedNextMetadata);
+  }, [selectedCategory, metadataValues, metadataFieldArray, t, i18n.language]);
 
   const businessKeyRegister = register('businessKeyValue', {
     required: t('upload.validation.requiredField')
