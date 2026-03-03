@@ -470,6 +470,14 @@ export function DocumentUploadPage() {
                   <h3 className="metadata-section__title">{t('upload.metadata.requiredTitle')}</h3>
                   {requiredMetadata.map(({ field, index }) => {
                     const valueError = errors.metadata?.[index]?.value?.message as string | undefined;
+                    const isPrimaryBusinessKey = normalizeMetadataKey(field.key) === normalizeMetadataKey(businessKeyField);
+                    const businessKeyHint = isPrimaryBusinessKey
+                      ? `Este é o identificador principal da categoria (${businessKeyLabel}).`
+                      : undefined;
+                    const valuePlaceholder = isPrimaryBusinessKey
+                      ? `Informe ${businessKeyLabel} (identificador principal)`
+                      : t('upload.metadata.valuePlaceholder');
+
                     return (
                       <div key={field.id} className="metadata-extra__row">
                         <div className="metadata-extra__inputs">
@@ -484,7 +492,8 @@ export function DocumentUploadPage() {
                           />
                           <input
                             className="text-input"
-                            placeholder={t('upload.metadata.valuePlaceholder')}
+                            placeholder={valuePlaceholder}
+                            title={businessKeyHint}
                             defaultValue={field.value}
                             {...register(`metadata.${index}.value` as const, {
                               required: t('upload.validation.requiredField')
@@ -493,6 +502,7 @@ export function DocumentUploadPage() {
                         </div>
                         <div className="metadata-extra__actions">
                           {field.hint ? <span className="metadata-extra__hint">{field.hint}</span> : null}
+                          {businessKeyHint ? <span className="metadata-extra__hint">{businessKeyHint}</span> : null}
                           {valueError ? <span className="input-error">{valueError}</span> : null}
                         </div>
                       </div>
