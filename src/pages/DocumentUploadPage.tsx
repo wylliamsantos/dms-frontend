@@ -113,7 +113,6 @@ interface UploadFormValues {
   comment?: string;
   filename?: string;
   isFinal: boolean;
-  businessKeyValue: string;
   metadata: MetadataEntryForm[];
   document?: FileList;
 }
@@ -143,7 +142,6 @@ export function DocumentUploadPage() {
       comment: '',
       filename: '',
       isFinal: isOnboardingFlow,
-      businessKeyValue: '',
       metadata: [{ key: '', value: '', required: false }],
       document: undefined
     }
@@ -241,10 +239,6 @@ export function DocumentUploadPage() {
     metadataFieldArray.replace(normalizedNextMetadata);
   }, [selectedCategory, metadataValues, metadataFieldArray, t, i18n.language]);
 
-  const businessKeyRegister = register('businessKeyValue', {
-    required: t('upload.validation.requiredField')
-  });
-
   const uploadErrorMessage = useMemo(() => {
     if (!uploadMutation.error) {
       return null;
@@ -307,7 +301,6 @@ export function DocumentUploadPage() {
             comment: '',
             filename: '',
             isFinal: isOnboardingFlow,
-            businessKeyValue: '',
             metadata: [{ key: '', value: '', required: false }],
             document: undefined
           });
@@ -318,16 +311,14 @@ export function DocumentUploadPage() {
 
   const buildMetadataPayload = (values: UploadFormValues) => {
     const metadata: Record<string, unknown> = {};
-    const rawBusinessKeyValue = values.businessKeyValue?.trim();
-    if (rawBusinessKeyValue) {
-      const field = businessKeyField.toLowerCase();
-      metadata[field] = field === 'cpf' ? unmaskCpf(rawBusinessKeyValue) : rawBusinessKeyValue;
-    }
 
     values.metadata
       .filter((entry) => entry.key && entry.key.trim() && entry.value.trim())
       .forEach((entry) => {
-        metadata[entry.key.trim()] = entry.value.trim();
+        const key = entry.key.trim();
+        const value = entry.value.trim();
+        const isBusinessKey = normalizeMetadataKey(key) === normalizeMetadataKey(businessKeyField);
+        metadata[key] = isBusinessKey && normalizeMetadataKey(key) === 'cpf' ? unmaskCpf(value) : value;
       });
 
     if (!Object.keys(metadata).length) {
@@ -427,25 +418,12 @@ export function DocumentUploadPage() {
             </div>
           </div>
 
-          <div className="form-grid form-grid--two">
-            <div className="input-group">
-              <label htmlFor="businessKeyValue">{businessKeyLabel}</label>
-              <input
-                id="businessKeyValue"
-                className="text-input"
-                inputMode="text"
-                placeholder={`Informe ${businessKeyLabel}`}
-                {...businessKeyRegister}
-              />
-              {errors.businessKeyValue ? <span className="input-error">{errors.businessKeyValue.message as string}</span> : null}
+          <div className="input-group input-group--inline">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <input id="isFinal" type="checkbox" {...register('isFinal')} />
+              <label htmlFor="isFinal" style={{ margin: 0 }}>{t('upload.fields.finalLabel')}</label>
             </div>
-            <div className="input-group input-group--inline">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <input id="isFinal" type="checkbox" {...register('isFinal')} />
-                <label htmlFor="isFinal" style={{ margin: 0 }}>{t('upload.fields.finalLabel')}</label>
-              </div>
-              <span className="input-hint">{t('upload.fields.finalHint')}</span>
-            </div>
+            <span className="input-hint">{t('upload.fields.finalHint')}</span>
           </div>
 
           <div className="input-group">
@@ -636,7 +614,6 @@ export function DocumentUploadPage() {
                         comment: '',
                         filename: '',
                         isFinal: isOnboardingFlow,
-                        businessKeyValue: '',
                         metadata: [{ key: '', value: '', required: false }],
                         document: undefined
                       });
