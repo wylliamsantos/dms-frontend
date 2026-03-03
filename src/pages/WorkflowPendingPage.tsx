@@ -163,22 +163,23 @@ export function WorkflowPendingPage() {
             Nenhum documento pendente com os filtros atuais.
           </div>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Documento</th>
-                <th>Status</th>
-                <th>Categoria</th>
-                <th>Versão</th>
-                <th>Autor</th>
-                <th>Chave</th>
-                <th>Atualizado em</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.documentId}>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table table--pending">
+              <thead>
+                <tr>
+                  <th>Documento</th>
+                  <th>Status</th>
+                  <th>Categoria</th>
+                  <th>Versão</th>
+                  <th>Autor</th>
+                  <th>Chave</th>
+                  <th>Atualizado em</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.documentId}>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                       <strong>{item.filename || item.documentId}</strong>
@@ -218,9 +219,10 @@ export function WorkflowPendingPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {totalPages > 1 ? (

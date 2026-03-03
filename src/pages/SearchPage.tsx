@@ -5,19 +5,18 @@ import { useTranslation } from '@/i18n';
 
 import { setTransactionId } from '@/api/client';
 import { useCategories } from '@/hooks/useCategories';
-import { useSearchByCpf } from '@/hooks/useSearchByCpf';
+import { useSearchByBusinessKey } from '@/hooks/useSearchByBusinessKey';
 import { DocumentTable } from '@/components/DocumentTable';
 import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
 import { env } from '@/utils/env';
-import { formatCpf, unmaskCpf } from '@/utils/format';
 import { PageResponse, SearchEntry } from '@/types/document';
 
 const PAGE_SIZE = 10;
 const DEFAULT_VERSION_TYPE = 'ALL' as const;
 
 interface FiltersForm {
-  cpf: string;
+  businessKeyValue: string;
   categories: string[];
 }
 
@@ -35,32 +34,54 @@ export function SearchPage() {
     formState: { isSubmitting }
   } = useForm<FiltersForm>({
     defaultValues: {
-      cpf: '',
+      businessKeyValue: '',
       categories: []
     }
   });
 
-  const cpfRegister = register('cpf', {
-    required: true,
-    onChange: (event) => {
-      const formatted = formatCpf(event.target.value);
-      if (formatted !== event.target.value) {
-        setValue('cpf', formatted, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
-      }
-    }
-  });
-
   const categoriesQuery = useCategories();
-  const searchMutation = useSearchByCpf();
+  const searchMutation = useSearchByBusinessKey();
 
   useEffect(() => {
     setTransactionId(env.defaultTransactionId);
   }, []);
 
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
+  const selectedCategories = watch('categories');
+
+  useEffect(() => {
+    if (categories.length && !selectedCategories?.length) {
+      setValue('categories', categories.map((category) => category.name));
+    }
+  }, [categories, selectedCategories?.length, setValue]);
+
+  const selectedCategoryDetails = useMemo(
+    () => categories.filter((category) => (selectedCategories ?? []).includes(category.name)),
+    [categories, selectedCategories]
+  );
+
+  const selectedBusinessKeyTypes = useMemo(() => {
+    const keys = new Set(
+      selectedCategoryDetails
+        .map((category) => category.businessKeyField?.trim().toLowerCase())
+        .filter((value): value is string => !!value)
+    );
+    return Array.from(keys);
+  }, [selectedCategoryDetails]);
+
+  const hasIncompatibleCategories = selectedBusinessKeyTypes.length > 1;
+  const businessKeyType = selectedBusinessKeyTypes[0] ?? 'cpf';
+  const businessKeyLabel = businessKeyType.toUpperCase();
+
   const submitWithPage = (pageNumber: number, formValues?: FiltersForm) => {
     const values = formValues ?? getValues();
+    if (hasIncompatibleCategories) {
+      return;
+    }
+
     const payload = {
-      cpf: unmaskCpf(values.cpf),
+      businessKeyType,
+      businessKeyValue: values.businessKeyValue.trim(),
       documentCategoryNames: values.categories ?? [],
       versionType: DEFAULT_VERSION_TYPE,
       page: pageNumber,
@@ -77,20 +98,6 @@ export function SearchPage() {
   const onSubmit = handleSubmit((values) => {
     submitWithPage(0, values);
   });
-
-  const categories = useMemo(() => {
-    if (categoriesQuery.data) {
-      console.debug('[SearchPage] categories result', categoriesQuery.data);
-    }
-    return categoriesQuery.data ?? [];
-  }, [categoriesQuery.data]);
-  const selectedCategories = watch('categories');
-
-  useEffect(() => {
-    if (categories.length && !selectedCategories?.length) {
-      setValue('categories', categories.map((category) => category.name));
-    }
-  }, [categories, selectedCategories?.length, setValue]);
 
   const handleDocumentSelect = (entry: SearchEntry) => {
     if (!entry.id) return;
@@ -117,12 +124,8 @@ export function SearchPage() {
   const pageEnd = results && results.totalElements > 0 ? results.number * results.size + results.content.length : 0;
 
   const handlePageChange = (nextPage: number) => {
-    if (nextPage < 0) {
-      return;
-    }
-    if (totalPages !== 0 && nextPage > totalPages - 1) {
-      return;
-    }
+    if (nextPage < 0) return;
+    if (totalPages !== 0 && nextPage > totalPages - 1) return;
     submitWithPage(nextPage);
   };
 
@@ -175,13 +178,13 @@ export function SearchPage() {
         <form onSubmit={onSubmit} className="form-grid">
           <div className="form-grid form-grid--two">
             <div className="input-group">
-              <label htmlFor="cpf">{t('search.cpfLabel')}</label>
+              <label htmlFor="businessKeyValue">{businessKeyLabel}</label>
               <input
-                id="cpf"
+                id="businessKeyValue"
                 className="text-input"
-                inputMode="numeric"
-                placeholder={t('search.cpfPlaceholder')}
-                {...cpfRegister}
+                inputMode="text"
+                placeholder={`Informe ${businessKeyLabel}`}
+                {...register('businessKeyValue', { required: true })}
               />
             </div>
 
@@ -206,8 +209,18 @@ export function SearchPage() {
             </div>
           </div>
 
+          {hasIncompatibleCategories ? (
+            <div className="input-error">
+              As categorias selecionadas usam chaves diferentes ({selectedBusinessKeyTypes.join(', ')}). Selecione apenas categorias com a mesma business key para consultar.
+            </div>
+          ) : null}
+
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-            <button className="button button--primary" type="submit" disabled={isSubmitting || searchMutation.isPending}>
+            <button
+              className="button button--primary"
+              type="submit"
+              disabled={isSubmitting || searchMutation.isPending || hasIncompatibleCategories}
+            >
               {searchMutation.isPending ? t('search.submitting') : t('search.submit')}
             </button>
           </div>

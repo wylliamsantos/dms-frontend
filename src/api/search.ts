@@ -4,8 +4,9 @@ import { PageResponse, SearchEntry } from '@/types/document';
 type SearchScope = 'ALL' | 'LATEST' | 'MAJOR' | 'MINOR';
 type VersionType = 'MAJOR' | 'MINOR' | 'ALL';
 
-export interface SearchByCpfPayload {
-  cpf: string;
+export interface SearchByBusinessKeyPayload {
+  businessKeyType: string;
+  businessKeyValue: string;
   documentCategoryNames: string[];
   searchScope?: SearchScope;
   versionType?: VersionType;
@@ -13,8 +14,8 @@ export interface SearchByCpfPayload {
   size?: number;
 }
 
-export async function searchByCpf(payload: SearchByCpfPayload) {
-  const response = await searchApi.post<PageResponse<SearchEntry>>('/v1/search/byCpf', payload);
+export async function searchByBusinessKey(payload: SearchByBusinessKeyPayload) {
+  const response = await searchApi.post<PageResponse<SearchEntry>>('/v1/search/byBusinessKey', payload);
   return response.data;
 }
 

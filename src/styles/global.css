@@ -339,6 +339,20 @@ button {
   align-items: center;
 }
 
+.table--pending {
+  min-width: 1100px;
+}
+
+.table--pending td,
+.table--pending th {
+  vertical-align: top;
+}
+
+.table--pending td:nth-child(6) {
+  max-width: 220px;
+  word-break: break-word;
+}
+
 .table-footer {
   margin-top: 1rem;
   padding-top: 1rem;
