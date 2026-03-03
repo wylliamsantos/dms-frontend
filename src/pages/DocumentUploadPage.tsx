@@ -132,6 +132,7 @@ export function DocumentUploadPage() {
     handleSubmit,
     setValue,
     watch,
+    getValues,
     reset,
     formState: { isSubmitting, errors }
   } = useForm<UploadFormValues>({
@@ -158,7 +159,6 @@ export function DocumentUploadPage() {
 
   const documentFiles = watch('document');
   const categoryValue = watch('category');
-  const metadataValues = watch('metadata');
   const categories = useMemo(() => {
     const items = categoriesQuery.data ?? [];
     return items.filter((category) => category.active !== false);
@@ -192,7 +192,7 @@ export function DocumentUploadPage() {
       return;
     }
 
-    const currentMetadata = metadataValues ?? [];
+    const currentMetadata = getValues('metadata') ?? [];
     const requiredEntries = buildRequiredMetadataEntries(selectedCategory, t);
 
     const nextRequired = requiredEntries.map((entry) => {
@@ -237,7 +237,7 @@ export function DocumentUploadPage() {
 
     metadataSyncSignatureRef.current = signature;
     metadataFieldArray.replace(normalizedNextMetadata);
-  }, [selectedCategory, metadataValues, metadataFieldArray, t, i18n.language]);
+  }, [selectedCategory, getValues, metadataFieldArray, t, i18n.language]);
 
   const uploadErrorMessage = useMemo(() => {
     if (!uploadMutation.error) {
