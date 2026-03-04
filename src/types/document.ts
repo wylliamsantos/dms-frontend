@@ -82,6 +82,7 @@ export interface SearchEntry {
   version?: string;
   versionType?: string;
   workflowStatus?: string;
+  highlights?: string[];
 }
 
 export interface PageResponse<T> {

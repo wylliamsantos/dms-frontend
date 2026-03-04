@@ -36,6 +36,13 @@ export function DocumentTable({ items, onSelect, footer }: DocumentTableProps) {
                 <td>
                   <div>{entry.name}</div>
                   <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{entry.location}</div>
+                  {entry.highlights?.length ? (
+                    <ul style={{ margin: '0.4rem 0 0', paddingLeft: '1rem', color: '#475569', fontSize: '0.8rem' }}>
+                      {entry.highlights.map((highlight, index) => (
+                        <li key={`${entry.id}-hl-${index}`}>{highlight}</li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </td>
                 <td>{entry.nodeType}</td>
                 <td>
