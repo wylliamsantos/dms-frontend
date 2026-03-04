@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
+import { useQuery } from '@tanstack/react-query';
 
 import { DocumentPreview } from '@/components/DocumentPreview';
 import { ErrorState } from '@/components/ErrorState';
@@ -13,7 +14,11 @@ import {
   useDocumentInformation,
   useDocumentVersions
 } from '@/hooks/useDocumentDetails';
+import { listWorkflowHistory } from '@/api/workflow';
+import { listAuditEvents } from '@/api/audit';
 import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
+import { env } from '@/utils/env';
+import { formatDateTime } from '@/utils/format';
 
 const formatDate = (iso?: string, locale = 'pt-BR') => {
   if (!iso) return undefined;
@@ -37,6 +42,22 @@ export function DocumentDetailsPage() {
 
   const informationQuery = useDocumentInformation(documentId, activeVersion);
   const versionsQuery = useDocumentVersions(documentId);
+  const workflowHistoryQuery = useQuery({
+    queryKey: ['workflow-history', documentId],
+    queryFn: () => listWorkflowHistory(documentId as string),
+    enabled: Boolean(documentId)
+  });
+  const auditQuery = useQuery({
+    queryKey: ['audit-history', documentId],
+    queryFn: () =>
+      listAuditEvents({
+        tenantId: env.defaultTenantId || 'tenant-dev',
+        entityId: documentId,
+        page: 0,
+        size: 50
+      }),
+    enabled: Boolean(documentId)
+  });
   const contentMimeType = entry?.content?.mimeType ?? '';
   const contentSize = entry?.content?.sizeInBytes ?? 0;
   const isVideo = contentMimeType.startsWith('video/');
@@ -89,6 +110,36 @@ export function DocumentDetailsPage() {
   }, [binaryQuery.data, contentMimeType, preferBinaryPreview, objectUrl]);
 
   const versionItems = useMemo(() => versionsQuery.data?.list?.content ?? [], [versionsQuery.data?.list?.content]);
+
+  const timelineEvents = useMemo(() => {
+    const workflow = (workflowHistoryQuery.data ?? []).map((item) => ({
+      when: item.changedAt,
+      title: `${item.fromStatus} → ${item.toStatus}`,
+      detail: `${item.actor || 'system'} · ${item.reason || '-'}`,
+      kind: 'workflow'
+    }));
+
+    const versions = versionItems
+      .map((item) => item.entry)
+      .filter(Boolean)
+      .map((entry) => ({
+        when: entry?.createdAt,
+        title: `Versão ${entry?.version || '-'}`,
+        detail: `${entry?.versionType || ''} ${entry?.name || ''}`.trim(),
+        kind: 'version'
+      }));
+
+    const audits = (auditQuery.data?.events ?? []).map((event) => ({
+      when: event.occurredAt,
+      title: event.eventType,
+      detail: `${event.userId || 'system'}${event.filename ? ` · ${event.filename}` : ''}`,
+      kind: 'audit'
+    }));
+
+    return [...workflow, ...versions, ...audits]
+      .filter((event) => !!event.when)
+      .sort((a, b) => new Date(b.when as string).getTime() - new Date(a.when as string).getTime());
+  }, [workflowHistoryQuery.data, versionItems, auditQuery.data?.events]);
 
   const handleVersionSelect = (version: DmsDocumentSearchResponse) => {
     const newVersion = version.entry?.version;
@@ -271,6 +322,26 @@ export function DocumentDetailsPage() {
                 : undefined
             }
           />
+
+          <div className="card">
+            <h2 style={{ marginTop: 0 }}>Timeline do documento</h2>
+            {timelineEvents.length === 0 ? (
+              <p style={{ color: '#64748b' }}>Sem eventos para exibir.</p>
+            ) : (
+              <div className="timeline">
+                {timelineEvents.map((event, index) => (
+                  <div key={`${event.kind}-${index}-${event.when}`} className="timeline__item">
+                    <div className="timeline__dot" />
+                    <div className="timeline__content">
+                      <strong>{event.title}</strong>
+                      <div style={{ fontSize: '0.9rem', color: '#475569' }}>{event.detail}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{formatDateTime(event.when)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <VersionList items={versionItems} activeVersion={activeVersion} onSelect={handleVersionSelect} />
       </div>
