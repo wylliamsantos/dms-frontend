@@ -25,8 +25,11 @@ export interface AuditEventsResponse {
 export async function listAuditEvents(params: {
   tenantId: string;
   entityId?: string;
+  entityType?: string;
   userId?: string;
   eventType?: string;
+  occurredAtFrom?: string;
+  occurredAtTo?: string;
   page?: number;
   size?: number;
 }) {
