@@ -20,9 +20,18 @@ import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
 import { env } from '@/utils/env';
 import { formatDateTime } from '@/utils/format';
 
-const formatDate = (iso?: string, locale = 'pt-BR') => {
+const normalizeIso = (iso?: string) => {
   if (!iso) return undefined;
-  const date = new Date(iso);
+  const value = iso.trim();
+  if (!value) return undefined;
+  const hasTimezone = /([zZ]|[+\-]\d{2}:?\d{2})$/.test(value);
+  return hasTimezone ? value : `${value}Z`;
+};
+
+const formatDate = (iso?: string, locale = 'pt-BR') => {
+  const normalized = normalizeIso(iso);
+  if (!normalized) return undefined;
+  const date = new Date(normalized);
   if (Number.isNaN(date.getTime())) return undefined;
   return date.toLocaleString(locale, {
     day: '2-digit',
@@ -138,7 +147,11 @@ export function DocumentDetailsPage() {
 
     return [...workflow, ...versions, ...audits]
       .filter((event) => !!event.when)
-      .sort((a, b) => new Date(b.when as string).getTime() - new Date(a.when as string).getTime());
+      .sort((a, b) => {
+        const aw = normalizeIso(a.when);
+        const bw = normalizeIso(b.when);
+        return new Date(bw as string).getTime() - new Date(aw as string).getTime();
+      });
   }, [workflowHistoryQuery.data, versionItems, auditQuery.data?.events]);
 
   const handleVersionSelect = (version: DmsDocumentSearchResponse) => {
@@ -353,7 +366,7 @@ export function DocumentDetailsPage() {
                     <div className="timeline__content">
                       <strong>{event.title}</strong>
                       <div style={{ fontSize: '0.9rem', color: '#475569' }}>{event.detail}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{formatDateTime(event.when)}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{formatDateTime(normalizeIso(event.when))}</div>
                     </div>
                   </div>
                 ))}
