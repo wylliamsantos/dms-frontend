@@ -8,6 +8,7 @@ export interface SearchByBusinessKeyPayload {
   businessKeyType: string;
   businessKeyValue: string;
   documentCategoryNames: string[];
+  textQuery?: string;
   searchScope?: SearchScope;
   versionType?: VersionType;
   page?: number;

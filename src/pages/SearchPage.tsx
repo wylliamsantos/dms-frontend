@@ -17,6 +17,7 @@ const DEFAULT_VERSION_TYPE = 'ALL' as const;
 
 interface FiltersForm {
   businessKeyValue: string;
+  textQuery: string;
   categories: string[];
 }
 
@@ -35,6 +36,7 @@ export function SearchPage() {
   } = useForm<FiltersForm>({
     defaultValues: {
       businessKeyValue: '',
+      textQuery: '',
       categories: []
     }
   });
@@ -82,6 +84,7 @@ export function SearchPage() {
     const payload = {
       businessKeyType,
       businessKeyValue: values.businessKeyValue.trim(),
+      textQuery: values.textQuery.trim() || undefined,
       documentCategoryNames: values.categories ?? [],
       versionType: DEFAULT_VERSION_TYPE,
       page: pageNumber,
@@ -185,6 +188,17 @@ export function SearchPage() {
                 inputMode="text"
                 placeholder={`Informe ${businessKeyLabel}`}
                 {...register('businessKeyValue', { required: true })}
+              />
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="textQuery">Texto (nome/metadados)</label>
+              <input
+                id="textQuery"
+                className="text-input"
+                inputMode="text"
+                placeholder="Ex: contrato, banco, vencimento"
+                {...register('textQuery')}
               />
             </div>
 
