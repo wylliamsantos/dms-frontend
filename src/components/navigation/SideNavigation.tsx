@@ -16,6 +16,7 @@ export function SideNavigation() {
   const isCategoryActive = location.pathname.startsWith('/categories');
   const isWorkflowActive = location.pathname.startsWith('/workflow');
   const isOnboardingActive = location.pathname.startsWith('/onboarding');
+  const isAuditHistoryActive = location.pathname.startsWith('/audit/history');
   const canManageCategories = hasAnyRole([...PERMISSIONS.manageCategories]);
   const canReviewWorkflow = hasAnyRole([...PERMISSIONS.reviewWorkflow]);
   const canUploadDocument = hasAnyRole([...PERMISSIONS.uploadDocument]);
@@ -50,6 +51,14 @@ export function SideNavigation() {
               className={({ isActive }) => (isActive || isOnboardingActive ? 'active' : undefined)}
             >
               Onboarding
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/audit/history"
+              className={({ isActive }) => (isActive || isAuditHistoryActive ? 'active' : undefined)}
+            >
+              Histórico de auditoria
             </NavLink>
           </li>
         </ul>

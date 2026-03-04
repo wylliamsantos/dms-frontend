@@ -10,6 +10,7 @@ import { CategoryManagementPage } from '@/pages/CategoryManagementPage';
 import { SearchPage } from '@/pages/SearchPage';
 import { WorkflowPendingPage } from '@/pages/WorkflowPendingPage';
 import { OnboardingPage } from '@/pages/OnboardingPage';
+import { AuditHistoryPage } from '@/pages/AuditHistoryPage';
 
 export const router = createBrowserRouter([
   {
@@ -83,6 +84,17 @@ export const router = createBrowserRouter([
             description="Você não tem permissão para acessar o onboarding."
           >
             <OnboardingPage />
+          </RoleGuard>
+        )
+      },
+      {
+        path: 'audit/history',
+        element: (
+          <RoleGuard
+            allowedRoles={[...PERMISSIONS.search]}
+            description="Você não tem permissão para consultar auditoria."
+          >
+            <AuditHistoryPage />
           </RoleGuard>
         )
       }
