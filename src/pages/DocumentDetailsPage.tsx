@@ -162,7 +162,7 @@ export function DocumentDetailsPage() {
           >
             {t('details.header.title')}
           </span>
-          <h1 style={{ margin: 0, fontSize: '1.75rem', color: '#0f172a' }}>{entry?.name ?? t('details.untitled')}</h1>
+          <h1 style={{ margin: 0, fontSize: '1.75rem', color: '#0f172a', wordBreak: 'break-all', lineHeight: 1.2 }}>{entry?.name ?? t('details.untitled')}</h1>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', color: '#475569', fontSize: '0.95rem' }}>
             {entry?.category ? (
               <div>
@@ -202,9 +202,10 @@ export function DocumentDetailsPage() {
             display: 'flex',
             flexDirection: 'column',
             gap: '0.75rem',
-            alignItems: 'flex-end',
-            textAlign: 'right',
-            minWidth: '18rem'
+            alignItems: 'flex-start',
+            textAlign: 'left',
+            minWidth: '16rem',
+            flex: '1 1 320px'
           }}
         >
           {entry?.workflowStatus ? (
