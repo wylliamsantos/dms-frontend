@@ -15,9 +15,7 @@ import {
   useDocumentVersions
 } from '@/hooks/useDocumentDetails';
 import { listWorkflowHistory } from '@/api/workflow';
-import { listAuditEvents } from '@/api/audit';
 import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
-import { env } from '@/utils/env';
 import { formatDateTime } from '@/utils/format';
 
 const normalizeIso = (iso?: string) => {
@@ -47,9 +45,6 @@ export function DocumentDetailsPage() {
   const [activeVersion, setActiveVersion] = useState<string | undefined>(undefined);
   const [entry, setEntry] = useState<DmsEntry | undefined>(undefined);
   const [objectUrl, setObjectUrl] = useState<string | undefined>(undefined);
-  const [auditEntityId, setAuditEntityId] = useState<string>('');
-  const [auditUserId, setAuditUserId] = useState<string>('');
-  const [auditEventType, setAuditEventType] = useState<string>('');
   const { t, i18n } = useTranslation();
 
   const informationQuery = useDocumentInformation(documentId, activeVersion);
@@ -57,31 +52,6 @@ export function DocumentDetailsPage() {
   const workflowHistoryQuery = useQuery({
     queryKey: ['workflow-history', documentId],
     queryFn: () => listWorkflowHistory(documentId as string),
-    enabled: Boolean(documentId)
-  });
-  const timelineAuditQuery = useQuery({
-    queryKey: ['audit-history', documentId],
-    queryFn: () =>
-      listAuditEvents({
-        tenantId: env.defaultTenantId || 'tenant-dev',
-        entityId: documentId,
-        page: 0,
-        size: 50
-      }),
-    enabled: Boolean(documentId)
-  });
-
-  const auditHistoryQuery = useQuery({
-    queryKey: ['audit-history-filters', documentId, auditEntityId, auditUserId, auditEventType],
-    queryFn: () =>
-      listAuditEvents({
-        tenantId: env.defaultTenantId || 'tenant-dev',
-        entityId: auditEntityId || undefined,
-        userId: auditUserId || undefined,
-        eventType: auditEventType || undefined,
-        page: 0,
-        size: 100
-      }),
     enabled: Boolean(documentId)
   });
   const contentMimeType = entry?.content?.mimeType ?? '';
@@ -113,11 +83,7 @@ export function DocumentDetailsPage() {
     }
   }, [informationQuery.data?.entry, activeVersion]);
 
-  useEffect(() => {
-    if (documentId) {
-      setAuditEntityId(documentId);
-    }
-  }, [documentId]);
+  // audit filtering moved to dedicated admin page (/audit/history)
 
   useEffect(() => {
     if (!preferBinaryPreview) {
@@ -161,23 +127,14 @@ export function DocumentDetailsPage() {
         kind: 'version'
       }));
 
-    const audits = (timelineAuditQuery.data?.events ?? []).map((event) => ({
-      when: event.occurredAt,
-      title: event.eventType,
-      detail: `${event.userId || 'system'}${event.filename ? ` · ${event.filename}` : ''}`,
-      kind: 'audit'
-    }));
-
-    return [...workflow, ...versions, ...audits]
+    return [...workflow, ...versions]
       .filter((event) => !!event.when)
       .sort((a, b) => {
         const aw = normalizeIso(a.when);
         const bw = normalizeIso(b.when);
         return new Date(bw as string).getTime() - new Date(aw as string).getTime();
       });
-  }, [workflowHistoryQuery.data, versionItems, timelineAuditQuery.data?.events]);
-
-  const auditEvents = auditHistoryQuery.data?.events ?? [];
+  }, [workflowHistoryQuery.data, versionItems]);
 
   const handleVersionSelect = (version: DmsDocumentSearchResponse) => {
     const newVersion = version.entry?.version;
@@ -399,50 +356,7 @@ export function DocumentDetailsPage() {
             )}
           </div>
 
-          <div className="card">
-            <h2 style={{ marginTop: 0 }}>Histórico de auditoria</h2>
-            <div className="audit-filters">
-              <input
-                className="text-input"
-                value={auditEntityId}
-                onChange={(event) => setAuditEntityId(event.target.value)}
-                placeholder="Documento (entityId)"
-              />
-              <input
-                className="text-input"
-                value={auditUserId}
-                onChange={(event) => setAuditUserId(event.target.value)}
-                placeholder="Usuário (userId)"
-              />
-              <input
-                className="text-input"
-                value={auditEventType}
-                onChange={(event) => setAuditEventType(event.target.value)}
-                placeholder="Tipo de evento (ex: DOCUMENT_VIEWED)"
-              />
-            </div>
-
-            {auditHistoryQuery.isLoading ? (
-              <p style={{ color: '#64748b' }}>Carregando auditoria...</p>
-            ) : auditEvents.length === 0 ? (
-              <p style={{ color: '#64748b' }}>Sem eventos com os filtros atuais.</p>
-            ) : (
-              <div className="timeline timeline--audit">
-                {auditEvents.map((event) => (
-                  <div key={event.id} className="timeline__item">
-                    <div className="timeline__dot" />
-                    <div className="timeline__content">
-                      <strong>{event.eventType}</strong>
-                      <div style={{ fontSize: '0.9rem', color: '#475569' }}>
-                        {(event.userId || 'system') + (event.entityId ? ` · ${event.entityId}` : '')}
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{formatDateTime(normalizeIso(event.occurredAt))}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* auditoria dedicada movida para /audit/history (admin) */}
         </div>
         <VersionList items={versionItems} activeVersion={activeVersion} onSelect={handleVersionSelect} />
       </div>
