@@ -620,10 +620,13 @@ button {
   display: block;
   font-size: 0.85rem;
   color: #475569;
+  word-break: break-word;
 }
 
 .metadata-item span {
   font-size: 0.95rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .version-list {
