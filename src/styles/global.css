@@ -715,6 +715,10 @@ button {
   max-height: 320px;
 }
 
+.timeline--audit-page {
+  max-height: 620px;
+}
+
 .audit-filters {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
