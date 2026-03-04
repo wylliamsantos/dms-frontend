@@ -91,7 +91,7 @@ export const router = createBrowserRouter([
         path: 'audit/history',
         element: (
           <RoleGuard
-            allowedRoles={[...PERMISSIONS.search]}
+            allowedRoles={[...PERMISSIONS.auditAdmin]}
             description="Você não tem permissão para consultar auditoria."
           >
             <AuditHistoryPage />

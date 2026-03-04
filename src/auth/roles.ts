@@ -12,7 +12,8 @@ export const PERMISSIONS = {
   search: [APP_ROLES.OWNER, APP_ROLES.ADMIN, APP_ROLES.REVIEWER, APP_ROLES.VIEWER, APP_ROLES.LEGACY_VIEWER],
   uploadDocument: [APP_ROLES.OWNER, APP_ROLES.ADMIN, APP_ROLES.REVIEWER],
   reviewWorkflow: [APP_ROLES.OWNER, APP_ROLES.ADMIN, APP_ROLES.REVIEWER],
-  manageCategories: [APP_ROLES.OWNER, APP_ROLES.ADMIN]
+  manageCategories: [APP_ROLES.OWNER, APP_ROLES.ADMIN],
+  auditAdmin: [APP_ROLES.OWNER, APP_ROLES.ADMIN]
 } as const;
 
 export function hasAnyRole(roles: string[], requiredRoles: readonly string[]) {

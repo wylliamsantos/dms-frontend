@@ -20,6 +20,7 @@ export function SideNavigation() {
   const canManageCategories = hasAnyRole([...PERMISSIONS.manageCategories]);
   const canReviewWorkflow = hasAnyRole([...PERMISSIONS.reviewWorkflow]);
   const canUploadDocument = hasAnyRole([...PERMISSIONS.uploadDocument]);
+  const canViewAudit = hasAnyRole([...PERMISSIONS.auditAdmin]);
 
   return (
     <nav className="side-nav">
@@ -53,14 +54,16 @@ export function SideNavigation() {
               Onboarding
             </NavLink>
           </li>
-          <li>
-            <NavLink
-              to="/audit/history"
-              className={({ isActive }) => (isActive || isAuditHistoryActive ? 'active' : undefined)}
-            >
-              Histórico de auditoria
-            </NavLink>
-          </li>
+          {canViewAudit ? (
+            <li>
+              <NavLink
+                to="/audit/history"
+                className={({ isActive }) => (isActive || isAuditHistoryActive ? 'active' : undefined)}
+              >
+                Histórico de auditoria
+              </NavLink>
+            </li>
+          ) : null}
         </ul>
       </div>
       {canManageCategories || canReviewWorkflow ? (

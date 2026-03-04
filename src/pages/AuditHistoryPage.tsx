@@ -14,6 +14,19 @@ const normalizeIso = (iso?: string) => {
   return hasTimezone ? value : `${value}Z`;
 };
 
+const getIp = (event: { metadata?: Record<string, unknown>; attributes?: Record<string, unknown> }) => {
+  const candidates = [
+    event.attributes?.ip,
+    event.attributes?.clientIp,
+    event.attributes?.remoteIp,
+    event.metadata?.ip,
+    event.metadata?.clientIp,
+    event.metadata?.remoteIp
+  ];
+  const value = candidates.find((item) => typeof item === 'string' && item.trim().length > 0);
+  return typeof value === 'string' ? value : undefined;
+};
+
 export function AuditHistoryPage() {
   const [entityId, setEntityId] = useState('');
   const [userId, setUserId] = useState('');
@@ -78,6 +91,14 @@ export function AuditHistoryPage() {
                   <div style={{ fontSize: '0.9rem', color: '#475569' }}>
                     {(event.userId || 'system') + (event.entityId ? ` · ${event.entityId}` : '')}
                   </div>
+                  {getIp(event) ? (
+                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>IP: {getIp(event)}</div>
+                  ) : null}
+                  {event.attributes && Object.keys(event.attributes).length ? (
+                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                      attrs: {JSON.stringify(event.attributes)}
+                    </div>
+                  ) : null}
                   <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
                     {formatDateTime(normalizeIso(event.occurredAt))}
                   </div>
