@@ -28,27 +28,37 @@ export const searchApi = axios.create({
   headers: defaultHeaders()
 });
 
+export const auditApi = axios.create({
+  baseURL: env.auditApiBaseUrl,
+  headers: defaultHeaders()
+});
+
 export function setAuthToken(token?: string | null) {
   if (token) {
     documentApi.defaults.headers.Authorization = token;
     searchApi.defaults.headers.Authorization = token;
+    auditApi.defaults.headers.Authorization = token;
   } else {
     delete documentApi.defaults.headers.Authorization;
     delete searchApi.defaults.headers.Authorization;
+    delete auditApi.defaults.headers.Authorization;
   }
 }
 
 export function setTransactionId(transactionId: string) {
   documentApi.defaults.headers.TransactionId = transactionId;
   searchApi.defaults.headers.TransactionId = transactionId;
+  auditApi.defaults.headers.TransactionId = transactionId;
 }
 
 export function setTenantId(tenantId?: string | null) {
   if (tenantId) {
     documentApi.defaults.headers['X-Tenant-Id'] = tenantId;
     searchApi.defaults.headers['X-Tenant-Id'] = tenantId;
+    auditApi.defaults.headers['X-Tenant-Id'] = tenantId;
   } else {
     delete documentApi.defaults.headers['X-Tenant-Id'];
     delete searchApi.defaults.headers['X-Tenant-Id'];
+    delete auditApi.defaults.headers['X-Tenant-Id'];
   }
 }
