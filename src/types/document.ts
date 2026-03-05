@@ -72,13 +72,19 @@ export interface DocumentInsightResponse {
   ocrStats?: Record<string, unknown>;
 }
 
+export interface DocumentRagChunk {
+  source: string;
+  score: number;
+  excerpt: string;
+}
+
 export interface DocumentRagContextResponse {
   documentId: string;
   version?: string;
   enabled: boolean;
   status: string;
   message: string;
-  chunks: string[];
+  chunks: DocumentRagChunk[];
 }
 
 export interface DocumentChatResponse {

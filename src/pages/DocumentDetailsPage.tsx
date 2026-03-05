@@ -385,6 +385,19 @@ export function DocumentDetailsPage() {
             {!isChatDisabled && ragContextQuery.data?.message ? (
               <p style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '-0.2rem' }}>{ragContextQuery.data.message}</p>
             ) : null}
+            {!isChatDisabled && ragContextQuery.data?.chunks?.length ? (
+              <div style={{ marginBottom: '0.75rem' }}>
+                <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Chunks de contexto (RAG MVP)</strong>
+                <ul style={{ margin: 0, paddingLeft: '1.1rem', color: '#334155' }}>
+                  {ragContextQuery.data.chunks.slice(0, 3).map((chunk, idx) => (
+                    <li key={`rag-chunk-${idx}`} style={{ marginBottom: '0.4rem' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{chunk.source.toUpperCase()} · score {chunk.score.toFixed(2)}</span>
+                      <div style={{ fontSize: '0.86rem' }}>{chunk.excerpt}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             {isChatDisabled && chatUnavailableHint ? (
               <p className="details-inline-hint" style={{ marginBottom: '0.75rem' }}>
                 {chatUnavailableHint}
