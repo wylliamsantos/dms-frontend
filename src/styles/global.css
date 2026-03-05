@@ -918,7 +918,7 @@ textarea.text-input:focus {
 .details-layout {
   display: grid;
   gap: 1rem;
-  grid-template-columns: minmax(0, 2fr) minmax(260px, 360px);
+  grid-template-columns: minmax(0, 2fr) minmax(220px, 300px);
   align-items: start;
 }
 
@@ -926,6 +926,7 @@ textarea.text-input:focus {
   align-self: start;
   max-height: 80vh;
   overflow: auto;
+  width: 100%;
 }
 
 @media (max-width: 1024px) {

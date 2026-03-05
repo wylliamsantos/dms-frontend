@@ -3,8 +3,12 @@ export type WorkflowStatusTone = 'warning' | 'success' | 'danger' | 'muted';
 const WORKFLOW_STATUS_META: Record<string, { label: string; tone: WorkflowStatusTone }> = {
   DRAFT: { label: 'Rascunho', tone: 'muted' },
   PENDING_REVIEW: { label: 'Pendente', tone: 'warning' },
+  PENDING: { label: 'Pendente', tone: 'warning' },
+  PENDENTE: { label: 'Pendente', tone: 'warning' },
   APPROVED: { label: 'Aprovado', tone: 'success' },
-  REJECTED: { label: 'Reprovado', tone: 'danger' }
+  APROVADO: { label: 'Aprovado', tone: 'success' },
+  REJECTED: { label: 'Reprovado', tone: 'danger' },
+  REPROVADO: { label: 'Reprovado', tone: 'danger' }
 };
 
 const AUDIT_EVENT_LABELS: Record<string, string> = {
