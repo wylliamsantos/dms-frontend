@@ -349,10 +349,10 @@ export function DocumentDetailsPage() {
                 </button>
               ) : null}
             </div>
-            {chatMutation.isError ? <p className="details-inline-hint" style={{ marginBottom: 0 }}>Não foi possível responder agora. Tente novamente em instantes.</p> : null}
+            {chatMutation.isError ? <p className="details-inline-hint" style={{ marginBottom: 0 }}>Não foi possível responder agora. Confira se os serviços locais estão ativos e clique em <strong>Tentar novamente</strong>.</p> : null}
             {showProviderUnavailableHint ? (
               <p className="details-inline-hint" style={{ marginBottom: 0 }}>
-                O provedor local de IA está indisponível. Verifique se o Ollama está ativo e se o modelo padrão foi inicializado (ex.: <code>llama3.1:8b</code>), depois clique em <strong>Tentar novamente</strong>.
+                O provedor local de IA está indisponível no momento. Verifique se o Ollama está ativo e se o modelo padrão foi inicializado (ex.: <code>llama3.2:1b</code>). Em seguida, clique em <strong>Tentar novamente</strong>.
               </p>
             ) : null}
             {chatMutation.data ? (

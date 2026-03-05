@@ -10,7 +10,7 @@ interface VersionDiffPanelProps {
 }
 
 type JsonDiffChangeType = 'ADDED' | 'REMOVED' | 'CHANGED';
-type JsonParseMode = 'STRICT' | 'TOLERANT';
+type JsonParseMode = 'STRICT' | 'TOLERANT' | 'REPAIRED';
 
 interface JsonDiffChange {
   path: string;
@@ -24,6 +24,13 @@ interface TextDiffToken {
   type: 'same' | 'added' | 'removed';
 }
 
+interface LineDiffChange {
+  lineBase?: number;
+  lineTarget?: number;
+  before: string;
+  after: string;
+}
+
 interface JsonDiffResult {
   available: boolean;
   parseFailed: boolean;
@@ -34,17 +41,31 @@ interface JsonDiffResult {
     hasDifference: boolean;
     baseTokens: TextDiffToken[];
     targetTokens: TextDiffToken[];
+    lineChanges: LineDiffChange[];
   };
 }
 
 const JSON_CONTENT_HINT = /json/i;
 const MAX_DIFF_TEXT_SIZE = 40_000;
+const MAX_LINE_CHANGES = 18;
 
 function decodeBase64ToUtf8(base64: string): string {
   const clean = base64.includes(',') ? base64.split(',').pop() ?? base64 : base64;
   const binary = atob(clean);
   const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
   return new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+}
+
+function normalizeJsonText(raw: string): string {
+  return raw.replace(/^\uFEFF/, '').trim();
+}
+
+function repairJsonText(raw: string): string {
+  let repaired = normalizeJsonText(raw);
+  repaired = repaired.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '');
+  repaired = repaired.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+  repaired = repaired.replace(/,\s*([}\]])/g, '$1');
+  return repaired;
 }
 
 function formatPath(parent: string, key: string | number, isArrayIndex: boolean): string {
@@ -176,16 +197,46 @@ function buildTokenDiff(base: string, target: string): { baseTokens: TextDiffTok
   return { baseTokens, targetTokens, hasDifference };
 }
 
+function buildLineDiff(base: string, target: string): LineDiffChange[] {
+  const baseLines = base.slice(0, MAX_DIFF_TEXT_SIZE).split(/\r?\n/);
+  const targetLines = target.slice(0, MAX_DIFF_TEXT_SIZE).split(/\r?\n/);
+
+  const max = Math.max(baseLines.length, targetLines.length);
+  const changes: LineDiffChange[] = [];
+
+  for (let i = 0; i < max && changes.length < MAX_LINE_CHANGES; i += 1) {
+    const before = baseLines[i] ?? '';
+    const after = targetLines[i] ?? '';
+    if (before === after) continue;
+
+    changes.push({
+      lineBase: i < baseLines.length ? i + 1 : undefined,
+      lineTarget: i < targetLines.length ? i + 1 : undefined,
+      before,
+      after
+    });
+  }
+
+  return changes;
+}
+
 function safeJsonParse(raw: string): { ok: true; data: unknown; mode: JsonParseMode } | { ok: false; reason: string } {
+  const normalized = normalizeJsonText(raw);
+
   try {
-    return { ok: true, data: JSON.parse(raw), mode: 'STRICT' };
+    return { ok: true, data: JSON.parse(normalized), mode: 'STRICT' };
   } catch (strictError) {
     try {
-      return { ok: true, data: JSON5.parse(raw), mode: 'TOLERANT' };
-    } catch (tolerantError) {
-      const strictReason = strictError instanceof Error ? strictError.message : 'Falha no parse estrito';
-      const tolerantReason = tolerantError instanceof Error ? tolerantError.message : 'Falha no parse tolerante';
-      return { ok: false, reason: `${strictReason} | tolerant: ${tolerantReason}` };
+      return { ok: true, data: JSON5.parse(normalized), mode: 'TOLERANT' };
+    } catch {
+      try {
+        const repaired = repairJsonText(raw);
+        return { ok: true, data: JSON5.parse(repaired), mode: 'REPAIRED' };
+      } catch (repairError) {
+        const strictReason = strictError instanceof Error ? strictError.message : 'Falha no parse estrito';
+        const repairReason = repairError instanceof Error ? repairError.message : 'Falha no parse reparado';
+        return { ok: false, reason: `${strictReason} | reparo: ${repairReason}` };
+      }
     }
   }
 }
@@ -258,18 +309,26 @@ export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps
       return {
         available: true,
         parseFailed: false,
-        parseMode: parsedBase.mode === 'STRICT' && parsedTarget.mode === 'STRICT' ? 'STRICT' : 'TOLERANT',
+        parseMode: parsedBase.mode === 'STRICT' && parsedTarget.mode === 'STRICT'
+          ? 'STRICT'
+          : parsedBase.mode === 'REPAIRED' || parsedTarget.mode === 'REPAIRED'
+            ? 'REPAIRED'
+            : 'TOLERANT',
         changes: diffJsonValues(parsedBase.data, parsedTarget.data)
       };
     }
 
     const textDiff = buildTokenDiff(baseText, targetText);
+    const lineChanges = buildLineDiff(baseText, targetText);
     return {
       available: false,
       parseFailed: true,
       parseFailureReason: `Base: ${parsedBase.ok ? 'ok' : parsedBase.reason} | Alvo: ${parsedTarget.ok ? 'ok' : parsedTarget.reason}`,
       changes: [],
-      textDiff
+      textDiff: {
+        ...textDiff,
+        lineChanges
+      }
     };
   }, [baseContentQuery.data, targetContentQuery.data, shouldAttemptJsonDiff]);
 
@@ -314,6 +373,7 @@ export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps
               <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>
                 Diferenças estruturadas (JSON)
                 {jsonDiff.parseMode === 'TOLERANT' ? <span style={{ marginLeft: '0.4rem', fontSize: '0.8rem', color: '#92400e' }}>(modo tolerante)</span> : null}
+                {jsonDiff.parseMode === 'REPAIRED' ? <span style={{ marginLeft: '0.4rem', fontSize: '0.8rem', color: '#92400e' }}>(modo reparado)</span> : null}
               </h3>
               {jsonDiff.changes.length === 0 ? (
                 <p style={{ color: '#64748b', margin: 0 }}>Sem alterações estruturais: os JSONs são equivalentes.</p>
@@ -323,7 +383,7 @@ export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps
                     <thead><tr><th>Caminho</th><th>Tipo</th><th>Antes</th><th>Depois</th></tr></thead>
                     <tbody>
                       {jsonDiff.changes.map((change) => (
-                        <tr key={`${change.path}-${change.changeType}`}>
+                        <tr key={`${change.path}-${change.changeType}-${formatDiffValue(change.before)}-${formatDiffValue(change.after)}`}>
                           <td><code>{change.path}</code></td>
                           <td><span className={`badge ${change.changeType === 'ADDED' ? 'badge--success' : change.changeType === 'REMOVED' ? 'badge--danger' : 'badge--warning'}`}>{change.changeType}</span></td>
                           <td><code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{formatDiffValue(change.before)}</code></td>
@@ -341,8 +401,25 @@ export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps
             <div style={{ marginTop: '1rem' }}>
               <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Mudanças detectadas (fallback textual)</h3>
               <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 0 }}>
-                Conteúdo JSON inválido. Mesmo assim, o diff textual destacou exatamente os trechos alterados. Motivo: {jsonDiff.parseFailureReason}
+                Conteúdo JSON inválido. O diff abaixo mostra trechos reais alterados com destaque e linha. Motivo: {jsonDiff.parseFailureReason}
               </p>
+
+              {jsonDiff.textDiff?.lineChanges?.length ? (
+                <div style={{ marginBottom: '0.75rem', display: 'grid', gap: '0.5rem' }}>
+                  {jsonDiff.textDiff.lineChanges.map((line, idx) => (
+                    <div key={`line-${idx}`} style={{ border: '1px solid #e2e8f0', borderRadius: '0.6rem', padding: '0.5rem 0.65rem' }}>
+                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '0.35rem' }}>
+                        Linha base {line.lineBase ?? '-'} → alvo {line.lineTarget ?? '-'}
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                        <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#fff1f2', padding: '0.35rem', borderRadius: '0.35rem' }}>{line.before || '∅'}</code>
+                        <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#f0fdf4', padding: '0.35rem', borderRadius: '0.35rem' }}>{line.after || '∅'}</code>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
               {jsonDiff.textDiff?.hasDifference ? (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                   <div>
