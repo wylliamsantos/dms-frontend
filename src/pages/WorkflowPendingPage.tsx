@@ -6,6 +6,7 @@ import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
 import { useAuth } from '@/context/AuthContext';
 import {
+  getWorkflowDashboardMetrics,
   listPendingWorkflow,
   PendingDocumentItem,
   reviewWorkflowDocument
@@ -36,6 +37,11 @@ export function WorkflowPendingPage() {
         page,
         size: PAGE_SIZE
       })
+  });
+
+  const dashboardQuery = useQuery({
+    queryKey: ['workflow-dashboard-metrics'],
+    queryFn: getWorkflowDashboardMetrics
   });
 
   const reviewMutation = useMutation({
@@ -111,6 +117,37 @@ export function WorkflowPendingPage() {
             <span className="badge badge--warning">{totalElements} pendente(s)</span>
           </div>
         </header>
+
+        {dashboardQuery.data ? (
+          <div className="form-grid form-grid--two" style={{ marginBottom: '1rem' }}>
+            <div className="card" style={{ backgroundColor: '#f8fafc' }}>
+              <h3 style={{ marginTop: 0 }}>Volume por status</h3>
+              <ul style={{ margin: 0, paddingLeft: '1rem' }}>
+                {dashboardQuery.data.statusCounts.map((item) => (
+                  <li key={item.status}>
+                    <strong>{item.status}</strong>: {item.count}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="card" style={{ backgroundColor: '#f8fafc' }}>
+              <h3 style={{ marginTop: 0 }}>Volume por categoria/status</h3>
+              <div style={{ maxHeight: '180px', overflowY: 'auto', fontSize: '0.9rem' }}>
+                {dashboardQuery.data.categoryStatusCounts.length === 0 ? (
+                  <span>Nenhum dado encontrado.</span>
+                ) : (
+                  <ul style={{ margin: 0, paddingLeft: '1rem' }}>
+                    {dashboardQuery.data.categoryStatusCounts.map((item) => (
+                      <li key={`${item.category}-${item.status}`}>
+                        <strong>{item.category}</strong> · {item.status}: {item.count}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         <div className="form-grid form-grid--two" style={{ marginBottom: '1rem' }}>
           <div className="input-group">
