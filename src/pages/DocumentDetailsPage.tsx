@@ -442,7 +442,11 @@ export function DocumentDetailsPage() {
             ) : null}
             {chatMutation.data ? (
               <div style={{ marginTop: '0.75rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem' }}>
-                <p style={{ marginTop: 0, marginBottom: '0.5rem' }}><strong>Status:</strong> {chatMutation.data.status} · {chatMutation.data.message}</p>
+                <p style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+                  <strong>Status:</strong> {chatMutation.data.status} · {chatMutation.data.message}
+                  {chatMutation.data.model ? ` · modelo ${chatMutation.data.model}` : ''}
+                  {typeof chatMutation.data.latencyMs === 'number' ? ` · ${chatMutation.data.latencyMs}ms` : ''}
+                </p>
                 {chatMutation.data.answer ? <p style={{ whiteSpace: 'pre-wrap', marginTop: 0 }}>{chatMutation.data.answer}</p> : null}
                 {chatMutation.data.contextChunks?.length ? (
                   <>

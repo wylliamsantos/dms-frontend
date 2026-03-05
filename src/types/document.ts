@@ -95,6 +95,7 @@ export interface DocumentChatResponse {
   message: string;
   answer?: string;
   model?: string;
+  latencyMs?: number;
   contextChunks: string[];
 }
 
