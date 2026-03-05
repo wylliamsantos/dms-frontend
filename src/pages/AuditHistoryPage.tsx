@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-import { listActiveAuditAlerts, listAuditEvents } from '@/api/audit';
+import { exportAuditEvents, listActiveAuditAlerts, listAuditEvents } from '@/api/audit';
 import { LoadingState } from '@/components/LoadingState';
 import { env } from '@/utils/env';
 import { formatDateTime } from '@/utils/format';
@@ -27,21 +27,43 @@ const getIp = (event: { metadata?: Record<string, unknown>; attributes?: Record<
   return typeof value === 'string' ? value : undefined;
 };
 
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
 export function AuditHistoryPage() {
   const [entityId, setEntityId] = useState('');
   const [userId, setUserId] = useState('');
   const [eventType, setEventType] = useState('');
+  const [ip, setIp] = useState('');
+  const [occurredAtFrom, setOccurredAtFrom] = useState('');
+  const [occurredAtTo, setOccurredAtTo] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
 
   const tenantId = env.defaultTenantId || 'tenant-dev';
 
+  const filters = {
+    tenantId,
+    entityId: entityId || undefined,
+    userId: userId || undefined,
+    eventType: eventType || undefined,
+    ip: ip || undefined,
+    occurredAtFrom: normalizeIso(occurredAtFrom),
+    occurredAtTo: normalizeIso(occurredAtTo)
+  };
+
   const query = useQuery({
-    queryKey: ['audit-history-page', tenantId, entityId, userId, eventType],
+    queryKey: ['audit-history-page', tenantId, entityId, userId, eventType, ip, occurredAtFrom, occurredAtTo],
     queryFn: () =>
       listAuditEvents({
-        tenantId,
-        entityId: entityId || undefined,
-        userId: userId || undefined,
-        eventType: eventType || undefined,
+        ...filters,
         page: 0,
         size: 100
       })
@@ -52,6 +74,20 @@ export function AuditHistoryPage() {
     queryFn: () => listActiveAuditAlerts({ tenantId })
   });
 
+  const handleExport = async (format: 'json' | 'csv') => {
+    setIsExporting(true);
+    try {
+      const blob = await exportAuditEvents({
+        ...filters,
+        format,
+        size: 2000
+      });
+      downloadBlob(blob, `audit-events.${format}`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const events = query.data?.events ?? [];
   const alerts = alertsQuery.data?.alerts ?? [];
 
@@ -59,7 +95,7 @@ export function AuditHistoryPage() {
     <div className="page-document-details">
       <div className="card" style={{ marginBottom: '1rem' }}>
         <h1 style={{ marginTop: 0 }}>Histórico de auditoria</h1>
-        <p style={{ color: '#64748b' }}>Consulte eventos por documento e/ou usuário.</p>
+        <p style={{ color: '#64748b' }}>Consulte eventos por documento, usuário, período e IP.</p>
 
         <div className="audit-filters">
           <input
@@ -80,6 +116,33 @@ export function AuditHistoryPage() {
             onChange={(event) => setEventType(event.target.value)}
             placeholder="Tipo de evento (ex: DOCUMENT_VIEWED)"
           />
+          <input
+            className="text-input"
+            value={ip}
+            onChange={(event) => setIp(event.target.value)}
+            placeholder="IP (ex: 203.0.113.10)"
+          />
+          <input
+            className="text-input"
+            value={occurredAtFrom}
+            onChange={(event) => setOccurredAtFrom(event.target.value)}
+            placeholder="Data inicial ISO (ex: 2026-03-01T00:00:00Z)"
+          />
+          <input
+            className="text-input"
+            value={occurredAtTo}
+            onChange={(event) => setOccurredAtTo(event.target.value)}
+            placeholder="Data final ISO (ex: 2026-03-05T23:59:59Z)"
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+          <button className="button-secondary" type="button" onClick={() => handleExport('csv')} disabled={isExporting}>
+            Exportar CSV
+          </button>
+          <button className="button-secondary" type="button" onClick={() => handleExport('json')} disabled={isExporting}>
+            Exportar JSON
+          </button>
         </div>
       </div>
 
