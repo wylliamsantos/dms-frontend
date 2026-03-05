@@ -101,8 +101,33 @@ export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps
             </div>
           )}
 
-          <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#64748b' }}>
-            Comparação textual de conteúdo ainda não disponível para todos os tipos de arquivo.
+          <div style={{ marginTop: '1rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Comparação textual</h3>
+            {diffQuery.data.contentComparison?.available ? (
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                <div>
+                  <span className="badge badge--muted">{diffQuery.data.contentComparison.changeType}</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Trecho versão base</div>
+                    <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {diffQuery.data.contentComparison.baseSnippet ?? '-'}
+                    </code>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Trecho versão alvo</div>
+                    <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {diffQuery.data.contentComparison.targetSnippet ?? '-'}
+                    </code>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                Comparação textual indisponível para esse tipo de arquivo.
+              </p>
+            )}
           </div>
         </>
       ) : null}
