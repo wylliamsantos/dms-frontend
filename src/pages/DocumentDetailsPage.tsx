@@ -412,6 +412,7 @@ export function DocumentDetailsPage() {
             {!isChatDisabled && ragContextQuery.data ? (
               <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '-0.25rem' }}>
                 Categoria: {ragContextQuery.data.category || 'unknown'}
+                {ragContextQuery.data.qualityBand ? ` · qualidade ${ragContextQuery.data.qualityBand}` : ''}
                 {typeof ragContextQuery.data.averageScore === 'number' ? ` · score médio ${ragContextQuery.data.averageScore.toFixed(2)}` : ''}
                 {typeof ragContextQuery.data.latencyMs === 'number' ? ` · ${ragContextQuery.data.latencyMs}ms` : ''}
               </p>
