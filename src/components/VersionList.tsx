@@ -10,7 +10,7 @@ interface VersionListProps {
   onSelect: (version: DmsDocumentSearchResponse) => void;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 8;
 
 export function VersionList({ items, activeVersion, onSelect }: VersionListProps) {
   const { t } = useTranslation();
@@ -24,13 +24,20 @@ export function VersionList({ items, activeVersion, onSelect }: VersionListProps
     return items.slice(start, start + PAGE_SIZE);
   }, [items, safePage]);
 
+  const startIndex = items.length ? safePage * PAGE_SIZE + 1 : 0;
+  const endIndex = Math.min((safePage + 1) * PAGE_SIZE, items.length);
+
   if (!items.length) {
     return <div className="card version-list-card">{t('versionList.empty')}</div>;
   }
 
   return (
-    <div className="card version-list-card">
-      <h2 style={{ marginTop: 0 }}>{t('versionList.title')}</h2>
+    <div className="card version-list-card version-list-card--compact">
+      <h2 style={{ marginTop: 0, marginBottom: '0.35rem' }}>{t('versionList.title')}</h2>
+      <p style={{ margin: '0 0 0.75rem 0', color: '#64748b', fontSize: '0.83rem' }}>
+        Exibindo {startIndex}-{endIndex} de {items.length} versões
+      </p>
+
       <div className="version-list">
         {pagedItems.map((item, index) => {
           const version = item.entry?.version;
@@ -45,7 +52,7 @@ export function VersionList({ items, activeVersion, onSelect }: VersionListProps
             >
               <div>
                 <strong>{t('versionList.versionLabel', { version })}</strong>
-                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                <div style={{ fontSize: '0.76rem', color: '#64748b' }}>
                   {t('versionList.metadata', {
                     date: formatDateTime(item.entry?.modifiedAt) ?? '-',
                     type: item.entry?.versionType ?? '-'
@@ -59,12 +66,15 @@ export function VersionList({ items, activeVersion, onSelect }: VersionListProps
       </div>
 
       {totalPages > 1 ? (
-        <div className="pagination" style={{ marginTop: '0.75rem' }}>
+        <div className="pagination version-list-pagination" style={{ marginTop: '0.75rem' }}>
           <div className="pagination__controls">
+            <button type="button" className="button button--ghost" onClick={() => setPage(0)} disabled={safePage === 0}>
+              «
+            </button>
             <button type="button" className="button button--ghost" onClick={() => setPage((current) => Math.max(current - 1, 0))} disabled={safePage === 0}>
               Anterior
             </button>
-            <span className="pagination__page">Página {safePage + 1} de {totalPages}</span>
+            <span className="pagination__page">{safePage + 1}/{totalPages}</span>
             <button
               type="button"
               className="button button--ghost"
@@ -72,6 +82,9 @@ export function VersionList({ items, activeVersion, onSelect }: VersionListProps
               disabled={safePage >= totalPages - 1}
             >
               Próxima
+            </button>
+            <button type="button" className="button button--ghost" onClick={() => setPage(totalPages - 1)} disabled={safePage >= totalPages - 1}>
+              »
             </button>
           </div>
         </div>
