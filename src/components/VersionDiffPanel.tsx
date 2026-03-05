@@ -17,6 +17,13 @@ interface JsonDiffChange {
   after: unknown;
 }
 
+interface JsonDiffResult {
+  available: boolean;
+  parseFailed: boolean;
+  parseFailureReason?: string;
+  changes: JsonDiffChange[];
+}
+
 const JSON_CONTENT_HINT = /json/i;
 
 function decodeBase64ToUtf8(base64: string): string {
@@ -115,6 +122,10 @@ function formatDiffValue(value: unknown): string {
   }
 }
 
+function getSafeSnippet(value: string | null | undefined): string {
+  return (value ?? '').trim();
+}
+
 export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps) {
   const availableVersions = useMemo(
     () => versions.map((item) => item.entry?.version).filter((value): value is string => Boolean(value)),
@@ -161,9 +172,9 @@ export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps
   const baseContentQuery = useDocumentBase64(documentId, baseVersion, shouldAttemptJsonDiff);
   const targetContentQuery = useDocumentBase64(documentId, targetVersion, shouldAttemptJsonDiff);
 
-  const jsonDiff = useMemo(() => {
+  const jsonDiff = useMemo<JsonDiffResult>(() => {
     if (!shouldAttemptJsonDiff || !baseContentQuery.data || !targetContentQuery.data) {
-      return { available: false as const, changes: [] as JsonDiffChange[] };
+      return { available: false, parseFailed: false, changes: [] };
     }
 
     try {
@@ -172,13 +183,37 @@ export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps
       const baseJson = JSON.parse(baseText) as unknown;
       const targetJson = JSON.parse(targetText) as unknown;
       return {
-        available: true as const,
+        available: true,
+        parseFailed: false,
         changes: diffJsonValues(baseJson, targetJson)
       };
-    } catch {
-      return { available: false as const, changes: [] as JsonDiffChange[] };
+    } catch (error) {
+      return {
+        available: false,
+        parseFailed: true,
+        parseFailureReason: error instanceof Error ? error.message : 'Falha ao interpretar JSON',
+        changes: []
+      };
     }
   }, [baseContentQuery.data, targetContentQuery.data, shouldAttemptJsonDiff]);
+
+  const textualComparison = useMemo(() => {
+    const content = diffQuery.data?.contentComparison;
+    if (!content?.available) {
+      return undefined;
+    }
+
+    const baseSnippet = getSafeSnippet(content.baseSnippet);
+    const targetSnippet = getSafeSnippet(content.targetSnippet);
+    const hasDifference = !Object.is(baseSnippet, targetSnippet);
+
+    return {
+      baseSnippet: content.baseSnippet,
+      targetSnippet: content.targetSnippet,
+      hasDifference,
+      changeTypeLabel: hasDifference ? 'CHANGED' : 'UNCHANGED'
+    };
+  }, [diffQuery.data?.contentComparison]);
 
   if (availableVersions.length < 2) {
     return (
@@ -224,7 +259,7 @@ export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps
             <div style={{ marginBottom: '1rem' }}>
               <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Diferenças estruturadas (JSON)</h3>
               {jsonDiff.changes.length === 0 ? (
-                <p style={{ color: '#64748b', margin: 0 }}>Os JSONs são equivalentes.</p>
+                <p style={{ color: '#64748b', margin: 0 }}>Sem alterações estruturais: os JSONs são equivalentes.</p>
               ) : (
                 <div style={{ overflowX: 'auto' }}>
                   <table className="table" style={{ fontSize: '0.88rem' }}>
@@ -256,6 +291,36 @@ export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps
             </div>
           ) : null}
 
+          {jsonDiff.parseFailed && textualComparison ? (
+            <div style={{ marginTop: '1rem' }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Comparação textual (fallback)</h3>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 0 }}>
+                Não foi possível interpretar o conteúdo como JSON. Motivo: {jsonDiff.parseFailureReason}
+              </p>
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                <div>
+                  <span className={`badge ${textualComparison.hasDifference ? 'badge--warning' : 'badge--success'}`}>
+                    {textualComparison.changeTypeLabel}
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Trecho versão base</div>
+                    <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {textualComparison.baseSnippet ?? '-'}
+                    </code>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Trecho versão alvo</div>
+                    <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {textualComparison.targetSnippet ?? '-'}
+                    </code>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {diffQuery.data.metadataChanges.length === 0 ? (
             <p style={{ color: '#64748b' }}>Nenhuma diferença de metadados encontrada.</p>
           ) : (
@@ -283,35 +348,6 @@ export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps
               ))}
             </div>
           )}
-
-          <div style={{ marginTop: '1rem' }}>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Comparação textual (fallback)</h3>
-            {diffQuery.data.contentComparison?.available ? (
-              <div style={{ display: 'grid', gap: '0.5rem' }}>
-                <div>
-                  <span className="badge badge--muted">{diffQuery.data.contentComparison.changeType}</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Trecho versão base</div>
-                    <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                      {diffQuery.data.contentComparison.baseSnippet ?? '-'}
-                    </code>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Trecho versão alvo</div>
-                    <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                      {diffQuery.data.contentComparison.targetSnippet ?? '-'}
-                    </code>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                Comparação textual indisponível para esse tipo de arquivo.
-              </p>
-            )}
-          </div>
         </>
       ) : null}
     </div>
