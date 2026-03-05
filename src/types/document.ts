@@ -70,6 +70,17 @@ export interface DocumentRagContextResponse {
   chunks: string[];
 }
 
+export interface DocumentChatResponse {
+  documentId: string;
+  version?: string;
+  enabled: boolean;
+  status: string;
+  message: string;
+  answer?: string;
+  model?: string;
+  contextChunks: string[];
+}
+
 export interface DmsDocumentSearchResponse {
   entry?: DmsEntry;
 }

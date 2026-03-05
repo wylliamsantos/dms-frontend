@@ -7,7 +7,8 @@ import {
   VersionsResponse,
   DocumentVersionDiffResponse,
   DocumentInsightResponse,
-  DocumentRagContextResponse
+  DocumentRagContextResponse,
+  DocumentChatResponse
 } from '@/types/document';
 
 export async function listCategories(): Promise<DocumentCategory[]> {
@@ -49,6 +50,14 @@ export async function fetchDocumentRagContext(documentId: string, version?: stri
     ? `/v1/documents/${documentId}/${version}/rag/context`
     : `/v1/documents/${documentId}/rag/context`;
   const response = await documentApi.get<DocumentRagContextResponse>(path);
+  return response.data;
+}
+
+export async function chatByDocument(documentId: string, message: string, version?: string) {
+  const response = await documentApi.post<DocumentChatResponse>(`/v1/documents/${documentId}/chat`, {
+    message,
+    version
+  });
   return response.data;
 }
 

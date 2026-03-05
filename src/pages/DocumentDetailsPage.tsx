@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { DocumentPreview } from '@/components/DocumentPreview';
 import { ErrorState } from '@/components/ErrorState';
@@ -17,6 +17,7 @@ import {
   useDocumentRagContext,
   useDocumentVersions
 } from '@/hooks/useDocumentDetails';
+import { chatByDocument } from '@/api/document';
 import { listWorkflowHistory } from '@/api/workflow';
 import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
 import { formatDateTime } from '@/utils/format';
@@ -54,6 +55,7 @@ export function DocumentDetailsPage() {
   const [objectUrl, setObjectUrl] = useState<string | undefined>(undefined);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [showFullOcrText, setShowFullOcrText] = useState(false);
+  const [chatInput, setChatInput] = useState('');
   const { t, i18n } = useTranslation();
 
   const informationQuery = useDocumentInformation(documentId, activeVersion);
@@ -64,6 +66,12 @@ export function DocumentDetailsPage() {
     queryKey: ['workflow-history', documentId],
     queryFn: () => listWorkflowHistory(documentId as string),
     enabled: Boolean(documentId)
+  });
+  const chatMutation = useMutation({
+    mutationFn: (message: string) => chatByDocument(documentId as string, message, activeVersion),
+    onError: () => {
+      // handled in UI
+    }
   });
   const contentMimeType = entry?.content?.mimeType ?? '';
   const contentSize = entry?.content?.sizeInBytes ?? 0;
@@ -168,6 +176,12 @@ export function DocumentDetailsPage() {
     } catch {
       setCopyFeedback('Falha ao copiar UUID.');
     }
+  };
+
+  const handleSendChat = () => {
+    const message = chatInput.trim();
+    if (!message || isChatDisabled || !documentId) return;
+    chatMutation.mutate(message);
   };
 
   if (!documentId) {
@@ -309,7 +323,7 @@ export function DocumentDetailsPage() {
 
           <div className="card">
             <h2 style={{ marginTop: 0 }}>Chat do documento (MVP local)</h2>
-            <p style={{ color: '#64748b', marginTop: 0 }}>Placeholder para chat contextual com conteúdo OCR + metadados, sem LLM pago externo.</p>
+            <p style={{ color: '#64748b', marginTop: 0 }}>Pergunte sobre OCR/metadados. O backend usa RAG local por documento.</p>
             {isChatDisabled ? (
               <div className="alert" style={{ marginBottom: '0.75rem' }}>
                 {chatDisabledReason}
@@ -318,15 +332,39 @@ export function DocumentDetailsPage() {
             <textarea
               className="text-input"
               rows={4}
+              value={chatInput}
+              onChange={(event) => setChatInput(event.target.value)}
               placeholder={isChatDisabled ? 'Chat indisponível no momento.' : 'Digite uma pergunta sobre este documento...'}
-              disabled={isChatDisabled}
+              disabled={isChatDisabled || chatMutation.isPending}
               style={{ width: '100%', resize: 'vertical', background: isChatDisabled ? '#f8fafc' : undefined }}
             />
-            <div style={{ marginTop: '0.6rem' }}>
-              <button type="button" className="button button--primary" disabled>
-                Enviar (em breve)
+            <div style={{ marginTop: '0.6rem', display: 'flex', gap: '0.5rem' }}>
+              <button type="button" className="button button--primary" onClick={handleSendChat} disabled={isChatDisabled || chatMutation.isPending || !chatInput.trim()}>
+                {chatMutation.isPending ? 'Enviando...' : 'Enviar'}
               </button>
+              {chatMutation.isError ? (
+                <button type="button" className="button button--ghost" onClick={handleSendChat} disabled={isChatDisabled || chatMutation.isPending || !chatInput.trim()}>
+                  Tentar novamente
+                </button>
+              ) : null}
             </div>
+            {chatMutation.isError ? <p style={{ color: '#b91c1c', marginBottom: 0 }}>Não foi possível responder agora.</p> : null}
+            {chatMutation.data ? (
+              <div style={{ marginTop: '0.75rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem' }}>
+                <p style={{ marginTop: 0, marginBottom: '0.5rem' }}><strong>Status:</strong> {chatMutation.data.status} · {chatMutation.data.message}</p>
+                {chatMutation.data.answer ? <p style={{ whiteSpace: 'pre-wrap', marginTop: 0 }}>{chatMutation.data.answer}</p> : null}
+                {chatMutation.data.contextChunks?.length ? (
+                  <>
+                    <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Fontes usadas</strong>
+                    <ul style={{ marginTop: 0, marginBottom: 0 }}>
+                      {chatMutation.data.contextChunks.map((chunk, idx) => (
+                        <li key={`ctx-${idx}`} style={{ marginBottom: '0.35rem' }}>{chunk}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <VersionDiffPanel documentId={documentId} versions={versionItems} />
