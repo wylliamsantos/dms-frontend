@@ -269,6 +269,9 @@ export function SearchPage() {
               {!showSuggestionsLoading && isSuggestionsRefreshing ? (
                 <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Atualizando sugestões…</span>
               ) : null}
+              {!showSuggestionsLoading && !isSuggestionsRefreshing && textQuery.trim().length > 0 && textQuery.trim().length < 2 ? (
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Digite ao menos 2 caracteres para sugerir termos.</span>
+              ) : null}
             </div>
 
             <div className="input-group">

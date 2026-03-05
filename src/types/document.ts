@@ -89,6 +89,7 @@ export interface DocumentRagContextResponse {
   chunkCount?: number;
   averageScore?: number;
   latencyMs?: number;
+  qualityBand?: 'HIGH' | 'MEDIUM' | 'LOW' | 'BLOCKED' | string;
   chunks: DocumentRagChunk[];
 }
 
