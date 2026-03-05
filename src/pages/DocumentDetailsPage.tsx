@@ -8,6 +8,7 @@ import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
 import { MetadataPanel } from '@/components/MetadataPanel';
 import { VersionList } from '@/components/VersionList';
+import { VersionDiffPanel } from '@/components/VersionDiffPanel';
 import {
   useDocumentBase64,
   useDocumentBinary,
@@ -320,6 +321,7 @@ export function DocumentDetailsPage() {
       <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '2fr 1fr' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <MetadataPanel entry={entry} />
+          <VersionDiffPanel documentId={documentId} versions={versionItems} />
           <DocumentPreview
             entry={entry}
             base64={base64Query.data}

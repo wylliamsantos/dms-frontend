@@ -67,6 +67,22 @@ export interface VersionsResponse {
   list: VersionPage;
 }
 
+export type DocumentVersionChangeType = 'ADDED' | 'REMOVED' | 'CHANGED';
+
+export interface DocumentVersionMetadataChange {
+  field: string;
+  before: string | null;
+  after: string | null;
+  changeType: DocumentVersionChangeType;
+}
+
+export interface DocumentVersionDiffResponse {
+  documentId: string;
+  baseVersion: string;
+  targetVersion: string;
+  metadataChanges: DocumentVersionMetadataChange[];
+}
+
 export interface SearchEntry {
   createdAt?: string;
   modifiedAt?: string;

@@ -4,6 +4,7 @@ import {
   fetchDocumentBase64,
   fetchDocumentBinary,
   fetchDocumentInformation,
+  fetchDocumentVersionDiff,
   fetchDocumentVersions
 } from '@/api/document';
 
@@ -48,5 +49,23 @@ export function useDocumentBinary(documentId: string | undefined, version?: stri
       return fetchDocumentBinary(documentId, version);
     },
     enabled: Boolean(documentId) && Boolean(enabled)
+  });
+}
+
+export function useDocumentVersionDiff(
+  documentId: string | undefined,
+  baseVersion?: string,
+  targetVersion?: string,
+  enabled?: boolean
+) {
+  return useQuery({
+    queryKey: ['document-version-diff', documentId, baseVersion, targetVersion],
+    queryFn: () => {
+      if (!documentId || !baseVersion || !targetVersion) {
+        throw new Error('documentId, baseVersion and targetVersion are required');
+      }
+      return fetchDocumentVersionDiff(documentId, baseVersion, targetVersion);
+    },
+    enabled: Boolean(documentId && baseVersion && targetVersion && enabled)
   });
 }
