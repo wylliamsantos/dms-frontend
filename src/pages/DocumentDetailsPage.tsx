@@ -23,7 +23,7 @@ const normalizeIso = (iso?: string) => {
   if (!iso) return undefined;
   const value = iso.trim();
   if (!value) return undefined;
-  const hasTimezone = /([zZ]|[+\-]\d{2}:?\d{2})$/.test(value);
+  const hasTimezone = /([zZ]|[+-]\d{2}:?\d{2})$/.test(value);
   return hasTimezone ? value : `${value}Z`;
 };
 
