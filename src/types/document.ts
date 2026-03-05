@@ -76,11 +76,19 @@ export interface DocumentVersionMetadataChange {
   changeType: DocumentVersionChangeType;
 }
 
+export interface DocumentVersionContentComparison {
+  available: boolean;
+  changeType: string;
+  baseSnippet: string | null;
+  targetSnippet: string | null;
+}
+
 export interface DocumentVersionDiffResponse {
   documentId: string;
   baseVersion: string;
   targetVersion: string;
   metadataChanges: DocumentVersionMetadataChange[];
+  contentComparison?: DocumentVersionContentComparison;
 }
 
 export interface SearchEntry {
