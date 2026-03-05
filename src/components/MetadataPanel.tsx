@@ -51,12 +51,7 @@ export function MetadataPanel({ entry }: MetadataPanelProps) {
           ))}
       </div>
 
-      {entry.ocrSummary ? (
-        <div style={{ marginTop: '1rem' }}>
-          <h3>Resumo OCR</h3>
-          <p style={{ marginBottom: 0 }}>{entry.ocrSummary}</p>
-        </div>
-      ) : null}
+      {/* Resumo OCR exibido no card dedicado de OCR na página de detalhes. */}
 
       {importantMetadataEntries.length ? (
         <div style={{ marginTop: '1rem' }}>
