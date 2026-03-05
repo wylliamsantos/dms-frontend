@@ -178,6 +178,9 @@ export function DocumentDetailsPage() {
     }
   };
 
+  const lastChatStatus = chatMutation.data?.status;
+  const showProviderUnavailableHint = lastChatStatus === 'PROVIDER_UNAVAILABLE';
+
   const handleSendChat = () => {
     const message = chatInput.trim();
     if (!message || isChatDisabled || !documentId) return;
@@ -340,13 +343,18 @@ export function DocumentDetailsPage() {
               <button type="button" className="button button--primary" onClick={handleSendChat} disabled={isChatDisabled || chatMutation.isPending || !chatInput.trim()}>
                 {chatMutation.isPending ? 'Enviando...' : 'Enviar'}
               </button>
-              {chatMutation.isError ? (
+              {chatMutation.isError || showProviderUnavailableHint ? (
                 <button type="button" className="button button--ghost" onClick={handleSendChat} disabled={isChatDisabled || chatMutation.isPending || !chatInput.trim()}>
                   Tentar novamente
                 </button>
               ) : null}
             </div>
             {chatMutation.isError ? <p className="details-inline-hint" style={{ marginBottom: 0 }}>Não foi possível responder agora. Tente novamente em instantes.</p> : null}
+            {showProviderUnavailableHint ? (
+              <p className="details-inline-hint" style={{ marginBottom: 0 }}>
+                O provedor local de IA está indisponível. Verifique se o Ollama está ativo e se o modelo padrão foi inicializado (ex.: <code>llama3.1:8b</code>), depois clique em <strong>Tentar novamente</strong>.
+              </p>
+            ) : null}
             {chatMutation.data ? (
               <div style={{ marginTop: '0.75rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem' }}>
                 <p style={{ marginTop: 0, marginBottom: '0.5rem' }}><strong>Status:</strong> {chatMutation.data.status} · {chatMutation.data.message}</p>
