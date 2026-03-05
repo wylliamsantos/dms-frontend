@@ -85,6 +85,10 @@ export interface DocumentRagContextResponse {
   enabled: boolean;
   status: string;
   message: string;
+  category?: string;
+  chunkCount?: number;
+  averageScore?: number;
+  latencyMs?: number;
   chunks: DocumentRagChunk[];
 }
 
