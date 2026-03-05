@@ -39,10 +39,18 @@ export interface WorkflowCategoryStatusCountItem {
   count: number;
 }
 
+export interface WorkflowSlaReviewMetrics {
+  targetHours: number;
+  withinSla: number;
+  outsideSla: number;
+}
+
 export interface WorkflowDashboardMetrics {
   totalDocuments: number;
   statusCounts: WorkflowStatusCountItem[];
   categoryStatusCounts: WorkflowCategoryStatusCountItem[];
+  slaReview?: WorkflowSlaReviewMetrics;
+  averageProcessingTimeHours?: number | null;
 }
 
 export interface WorkflowReviewRequest {

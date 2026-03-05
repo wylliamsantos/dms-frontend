@@ -119,7 +119,7 @@ export function WorkflowPendingPage() {
         </header>
 
         {dashboardQuery.data ? (
-          <div className="form-grid form-grid--two" style={{ marginBottom: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
             <div className="card" style={{ backgroundColor: '#f8fafc' }}>
               <h3 style={{ marginTop: 0 }}>Volume por status</h3>
               <ul style={{ margin: 0, paddingLeft: '1rem' }}>
@@ -145,6 +145,35 @@ export function WorkflowPendingPage() {
                   </ul>
                 )}
               </div>
+            </div>
+            <div className="card" style={{ backgroundColor: '#f8fafc' }}>
+              <h3 style={{ marginTop: 0 }}>SLA de revisão</h3>
+              {dashboardQuery.data.slaReview ? (
+                <ul style={{ margin: 0, paddingLeft: '1rem' }}>
+                  <li>
+                    <strong>Meta:</strong> {dashboardQuery.data.slaReview.targetHours}h
+                  </li>
+                  <li>
+                    <strong>Dentro do SLA:</strong> {dashboardQuery.data.slaReview.withinSla}
+                  </li>
+                  <li>
+                    <strong>Fora do SLA:</strong> {dashboardQuery.data.slaReview.outsideSla}
+                  </li>
+                </ul>
+              ) : (
+                <span>Nenhum dado encontrado.</span>
+              )}
+            </div>
+            <div className="card" style={{ backgroundColor: '#f8fafc' }}>
+              <h3 style={{ marginTop: 0 }}>Tempo médio de processamento</h3>
+              <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>
+                {dashboardQuery.data.averageProcessingTimeHours != null
+                  ? `${dashboardQuery.data.averageProcessingTimeHours.toFixed(1)}h`
+                  : 'Sem dados'}
+              </p>
+              <small style={{ color: '#64748b' }}>
+                Considera documentos finalizados (APPROVED/REJECTED).
+              </small>
             </div>
           </div>
         ) : null}
