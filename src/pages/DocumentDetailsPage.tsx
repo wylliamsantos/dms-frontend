@@ -158,6 +158,13 @@ export function DocumentDetailsPage() {
     return undefined;
   }, [entry?.ocrText, entry?.properties]);
 
+  const hasImportantExtractedMetadata = Boolean(
+    entry?.importantExtractedMetadata && Object.keys(entry.importantExtractedMetadata).length
+  );
+  const hasOcrSummary = Boolean(entry?.ocrSummary?.trim());
+  const isOcrEligibleMime = contentMimeType.startsWith('image/') || contentMimeType === 'application/pdf';
+  const shouldShowOcrCard = isOcrEligibleMime && (hasOcrSummary || Boolean(fullOcrText) || hasImportantExtractedMetadata);
+
   const handleVersionSelect = (version: DmsDocumentSearchResponse) => {
     const newVersion = version.entry?.version;
     setActiveVersion(newVersion);
@@ -272,32 +279,34 @@ export function DocumentDetailsPage() {
 
       <div className="details-layout">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div className="card details-ocr-highlight">
-            <div className="details-ocr-highlight__header">
-              <span className="badge badge--success">Resumo OCR</span>
-              <span className="details-ocr-highlight__hint">Destaque automático da extração</span>
-            </div>
-            <h2 style={{ marginTop: '0.35rem' }}>OCR do documento</h2>
-            <p className="details-ocr-highlight__summary">{entry?.ocrSummary || 'Sem resumo OCR disponível para esta versão.'}</p>
-            {entry?.importantExtractedMetadata && Object.keys(entry.importantExtractedMetadata).length ? (
-              <div className="metadata-grid" style={{ marginBottom: '0.75rem' }}>
-                {Object.entries(entry.importantExtractedMetadata).map(([key, value]) => (
-                  <div className="metadata-item" key={key}>
-                    <strong>{key}</strong>
-                    <span>{value == null ? '-' : String(value)}</span>
-                  </div>
-                ))}
+          {shouldShowOcrCard ? (
+            <div className="card details-ocr-highlight">
+              <div className="details-ocr-highlight__header">
+                <span className="badge badge--success">Resumo OCR</span>
+                <span className="details-ocr-highlight__hint">Destaque automático da extração</span>
               </div>
-            ) : null}
-            {fullOcrText ? (
-              <>
-                <button type="button" className="button button--ghost" onClick={() => setShowFullOcrText((current) => !current)}>
-                  {showFullOcrText ? 'Ocultar OCR completo' : 'Expandir OCR completo'}
-                </button>
-                {showFullOcrText ? <pre className="text-preview" style={{ marginTop: '0.75rem', maxHeight: 320 }}>{fullOcrText}</pre> : null}
-              </>
-            ) : null}
-          </div>
+              <h2 style={{ marginTop: '0.35rem' }}>OCR do documento</h2>
+              {hasOcrSummary ? <p className="details-ocr-highlight__summary">{entry?.ocrSummary}</p> : null}
+              {hasImportantExtractedMetadata ? (
+                <div className="metadata-grid" style={{ marginBottom: '0.75rem' }}>
+                  {Object.entries(entry?.importantExtractedMetadata || {}).map(([key, value]) => (
+                    <div className="metadata-item" key={key}>
+                      <strong>{key}</strong>
+                      <span>{value == null ? '-' : String(value)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {fullOcrText ? (
+                <>
+                  <button type="button" className="button button--ghost" onClick={() => setShowFullOcrText((current) => !current)}>
+                    {showFullOcrText ? 'Ocultar OCR completo' : 'Expandir OCR completo'}
+                  </button>
+                  {showFullOcrText ? <pre className="text-preview" style={{ marginTop: '0.75rem', maxHeight: 320 }}>{fullOcrText}</pre> : null}
+                </>
+              ) : null}
+            </div>
+          ) : null}
 
           <MetadataPanel entry={entry} />
 

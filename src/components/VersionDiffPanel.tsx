@@ -24,11 +24,19 @@ interface TextDiffToken {
   type: 'same' | 'added' | 'removed';
 }
 
+interface ContextLine {
+  lineNumber?: number;
+  text: string;
+  changed?: boolean;
+}
+
 interface LineDiffChange {
   lineBase?: number;
   lineTarget?: number;
   before: string;
   after: string;
+  baseContext: ContextLine[];
+  targetContext: ContextLine[];
 }
 
 interface JsonDiffResult {
@@ -209,11 +217,36 @@ function buildLineDiff(base: string, target: string): LineDiffChange[] {
     const after = targetLines[i] ?? '';
     if (before === after) continue;
 
+    const contextStart = Math.max(0, i - 2);
+    const contextEnd = i + 2;
+
+    const baseContext: ContextLine[] = [];
+    for (let j = contextStart; j <= contextEnd; j += 1) {
+      if (j >= baseLines.length) continue;
+      baseContext.push({
+        lineNumber: j + 1,
+        text: baseLines[j],
+        changed: j === i
+      });
+    }
+
+    const targetContext: ContextLine[] = [];
+    for (let j = contextStart; j <= contextEnd; j += 1) {
+      if (j >= targetLines.length) continue;
+      targetContext.push({
+        lineNumber: j + 1,
+        text: targetLines[j],
+        changed: j === i
+      });
+    }
+
     changes.push({
       lineBase: i < baseLines.length ? i + 1 : undefined,
       lineTarget: i < targetLines.length ? i + 1 : undefined,
       before,
-      after
+      after,
+      baseContext,
+      targetContext
     });
   }
 
@@ -239,22 +272,6 @@ function safeJsonParse(raw: string): { ok: true; data: unknown; mode: JsonParseM
       }
     }
   }
-}
-
-function renderTokens(tokens: TextDiffToken[]) {
-  return tokens.map((token, index) => {
-    const style =
-      token.type === 'added'
-        ? { background: '#dcfce7', color: '#166534' }
-        : token.type === 'removed'
-          ? { background: '#fee2e2', color: '#991b1b', textDecoration: 'line-through' as const }
-          : undefined;
-    return (
-      <span key={`${token.type}-${index}`} style={style}>
-        {token.value}
-      </span>
-    );
-  });
 }
 
 export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps) {
@@ -409,27 +426,56 @@ export function VersionDiffPanel({ documentId, versions }: VersionDiffPanelProps
                   {jsonDiff.textDiff.lineChanges.map((line, idx) => (
                     <div key={`line-${idx}`} style={{ border: '1px solid #e2e8f0', borderRadius: '0.6rem', padding: '0.5rem 0.65rem' }}>
                       <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '0.35rem' }}>
-                        Linha base {line.lineBase ?? '-'} → alvo {line.lineTarget ?? '-'}
+                        Linha base {line.lineBase ?? '-'} → alvo {line.lineTarget ?? '-'} (contexto ±2 linhas)
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                        <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#fff1f2', padding: '0.35rem', borderRadius: '0.35rem' }}>{line.before || '∅'}</code>
-                        <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#f0fdf4', padding: '0.35rem', borderRadius: '0.35rem' }}>{line.after || '∅'}</code>
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.2rem' }}>Base</div>
+                          <div style={{ border: '1px solid #e2e8f0', borderRadius: '0.35rem', overflow: 'hidden' }}>
+                            {line.baseContext.map((ctx) => (
+                              <div
+                                key={`b-${idx}-${ctx.lineNumber}`}
+                                style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: '3rem 1fr',
+                                  gap: '0.4rem',
+                                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                                  fontSize: '0.78rem',
+                                  padding: '0.2rem 0.35rem',
+                                  background: ctx.changed ? '#fff1f2' : '#ffffff'
+                                }}
+                              >
+                                <span style={{ color: '#64748b' }}>{ctx.lineNumber ?? '-'}</span>
+                                <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#0f172a' }}>{ctx.text || ' '}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.2rem' }}>Alvo</div>
+                          <div style={{ border: '1px solid #e2e8f0', borderRadius: '0.35rem', overflow: 'hidden' }}>
+                            {line.targetContext.map((ctx) => (
+                              <div
+                                key={`t-${idx}-${ctx.lineNumber}`}
+                                style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: '3rem 1fr',
+                                  gap: '0.4rem',
+                                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                                  fontSize: '0.78rem',
+                                  padding: '0.2rem 0.35rem',
+                                  background: ctx.changed ? '#f0fdf4' : '#ffffff'
+                                }}
+                              >
+                                <span style={{ color: '#64748b' }}>{ctx.lineNumber ?? '-'}</span>
+                                <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#0f172a' }}>{ctx.text || ' '}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
-                </div>
-              ) : null}
-
-              {jsonDiff.textDiff?.hasDifference ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Versão base (remoções em vermelho)</div>
-                    <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', display: 'block' }}>{renderTokens(jsonDiff.textDiff.baseTokens)}</code>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Versão alvo (adições em verde)</div>
-                    <code style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', display: 'block' }}>{renderTokens(jsonDiff.textDiff.targetTokens)}</code>
-                  </div>
                 </div>
               ) : (
                 <p style={{ color: '#64748b', margin: 0 }}>Sem mudanças textuais detectadas nos trechos comparáveis.</p>
