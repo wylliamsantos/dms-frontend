@@ -80,6 +80,8 @@ export function SearchPage() {
     return Array.from(unique);
   }, [suggestionsQuery.data, normalizedSuggestionQuery]);
 
+  const isSuggestionsRefreshing = normalizedSuggestionQuery.length >= 2 && suggestionsQuery.isFetching && suggestionOptions.length > 0;
+
   useEffect(() => {
     if (categories.length && !selectedCategories?.length) {
       setValue('categories', categories.map((category) => category.name));
@@ -263,6 +265,9 @@ export function SearchPage() {
               </datalist>
               {showSuggestionsLoading ? (
                 <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Carregando sugestões...</span>
+              ) : null}
+              {!showSuggestionsLoading && isSuggestionsRefreshing ? (
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Atualizando sugestões…</span>
               ) : null}
             </div>
 
