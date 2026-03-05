@@ -26,7 +26,7 @@ export interface SearchSuggestionsPayload {
   limit?: number;
 }
 
-export async function searchSuggestions(payload: SearchSuggestionsPayload) {
+export async function searchSuggestions(payload: SearchSuggestionsPayload, signal?: AbortSignal) {
   const params = new URLSearchParams();
   params.set('q', payload.query);
   (payload.categories ?? []).forEach((category) => params.append('categories', category));
@@ -34,7 +34,7 @@ export async function searchSuggestions(payload: SearchSuggestionsPayload) {
     params.set('limit', String(payload.limit));
   }
 
-  const response = await searchApi.get<string[]>(`/v1/search/suggestions?${params.toString()}`);
+  const response = await searchApi.get<string[]>(`/v1/search/suggestions?${params.toString()}`, { signal });
   return response.data;
 }
 

@@ -12,7 +12,7 @@ export function useSearchSuggestions({ query, categories = [], limit = 8 }: UseS
 
   return useQuery({
     queryKey: ['search-suggestions', normalized, categories, limit],
-    queryFn: () => searchSuggestions({ query: normalized, categories, limit }),
+    queryFn: ({ signal }) => searchSuggestions({ query: normalized, categories, limit }, signal),
     enabled: normalized.length >= 2,
     placeholderData: (previous) => previous,
     staleTime: 30_000

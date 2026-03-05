@@ -158,6 +158,14 @@ export function DocumentDetailsPage() {
     return undefined;
   }, [entry?.ocrText, entry?.properties]);
 
+  const ocrStats = useMemo(() => {
+    if (!fullOcrText) return null;
+    const chars = fullOcrText.length;
+    const lines = fullOcrText.split(/\r?\n/).filter((line) => line.trim().length > 0).length;
+    const words = fullOcrText.split(/\s+/).filter(Boolean).length;
+    return { chars, lines, words };
+  }, [fullOcrText]);
+
   const hasImportantExtractedMetadata = Boolean(
     entry?.importantExtractedMetadata && Object.keys(entry.importantExtractedMetadata).length
   );
@@ -287,6 +295,11 @@ export function DocumentDetailsPage() {
               </div>
               <h2 style={{ marginTop: '0.35rem' }}>OCR do documento</h2>
               {hasOcrSummary ? <p className="details-ocr-highlight__summary">{entry?.ocrSummary}</p> : null}
+              {ocrStats ? (
+                <p style={{ marginTop: '-0.25rem', color: '#475569', fontSize: '0.82rem' }}>
+                  OCR persistido: {ocrStats.words} palavras · {ocrStats.lines} linhas · {ocrStats.chars} caracteres
+                </p>
+              ) : null}
               {hasImportantExtractedMetadata ? (
                 <div className="metadata-grid" style={{ marginBottom: '0.75rem' }}>
                   {Object.entries(entry?.importantExtractedMetadata || {}).map(([key, value]) => (
@@ -347,6 +360,7 @@ export function DocumentDetailsPage() {
                 <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 0 }}>
                   Fonte: {insightQuery.data?.source || 'n/a'} · confiança {(insightQuery.data?.confidence ?? 0).toFixed(2)}
                   {insightQuery.data?.confidenceBand ? ` (${insightQuery.data.confidenceBand})` : ''}
+                  {insightQuery.data?.generatedAt ? ` · atualizado em ${formatDateTime(normalizeIso(insightQuery.data.generatedAt))}` : ''}
                 </p>
               </>
             )}
