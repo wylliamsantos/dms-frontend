@@ -63,6 +63,23 @@ export function SearchPage() {
     limit: 8
   });
 
+  const normalizedSuggestionQuery = debouncedTextQuery.trim().toLowerCase();
+  const suggestionOptions = useMemo(() => {
+    if (normalizedSuggestionQuery.length < 2) {
+      return [];
+    }
+
+    const unique = new Set<string>();
+    for (const suggestion of suggestionsQuery.data ?? []) {
+      const normalized = suggestion.trim();
+      if (!normalized) continue;
+      if (!normalized.toLowerCase().includes(normalizedSuggestionQuery)) continue;
+      unique.add(normalized);
+      if (unique.size >= 8) break;
+    }
+    return Array.from(unique);
+  }, [suggestionsQuery.data, normalizedSuggestionQuery]);
+
   useEffect(() => {
     if (categories.length && !selectedCategories?.length) {
       setValue('categories', categories.map((category) => category.name));
@@ -71,7 +88,7 @@ export function SearchPage() {
 
   useEffect(() => {
     const hasQuery = debouncedTextQuery.trim().length >= 2;
-    const hasPreviousSuggestions = Boolean((suggestionsQuery.data ?? []).length);
+    const hasPreviousSuggestions = Boolean(suggestionOptions.length);
 
     if (!hasQuery || !suggestionsQuery.isFetching || hasPreviousSuggestions) {
       if (!showSuggestionsLoading) {
@@ -93,7 +110,7 @@ export function SearchPage() {
     }, 280);
 
     return () => window.clearTimeout(timeout);
-  }, [debouncedTextQuery, suggestionsQuery.isFetching, suggestionsQuery.data, showSuggestionsLoading]);
+  }, [debouncedTextQuery, suggestionsQuery.isFetching, suggestionOptions.length, showSuggestionsLoading]);
 
   const selectedCategoryDetails = useMemo(
     () => categories.filter((category) => (selectedCategories ?? []).includes(category.name)),
@@ -240,7 +257,7 @@ export function SearchPage() {
                 {...register('textQuery')}
               />
               <datalist id="search-text-suggestions">
-                {(suggestionsQuery.data ?? []).map((suggestion) => (
+                {suggestionOptions.map((suggestion) => (
                   <option key={suggestion} value={suggestion} />
                 ))}
               </datalist>
