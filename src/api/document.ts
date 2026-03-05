@@ -4,7 +4,8 @@ import {
   DocumentCategory,
   DocumentId,
   DocumentInformationResponse,
-  VersionsResponse
+  VersionsResponse,
+  DocumentVersionDiffResponse
 } from '@/types/document';
 
 export async function listCategories(): Promise<DocumentCategory[]> {
@@ -23,6 +24,13 @@ export async function fetchDocumentInformation(documentId: string, version?: str
 
 export async function fetchDocumentVersions(documentId: string) {
   const response = await documentApi.get<VersionsResponse>(`/v1/documents/${documentId}/versions`);
+  return response.data;
+}
+
+export async function fetchDocumentVersionDiff(documentId: string, baseVersion: string, targetVersion: string) {
+  const response = await documentApi.get<DocumentVersionDiffResponse>(`/v1/documents/${documentId}/versions/diff`, {
+    params: { baseVersion, targetVersion }
+  });
   return response.data;
 }
 
