@@ -5,7 +5,9 @@ import {
   DocumentId,
   DocumentInformationResponse,
   VersionsResponse,
-  DocumentVersionDiffResponse
+  DocumentVersionDiffResponse,
+  DocumentInsightResponse,
+  DocumentRagContextResponse
 } from '@/types/document';
 
 export async function listCategories(): Promise<DocumentCategory[]> {
@@ -31,6 +33,22 @@ export async function fetchDocumentVersionDiff(documentId: string, baseVersion: 
   const response = await documentApi.get<DocumentVersionDiffResponse>(`/v1/documents/${documentId}/versions/diff`, {
     params: { baseVersion, targetVersion }
   });
+  return response.data;
+}
+
+export async function fetchDocumentInsight(documentId: string, version?: string) {
+  const path = version
+    ? `/v1/documents/${documentId}/${version}/insights`
+    : `/v1/documents/${documentId}/insights`;
+  const response = await documentApi.get<DocumentInsightResponse>(path);
+  return response.data;
+}
+
+export async function fetchDocumentRagContext(documentId: string, version?: string) {
+  const path = version
+    ? `/v1/documents/${documentId}/${version}/rag/context`
+    : `/v1/documents/${documentId}/rag/context`;
+  const response = await documentApi.get<DocumentRagContextResponse>(path);
   return response.data;
 }
 

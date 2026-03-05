@@ -46,6 +46,27 @@ export interface DmsEntry {
   workflowStatus?: string;
   content?: DmsContent;
   properties?: Record<string, unknown>;
+  ocrSummary?: string;
+  importantExtractedMetadata?: Record<string, unknown>;
+}
+
+export interface DocumentInsightResponse {
+  documentId: string;
+  version?: string;
+  summary?: string;
+  keyMetadata?: Record<string, unknown>;
+  warnings?: string[];
+  confidence?: number;
+  source?: string;
+}
+
+export interface DocumentRagContextResponse {
+  documentId: string;
+  version?: string;
+  enabled: boolean;
+  status: string;
+  message: string;
+  chunks: string[];
 }
 
 export interface DmsDocumentSearchResponse {
