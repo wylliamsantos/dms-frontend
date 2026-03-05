@@ -66,6 +66,7 @@ export interface DocumentInsightResponse {
   confidence?: number;
   confidenceBand?: 'HIGH' | 'MEDIUM' | 'LOW';
   source?: string;
+  generatedAt?: string;
   signals?: DocumentInsightSignal[];
 }
 
