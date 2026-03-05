@@ -336,6 +336,16 @@ export function DocumentDetailsPage() {
                   </div>
                 ) : null}
                 {insightQuery.data?.warnings?.length ? <ul style={{ marginBottom: '0.75rem' }}>{insightQuery.data.warnings.map((warning) => (<li key={warning}>{warning}</li>))}</ul> : null}
+                {insightQuery.data?.persistedMetadataPreview && Object.keys(insightQuery.data.persistedMetadataPreview).length ? (
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Metadados persistidos (preview)</strong>
+                    <div className="metadata-grid">
+                      {Object.entries(insightQuery.data.persistedMetadataPreview).map(([key, value]) => (
+                        <div className="metadata-item" key={`persisted-${key}`}><strong>{key}</strong><span>{value == null ? '-' : String(value)}</span></div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 {insightQuery.data?.signals?.length ? (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginBottom: '0.75rem' }}>
                     {insightQuery.data.signals.map((signal) => (
@@ -360,6 +370,9 @@ export function DocumentDetailsPage() {
                 <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 0 }}>
                   Fonte: {insightQuery.data?.source || 'n/a'} · confiança {(insightQuery.data?.confidence ?? 0).toFixed(2)}
                   {insightQuery.data?.confidenceBand ? ` (${insightQuery.data.confidenceBand})` : ''}
+                  {insightQuery.data?.ocrStats && Object.keys(insightQuery.data.ocrStats).length
+                    ? ` · OCR ${String(insightQuery.data.ocrStats.words ?? '-')} palavras/${String(insightQuery.data.ocrStats.lines ?? '-')} linhas`
+                    : ''}
                   {insightQuery.data?.generatedAt ? ` · atualizado em ${formatDateTime(normalizeIso(insightQuery.data.generatedAt))}` : ''}
                 </p>
               </>

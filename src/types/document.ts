@@ -68,6 +68,8 @@ export interface DocumentInsightResponse {
   source?: string;
   generatedAt?: string;
   signals?: DocumentInsightSignal[];
+  persistedMetadataPreview?: Record<string, unknown>;
+  ocrStats?: Record<string, unknown>;
 }
 
 export interface DocumentRagContextResponse {

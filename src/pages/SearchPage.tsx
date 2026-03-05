@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
@@ -55,6 +55,7 @@ export function SearchPage() {
   const textQuery = watch('textQuery');
   const debouncedTextQuery = useDebouncedValue(textQuery ?? '', 350);
   const [showSuggestionsLoading, setShowSuggestionsLoading] = useState(false);
+  const suggestionsLoadingShownAtRef = useRef<number | null>(null);
 
   const suggestionsQuery = useSearchSuggestions({
     query: debouncedTextQuery,
@@ -73,13 +74,26 @@ export function SearchPage() {
     const hasPreviousSuggestions = Boolean((suggestionsQuery.data ?? []).length);
 
     if (!hasQuery || !suggestionsQuery.isFetching || hasPreviousSuggestions) {
-      setShowSuggestionsLoading(false);
-      return;
+      if (!showSuggestionsLoading) {
+        return;
+      }
+      const shownAt = suggestionsLoadingShownAtRef.current;
+      const elapsed = shownAt ? Date.now() - shownAt : 0;
+      const remaining = Math.max(0, 220 - elapsed);
+      const hideTimer = window.setTimeout(() => {
+        setShowSuggestionsLoading(false);
+        suggestionsLoadingShownAtRef.current = null;
+      }, remaining);
+      return () => window.clearTimeout(hideTimer);
     }
 
-    const timeout = window.setTimeout(() => setShowSuggestionsLoading(true), 280);
+    const timeout = window.setTimeout(() => {
+      suggestionsLoadingShownAtRef.current = Date.now();
+      setShowSuggestionsLoading(true);
+    }, 280);
+
     return () => window.clearTimeout(timeout);
-  }, [debouncedTextQuery, suggestionsQuery.isFetching, suggestionsQuery.data]);
+  }, [debouncedTextQuery, suggestionsQuery.isFetching, suggestionsQuery.data, showSuggestionsLoading]);
 
   const selectedCategoryDetails = useMemo(
     () => categories.filter((category) => (selectedCategories ?? []).includes(category.name)),
