@@ -201,6 +201,12 @@ export function DocumentDetailsPage() {
   const currentVersionLabel = entry?.version
     ? `${entry.version}${entry?.versionType ? ` · ${entry.versionType}` : ''}`
     : undefined;
+  const isChatDisabled = !env.featureDocumentChat || !env.featureRagLocalMvp;
+  const chatDisabledReason = !env.featureRagLocalMvp
+    ? 'Chat desabilitado: RAG local está desativado (VITE_FEATURE_RAG_LOCAL_MVP=false).'
+    : !env.featureDocumentChat
+      ? 'Chat desabilitado por feature flag (VITE_FEATURE_DOCUMENT_CHAT=false).'
+      : undefined;
 
   return (
     <div className="page-document-details">
@@ -249,9 +255,13 @@ export function DocumentDetailsPage() {
 
       <div className="details-layout">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div className="card" style={{ borderLeft: '6px solid #0ea5e9' }}>
-            <h2 style={{ marginTop: 0 }}>OCR do documento</h2>
-            <p style={{ color: '#475569', marginTop: 0 }}>{entry?.ocrSummary || 'Sem resumo OCR disponível para esta versão.'}</p>
+          <div className="card details-ocr-highlight">
+            <div className="details-ocr-highlight__header">
+              <span className="badge badge--success">Resumo OCR</span>
+              <span className="details-ocr-highlight__hint">Destaque automático da extração</span>
+            </div>
+            <h2 style={{ marginTop: '0.35rem' }}>OCR do documento</h2>
+            <p className="details-ocr-highlight__summary">{entry?.ocrSummary || 'Sem resumo OCR disponível para esta versão.'}</p>
             {entry?.importantExtractedMetadata && Object.keys(entry.importantExtractedMetadata).length ? (
               <div className="metadata-grid" style={{ marginBottom: '0.75rem' }}>
                 {Object.entries(entry.importantExtractedMetadata).map(([key, value]) => (
@@ -300,7 +310,18 @@ export function DocumentDetailsPage() {
           <div className="card">
             <h2 style={{ marginTop: 0 }}>Chat do documento (MVP local)</h2>
             <p style={{ color: '#64748b', marginTop: 0 }}>Placeholder para chat contextual com conteúdo OCR + metadados, sem LLM pago externo.</p>
-            <textarea className="text-input" rows={4} placeholder={env.featureDocumentChat ? 'Digite uma pergunta sobre este documento...' : 'Chat desabilitado por feature flag.'} disabled={!env.featureDocumentChat} style={{ width: '100%', resize: 'vertical' }} />
+            {isChatDisabled ? (
+              <div className="alert" style={{ marginBottom: '0.75rem' }}>
+                {chatDisabledReason}
+              </div>
+            ) : null}
+            <textarea
+              className="text-input"
+              rows={4}
+              placeholder={isChatDisabled ? 'Chat indisponível no momento.' : 'Digite uma pergunta sobre este documento...'}
+              disabled={isChatDisabled}
+              style={{ width: '100%', resize: 'vertical', background: isChatDisabled ? '#f8fafc' : undefined }}
+            />
             <div style={{ marginTop: '0.6rem' }}>
               <button type="button" className="button button--primary" disabled>
                 Enviar (em breve)

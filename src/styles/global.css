@@ -929,6 +929,42 @@ textarea.text-input:focus {
   width: 100%;
 }
 
+.version-list-card--compact {
+  padding: 1rem;
+}
+
+.version-list-pagination .button {
+  padding: 0.45rem 0.7rem;
+  min-width: 2rem;
+}
+
+.details-ocr-highlight {
+  border: 1px solid #bae6fd;
+  background: linear-gradient(180deg, #f0f9ff, #ffffff);
+  box-shadow: 0 10px 28px rgba(14, 165, 233, 0.12);
+}
+
+.details-ocr-highlight__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.details-ocr-highlight__hint {
+  font-size: 0.78rem;
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.details-ocr-highlight__summary {
+  color: #0f172a;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  margin-top: 0;
+}
+
 @media (max-width: 1024px) {
   .app-body {
     flex-direction: column;
