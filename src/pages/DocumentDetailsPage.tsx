@@ -239,6 +239,12 @@ export function DocumentDetailsPage() {
     : !env.featureDocumentChat
       ? 'Chat temporariamente indisponível: feature flag local desativada.'
       : undefined;
+  const ragStatus = ragContextQuery.data?.status;
+  const ragStatusTone = ragStatus === 'READY'
+    ? { background: '#ecfdf5', color: '#166534', border: '#86efac' }
+    : ragStatus === 'TENANT_DISABLED' || ragStatus === 'DISABLED'
+      ? { background: '#fffbeb', color: '#92400e', border: '#fcd34d' }
+      : { background: '#f8fafc', color: '#475569', border: '#cbd5e1' };
 
   return (
     <div className="page-document-details">
@@ -382,6 +388,12 @@ export function DocumentDetailsPage() {
           <div className="card details-chat-card">
             <h2 style={{ marginTop: 0 }}>Chat do documento</h2>
             <p style={{ color: '#64748b', marginTop: 0 }}>Pergunte sobre OCR/metadados. O contexto RAG é aplicado internamente no pipeline do chat.</p>
+            {!isChatDisabled && ragStatus ? (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', borderRadius: '999px', border: `1px solid ${ragStatusTone.border}`, background: ragStatusTone.background, color: ragStatusTone.color, padding: '0.2rem 0.65rem', fontSize: '0.76rem', fontWeight: 700, marginBottom: '0.6rem' }}>
+                RAG: {ragStatus}
+                {ragContextQuery.data?.chunks?.length ? <span style={{ fontWeight: 600 }}>· {ragContextQuery.data.chunks.length} chunks</span> : null}
+              </div>
+            ) : null}
             {!isChatDisabled && ragContextQuery.data?.message ? (
               <p style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '-0.2rem' }}>{ragContextQuery.data.message}</p>
             ) : null}
