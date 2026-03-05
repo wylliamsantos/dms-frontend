@@ -3,6 +3,7 @@ import { useTranslation } from '@/i18n';
 
 import { SearchEntry } from '@/types/document';
 import { formatDateTime } from '@/utils/format';
+import { workflowStatusLabel } from '@/utils/labels';
 
 interface DocumentTableProps {
   items: SearchEntry[];
@@ -47,7 +48,7 @@ export function DocumentTable({ items, onSelect, footer }: DocumentTableProps) {
                 <td>{entry.nodeType}</td>
                 <td>
                   <span className={entry.workflowStatus === 'PENDING_REVIEW' ? 'badge badge--warning' : entry.workflowStatus === 'APPROVED' ? 'badge badge--success' : entry.workflowStatus === 'REJECTED' ? 'badge badge--danger' : 'badge badge--muted'}>
-                    {entry.workflowStatus ?? 'DRAFT'}
+                    {workflowStatusLabel(entry.workflowStatus ?? 'DRAFT')}
                   </span>
                 </td>
                 <td>

@@ -11,6 +11,7 @@ import {
   PendingDocumentItem,
   reviewWorkflowDocument
 } from '@/api/workflow';
+import { workflowStatusLabel } from '@/utils/labels';
 
 const PAGE_SIZE = 20;
 
@@ -125,7 +126,7 @@ export function WorkflowPendingPage() {
               <ul style={{ margin: 0, paddingLeft: '1rem' }}>
                 {dashboardQuery.data.statusCounts.map((item) => (
                   <li key={item.status}>
-                    <strong>{item.status}</strong>: {item.count}
+                    <strong>{workflowStatusLabel(item.status)}</strong>: {item.count}
                   </li>
                 ))}
               </ul>
@@ -139,7 +140,7 @@ export function WorkflowPendingPage() {
                   <ul style={{ margin: 0, paddingLeft: '1rem' }}>
                     {dashboardQuery.data.categoryStatusCounts.map((item) => (
                       <li key={`${item.category}-${item.status}`}>
-                        <strong>{item.category}</strong> · {item.status}: {item.count}
+                        <strong>{item.category}</strong> · {workflowStatusLabel(item.status)}: {item.count}
                       </li>
                     ))}
                   </ul>
@@ -253,7 +254,7 @@ export function WorkflowPendingPage() {
                     </div>
                   </td>
                   <td>
-                    <span className={statusBadgeClass(item.workflowStatus)}>{item.workflowStatus ?? '-'}</span>
+                    <span className={statusBadgeClass(item.workflowStatus)}>{workflowStatusLabel(item.workflowStatus)}</span>
                   </td>
                   <td>{item.category}</td>
                   <td>{item.currentVersion || '-'}</td>
