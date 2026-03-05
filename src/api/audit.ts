@@ -22,6 +22,20 @@ export interface AuditEventsResponse {
   size: number;
 }
 
+export interface AuditAlertItem {
+  code: string;
+  severity: 'HIGH' | 'MEDIUM' | 'LOW' | string;
+  title: string;
+  description: string;
+  detectedAt: string;
+  context?: Record<string, unknown>;
+}
+
+export interface AuditAlertsResponse {
+  alerts: AuditAlertItem[];
+  total: number;
+}
+
 export async function listAuditEvents(params: {
   tenantId: string;
   entityId?: string;
@@ -34,5 +48,10 @@ export async function listAuditEvents(params: {
   size?: number;
 }) {
   const response = await auditApi.get<AuditEventsResponse>('/v1/audit/events', { params });
+  return response.data;
+}
+
+export async function listActiveAuditAlerts(params: { tenantId: string }) {
+  const response = await auditApi.get<AuditAlertsResponse>('/v1/audit/alerts/active', { params });
   return response.data;
 }
