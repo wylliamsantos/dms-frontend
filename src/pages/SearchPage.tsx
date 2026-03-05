@@ -5,6 +5,7 @@ import { useTranslation } from '@/i18n';
 
 import { setTransactionId } from '@/api/client';
 import { useCategories } from '@/hooks/useCategories';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useSearchByBusinessKey } from '@/hooks/useSearchByBusinessKey';
 import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 import { DocumentTable } from '@/components/DocumentTable';
@@ -52,9 +53,11 @@ export function SearchPage() {
   const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
   const selectedCategories = watch('categories');
   const textQuery = watch('textQuery');
+  const debouncedTextQuery = useDebouncedValue(textQuery ?? '', 350);
+  const [showSuggestionsLoading, setShowSuggestionsLoading] = useState(false);
 
   const suggestionsQuery = useSearchSuggestions({
-    query: textQuery ?? '',
+    query: debouncedTextQuery,
     categories: selectedCategories ?? [],
     limit: 8
   });
@@ -64,6 +67,16 @@ export function SearchPage() {
       setValue('categories', categories.map((category) => category.name));
     }
   }, [categories, selectedCategories?.length, setValue]);
+
+  useEffect(() => {
+    if (!suggestionsQuery.isFetching) {
+      setShowSuggestionsLoading(false);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setShowSuggestionsLoading(true), 180);
+    return () => window.clearTimeout(timeout);
+  }, [suggestionsQuery.isFetching]);
 
   const selectedCategoryDetails = useMemo(
     () => categories.filter((category) => (selectedCategories ?? []).includes(category.name)),
@@ -214,7 +227,7 @@ export function SearchPage() {
                   <option key={suggestion} value={suggestion} />
                 ))}
               </datalist>
-              {suggestionsQuery.isFetching ? (
+              {showSuggestionsLoading ? (
                 <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Carregando sugestões...</span>
               ) : null}
             </div>

@@ -13,6 +13,8 @@ import {
   useDocumentBase64,
   useDocumentBinary,
   useDocumentInformation,
+  useDocumentInsight,
+  useDocumentRagContext,
   useDocumentVersions
 } from '@/hooks/useDocumentDetails';
 import { listWorkflowHistory } from '@/api/workflow';
@@ -51,6 +53,8 @@ export function DocumentDetailsPage() {
 
   const informationQuery = useDocumentInformation(documentId, activeVersion);
   const versionsQuery = useDocumentVersions(documentId);
+  const insightQuery = useDocumentInsight(documentId, activeVersion);
+  const ragContextQuery = useDocumentRagContext(documentId, activeVersion);
   const workflowHistoryQuery = useQuery({
     queryKey: ['workflow-history', documentId],
     queryFn: () => listWorkflowHistory(documentId as string),
@@ -322,6 +326,47 @@ export function DocumentDetailsPage() {
       <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '2fr 1fr' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <MetadataPanel entry={entry} />
+
+          <div className="card">
+            <h2 style={{ marginTop: 0 }}>Insights de IA (MVP)</h2>
+            {insightQuery.isLoading ? (
+              <p style={{ color: '#64748b' }}>Gerando insights...</p>
+            ) : insightQuery.isError ? (
+              <p style={{ color: '#b91c1c' }}>Não foi possível carregar insights neste momento.</p>
+            ) : (
+              <>
+                <p style={{ marginTop: 0 }}>{insightQuery.data?.summary || 'Sem resumo disponível para este documento.'}</p>
+                {insightQuery.data?.keyMetadata && Object.keys(insightQuery.data.keyMetadata).length ? (
+                  <div className="metadata-grid">
+                    {Object.entries(insightQuery.data.keyMetadata).map(([key, value]) => (
+                      <div className="metadata-item" key={key}>
+                        <strong>{key}</strong>
+                        <span>{value == null ? '-' : String(value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {insightQuery.data?.warnings?.length ? (
+                  <ul style={{ marginBottom: 0 }}>
+                    {insightQuery.data.warnings.map((warning) => (
+                      <li key={warning}>{warning}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 0 }}>
+                  Fonte: {insightQuery.data?.source || 'n/a'} · confiança {(insightQuery.data?.confidence ?? 0).toFixed(2)}
+                </p>
+              </>
+            )}
+          </div>
+
+          <div className="card">
+            <h2 style={{ marginTop: 0 }}>RAG por documento (skeleton)</h2>
+            <p style={{ margin: 0, color: '#475569' }}>
+              {ragContextQuery.data?.message || 'Carregando status do RAG...'}
+            </p>
+          </div>
+
           <VersionDiffPanel documentId={documentId} versions={versionItems} />
           <DocumentPreview
             entry={entry}

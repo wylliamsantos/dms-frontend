@@ -4,6 +4,8 @@ import {
   fetchDocumentBase64,
   fetchDocumentBinary,
   fetchDocumentInformation,
+  fetchDocumentInsight,
+  fetchDocumentRagContext,
   fetchDocumentVersionDiff,
   fetchDocumentVersions
 } from '@/api/document';
@@ -67,5 +69,27 @@ export function useDocumentVersionDiff(
       return fetchDocumentVersionDiff(documentId, baseVersion, targetVersion);
     },
     enabled: Boolean(documentId && baseVersion && targetVersion && enabled)
+  });
+}
+
+export function useDocumentInsight(documentId: string | undefined, version?: string) {
+  return useQuery({
+    queryKey: ['document-insight', documentId, version],
+    queryFn: () => {
+      if (!documentId) throw new Error('documentId is required');
+      return fetchDocumentInsight(documentId, version);
+    },
+    enabled: Boolean(documentId)
+  });
+}
+
+export function useDocumentRagContext(documentId: string | undefined, version?: string) {
+  return useQuery({
+    queryKey: ['document-rag-context', documentId, version],
+    queryFn: () => {
+      if (!documentId) throw new Error('documentId is required');
+      return fetchDocumentRagContext(documentId, version);
+    },
+    enabled: Boolean(documentId)
   });
 }

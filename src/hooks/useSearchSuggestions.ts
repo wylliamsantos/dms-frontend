@@ -13,6 +13,8 @@ export function useSearchSuggestions({ query, categories = [], limit = 8 }: UseS
   return useQuery({
     queryKey: ['search-suggestions', normalized, categories, limit],
     queryFn: () => searchSuggestions({ query: normalized, categories, limit }),
-    enabled: normalized.length >= 2
+    enabled: normalized.length >= 2,
+    placeholderData: (previous) => previous,
+    staleTime: 30_000
   });
 }

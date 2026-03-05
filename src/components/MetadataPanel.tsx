@@ -25,6 +25,7 @@ export function MetadataPanel({ entry }: MetadataPanelProps) {
   ];
 
   const metadataEntries = Object.entries(entry.properties ?? {});
+  const importantMetadataEntries = Object.entries(entry.importantExtractedMetadata ?? {});
 
   const formatMetadataValue = (key: string, value: unknown) => {
     if (value === null || typeof value === 'undefined') return '-';
@@ -49,6 +50,27 @@ export function MetadataPanel({ entry }: MetadataPanelProps) {
             </div>
           ))}
       </div>
+
+      {entry.ocrSummary ? (
+        <div style={{ marginTop: '1rem' }}>
+          <h3>Resumo OCR</h3>
+          <p style={{ marginBottom: 0 }}>{entry.ocrSummary}</p>
+        </div>
+      ) : null}
+
+      {importantMetadataEntries.length ? (
+        <div style={{ marginTop: '1rem' }}>
+          <h3>Metadados extraídos (prioritários)</h3>
+          <div className="metadata-grid">
+            {importantMetadataEntries.map(([key, value]) => (
+              <div className="metadata-item" key={key}>
+                <strong>{key}</strong>
+                <span>{formatMetadataValue(key, value)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {metadataEntries.length ? (
         <div style={{ marginTop: '1rem' }}>
