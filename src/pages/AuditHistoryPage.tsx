@@ -5,7 +5,12 @@ import { exportAuditEvents, listActiveAuditAlerts, listAuditEvents } from '@/api
 import { LoadingState } from '@/components/LoadingState';
 import { env } from '@/utils/env';
 import { formatDateTime } from '@/utils/format';
-import { AUDIT_EVENT_OPTIONS, auditEventLabel } from '@/utils/labels';
+import {
+  AUDIT_EVENT_OPTIONS,
+  auditEventLabel,
+  workflowStatusClassName,
+  workflowStatusLabel
+} from '@/utils/labels';
 
 const normalizeIso = (iso?: string) => {
   if (!iso) return undefined;
@@ -26,6 +31,15 @@ const getIp = (event: { metadata?: Record<string, unknown>; attributes?: Record<
   ];
   const value = candidates.find((item) => typeof item === 'string' && item.trim().length > 0);
   return typeof value === 'string' ? value : undefined;
+};
+
+const getWorkflowTransition = (event: { attributes?: Record<string, unknown>; metadata?: Record<string, unknown> }) => {
+  const from = event.attributes?.fromStatus ?? event.metadata?.fromStatus;
+  const to = event.attributes?.toStatus ?? event.metadata?.toStatus;
+  return {
+    from: typeof from === 'string' ? from : undefined,
+    to: typeof to === 'string' ? to : undefined
+  };
 };
 
 const downloadBlob = (blob: Blob, filename: string) => {
@@ -193,28 +207,42 @@ export function AuditHistoryPage() {
           <p style={{ color: '#64748b' }}>Sem eventos para os filtros atuais.</p>
         ) : (
           <div className="timeline timeline--audit-page">
-            {events.map((event) => (
-              <div key={event.id} className="timeline__item">
-                <div className="timeline__dot" />
-                <div className="timeline__content">
-                  <strong>{auditEventLabel(event.eventType)}</strong>
-                  <div style={{ fontSize: '0.9rem', color: '#475569' }}>
-                    {(event.userId || 'system') + (event.entityId ? ` · ${event.entityId}` : '')}
-                  </div>
-                  {getIp(event) ? (
-                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>IP: {getIp(event)}</div>
-                  ) : null}
-                  {event.attributes && Object.keys(event.attributes).length ? (
-                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                      attrs: {JSON.stringify(event.attributes)}
+            {events.map((event) => {
+              const transition = getWorkflowTransition(event);
+              return (
+                <div key={event.id} className="timeline__item">
+                  <div className="timeline__dot" />
+                  <div className="timeline__content">
+                    <strong>{auditEventLabel(event.eventType)}</strong>
+                    <div style={{ fontSize: '0.9rem', color: '#475569' }}>
+                      {(event.userId || 'system') + (event.entityId ? ` · ${event.entityId}` : '')}
                     </div>
-                  ) : null}
-                  <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                    {formatDateTime(normalizeIso(event.occurredAt))}
+                    {transition.from || transition.to ? (
+                      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                        {transition.from ? (
+                          <span className={workflowStatusClassName(transition.from)}>{workflowStatusLabel(transition.from)}</span>
+                        ) : null}
+                        {transition.from && transition.to ? <span style={{ color: '#64748b' }}>→</span> : null}
+                        {transition.to ? (
+                          <span className={workflowStatusClassName(transition.to)}>{workflowStatusLabel(transition.to)}</span>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {getIp(event) ? (
+                      <div style={{ fontSize: '0.85rem', color: '#64748b' }}>IP: {getIp(event)}</div>
+                    ) : null}
+                    {event.attributes && Object.keys(event.attributes).length ? (
+                      <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                        attrs: {JSON.stringify(event.attributes)}
+                      </div>
+                    ) : null}
+                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                      {formatDateTime(normalizeIso(event.occurredAt))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
