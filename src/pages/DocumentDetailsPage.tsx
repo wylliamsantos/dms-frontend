@@ -322,8 +322,32 @@ export function DocumentDetailsPage() {
                     ))}
                   </div>
                 ) : null}
-                {insightQuery.data?.warnings?.length ? <ul style={{ marginBottom: 0 }}>{insightQuery.data.warnings.map((warning) => (<li key={warning}>{warning}</li>))}</ul> : null}
-                <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 0 }}>Fonte: {insightQuery.data?.source || 'n/a'} · confiança {(insightQuery.data?.confidence ?? 0).toFixed(2)}</p>
+                {insightQuery.data?.warnings?.length ? <ul style={{ marginBottom: '0.75rem' }}>{insightQuery.data.warnings.map((warning) => (<li key={warning}>{warning}</li>))}</ul> : null}
+                {insightQuery.data?.signals?.length ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginBottom: '0.75rem' }}>
+                    {insightQuery.data.signals.map((signal) => (
+                      <span
+                        key={signal.signal}
+                        title={signal.description}
+                        style={{
+                          borderRadius: '999px',
+                          border: `1px solid ${signal.active ? '#14b8a6' : '#cbd5e1'}`,
+                          background: signal.active ? '#f0fdfa' : '#f8fafc',
+                          color: signal.active ? '#0f766e' : '#64748b',
+                          padding: '0.15rem 0.55rem',
+                          fontSize: '0.76rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        {signal.signal.toUpperCase()} {signal.active ? '✓' : '·'}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 0 }}>
+                  Fonte: {insightQuery.data?.source || 'n/a'} · confiança {(insightQuery.data?.confidence ?? 0).toFixed(2)}
+                  {insightQuery.data?.confidenceBand ? ` (${insightQuery.data.confidenceBand})` : ''}
+                </p>
               </>
             )}
           </div>

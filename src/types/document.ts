@@ -51,6 +51,12 @@ export interface DmsEntry {
   importantExtractedMetadata?: Record<string, unknown>;
 }
 
+export interface DocumentInsightSignal {
+  signal: string;
+  description: string;
+  active: boolean;
+}
+
 export interface DocumentInsightResponse {
   documentId: string;
   version?: string;
@@ -58,7 +64,9 @@ export interface DocumentInsightResponse {
   keyMetadata?: Record<string, unknown>;
   warnings?: string[];
   confidence?: number;
+  confidenceBand?: 'HIGH' | 'MEDIUM' | 'LOW';
   source?: string;
+  signals?: DocumentInsightSignal[];
 }
 
 export interface DocumentRagContextResponse {
