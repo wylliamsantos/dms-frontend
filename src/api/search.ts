@@ -20,6 +20,24 @@ export async function searchByBusinessKey(payload: SearchByBusinessKeyPayload) {
   return response.data;
 }
 
+export interface SearchSuggestionsPayload {
+  query: string;
+  categories?: string[];
+  limit?: number;
+}
+
+export async function searchSuggestions(payload: SearchSuggestionsPayload) {
+  const params = new URLSearchParams();
+  params.set('q', payload.query);
+  (payload.categories ?? []).forEach((category) => params.append('categories', category));
+  if (typeof payload.limit === 'number') {
+    params.set('limit', String(payload.limit));
+  }
+
+  const response = await searchApi.get<string[]>(`/v1/search/suggestions?${params.toString()}`);
+  return response.data;
+}
+
 export interface SearchByMetadataPayload {
   type: string;
   metadata?: string;
