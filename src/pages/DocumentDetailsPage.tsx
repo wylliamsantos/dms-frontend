@@ -401,11 +401,20 @@ export function DocumentDetailsPage() {
             {!isChatDisabled && ragStatus ? (
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', borderRadius: '999px', border: `1px solid ${ragStatusTone.border}`, background: ragStatusTone.background, color: ragStatusTone.color, padding: '0.2rem 0.65rem', fontSize: '0.76rem', fontWeight: 700, marginBottom: '0.6rem' }}>
                 RAG: {ragStatus}
-                {ragContextQuery.data?.chunks?.length ? <span style={{ fontWeight: 600 }}>· {ragContextQuery.data.chunks.length} chunks</span> : null}
+                {(ragContextQuery.data?.chunkCount ?? ragContextQuery.data?.chunks?.length) ? (
+                  <span style={{ fontWeight: 600 }}>· {ragContextQuery.data?.chunkCount ?? ragContextQuery.data?.chunks.length} chunks</span>
+                ) : null}
               </div>
             ) : null}
             {!isChatDisabled && ragContextQuery.data?.message ? (
               <p style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '-0.2rem' }}>{ragContextQuery.data.message}</p>
+            ) : null}
+            {!isChatDisabled && ragContextQuery.data ? (
+              <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '-0.25rem' }}>
+                Categoria: {ragContextQuery.data.category || 'unknown'}
+                {typeof ragContextQuery.data.averageScore === 'number' ? ` · score médio ${ragContextQuery.data.averageScore.toFixed(2)}` : ''}
+                {typeof ragContextQuery.data.latencyMs === 'number' ? ` · ${ragContextQuery.data.latencyMs}ms` : ''}
+              </p>
             ) : null}
             {!isChatDisabled && ragContextQuery.data?.chunks?.length ? (
               <div style={{ marginBottom: '0.75rem' }}>
