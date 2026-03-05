@@ -6,6 +6,7 @@ import { useTranslation } from '@/i18n';
 import { setTransactionId } from '@/api/client';
 import { useCategories } from '@/hooks/useCategories';
 import { useSearchByBusinessKey } from '@/hooks/useSearchByBusinessKey';
+import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 import { DocumentTable } from '@/components/DocumentTable';
 import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
@@ -50,6 +51,13 @@ export function SearchPage() {
 
   const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
   const selectedCategories = watch('categories');
+  const textQuery = watch('textQuery');
+
+  const suggestionsQuery = useSearchSuggestions({
+    query: textQuery ?? '',
+    categories: selectedCategories ?? [],
+    limit: 8
+  });
 
   useEffect(() => {
     if (categories.length && !selectedCategories?.length) {
@@ -198,8 +206,17 @@ export function SearchPage() {
                 className="text-input"
                 inputMode="text"
                 placeholder="Ex: contrato, banco, vencimento"
+                list="search-text-suggestions"
                 {...register('textQuery')}
               />
+              <datalist id="search-text-suggestions">
+                {(suggestionsQuery.data ?? []).map((suggestion) => (
+                  <option key={suggestion} value={suggestion} />
+                ))}
+              </datalist>
+              {suggestionsQuery.isFetching ? (
+                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Carregando sugestões...</span>
+              ) : null}
             </div>
 
             <div className="input-group">
