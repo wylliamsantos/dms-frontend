@@ -69,14 +69,17 @@ export function SearchPage() {
   }, [categories, selectedCategories?.length, setValue]);
 
   useEffect(() => {
-    if (!suggestionsQuery.isFetching) {
+    const hasQuery = debouncedTextQuery.trim().length >= 2;
+    const hasPreviousSuggestions = Boolean((suggestionsQuery.data ?? []).length);
+
+    if (!hasQuery || !suggestionsQuery.isFetching || hasPreviousSuggestions) {
       setShowSuggestionsLoading(false);
       return;
     }
 
-    const timeout = window.setTimeout(() => setShowSuggestionsLoading(true), 180);
+    const timeout = window.setTimeout(() => setShowSuggestionsLoading(true), 280);
     return () => window.clearTimeout(timeout);
-  }, [suggestionsQuery.isFetching]);
+  }, [debouncedTextQuery, suggestionsQuery.isFetching, suggestionsQuery.data]);
 
   const selectedCategoryDetails = useMemo(
     () => categories.filter((category) => (selectedCategories ?? []).includes(category.name)),

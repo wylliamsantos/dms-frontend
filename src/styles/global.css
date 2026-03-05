@@ -915,6 +915,19 @@ textarea.text-input:focus {
   box-shadow: var(--shadow-strong);
 }
 
+.details-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 360px);
+  align-items: start;
+}
+
+.version-list-card {
+  align-self: start;
+  max-height: 80vh;
+  overflow: auto;
+}
+
 @media (max-width: 1024px) {
   .app-body {
     flex-direction: column;
@@ -930,5 +943,9 @@ textarea.text-input:focus {
 
   .side-nav {
     gap: 1rem;
+  }
+
+  .details-layout {
+    grid-template-columns: 1fr;
   }
 }

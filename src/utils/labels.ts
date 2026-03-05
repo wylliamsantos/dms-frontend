@@ -1,8 +1,10 @@
-const WORKFLOW_STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Rascunho',
-  PENDING_REVIEW: 'Pendente',
-  APPROVED: 'Aprovado',
-  REJECTED: 'Reprovado'
+export type WorkflowStatusTone = 'warning' | 'success' | 'danger' | 'muted';
+
+const WORKFLOW_STATUS_META: Record<string, { label: string; tone: WorkflowStatusTone }> = {
+  DRAFT: { label: 'Rascunho', tone: 'muted' },
+  PENDING_REVIEW: { label: 'Pendente', tone: 'warning' },
+  APPROVED: { label: 'Aprovado', tone: 'success' },
+  REJECTED: { label: 'Reprovado', tone: 'danger' }
 };
 
 const AUDIT_EVENT_LABELS: Record<string, string> = {
@@ -17,7 +19,13 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
 
 export function workflowStatusLabel(status?: string) {
   if (!status) return '-';
-  return WORKFLOW_STATUS_LABELS[status] ?? toHuman(status);
+  return WORKFLOW_STATUS_META[status]?.label ?? toHuman(status);
+}
+
+export function workflowStatusClassName(status?: string) {
+  if (!status) return 'badge badge--muted';
+  const tone = WORKFLOW_STATUS_META[status]?.tone ?? 'muted';
+  return `badge badge--${tone}`;
 }
 
 export function auditEventLabel(eventType?: string) {

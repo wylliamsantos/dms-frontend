@@ -11,16 +11,9 @@ import {
   PendingDocumentItem,
   reviewWorkflowDocument
 } from '@/api/workflow';
-import { workflowStatusLabel } from '@/utils/labels';
+import { workflowStatusClassName, workflowStatusLabel } from '@/utils/labels';
 
 const PAGE_SIZE = 20;
-
-function statusBadgeClass(status?: string) {
-  if (status === 'APPROVED') return 'badge badge--success';
-  if (status === 'REJECTED') return 'badge badge--danger';
-  if (status === 'PENDING_REVIEW') return 'badge badge--warning';
-  return 'badge badge--muted';
-}
 
 export function WorkflowPendingPage() {
   const { hasAnyRole } = useAuth();
@@ -254,7 +247,7 @@ export function WorkflowPendingPage() {
                     </div>
                   </td>
                   <td>
-                    <span className={statusBadgeClass(item.workflowStatus)}>{workflowStatusLabel(item.workflowStatus)}</span>
+                    <span className={workflowStatusClassName(item.workflowStatus)}>{workflowStatusLabel(item.workflowStatus)}</span>
                   </td>
                   <td>{item.category}</td>
                   <td>{item.currentVersion || '-'}</td>

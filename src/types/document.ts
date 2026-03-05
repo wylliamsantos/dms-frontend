@@ -47,6 +47,7 @@ export interface DmsEntry {
   content?: DmsContent;
   properties?: Record<string, unknown>;
   ocrSummary?: string;
+  ocrText?: string;
   importantExtractedMetadata?: Record<string, unknown>;
 }
 
