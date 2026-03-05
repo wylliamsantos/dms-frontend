@@ -28,6 +28,23 @@ export interface PendingDocumentsPage {
   number: number;
 }
 
+export interface WorkflowStatusCountItem {
+  status: string;
+  count: number;
+}
+
+export interface WorkflowCategoryStatusCountItem {
+  category: string;
+  status: string;
+  count: number;
+}
+
+export interface WorkflowDashboardMetrics {
+  totalDocuments: number;
+  statusCounts: WorkflowStatusCountItem[];
+  categoryStatusCounts: WorkflowCategoryStatusCountItem[];
+}
+
 export interface WorkflowReviewRequest {
   action: 'APPROVE' | 'REPROVE';
   reason?: string;
@@ -37,6 +54,11 @@ export interface WorkflowReviewResponse {
   documentId: string;
   workflowStatus: string;
   message: string;
+}
+
+export async function getWorkflowDashboardMetrics() {
+  const response = await documentApi.get<WorkflowDashboardMetrics>('/v1/workflow/dashboard');
+  return response.data;
 }
 
 export async function listWorkflowHistory(documentId: string) {
