@@ -216,10 +216,10 @@ export function DocumentDetailsPage() {
     ? `${entry.version}${entry?.versionType ? ` · ${entry.versionType}` : ''}`
     : undefined;
   const isChatDisabled = !env.featureDocumentChat || !env.featureRagLocalMvp;
-  const chatDisabledReason = !env.featureRagLocalMvp
-    ? 'Chat desabilitado: RAG local está desativado (VITE_FEATURE_RAG_LOCAL_MVP=false).'
+  const chatUnavailableHint = !env.featureRagLocalMvp
+    ? 'Chat temporariamente indisponível: recurso local de contexto não está ativo.'
     : !env.featureDocumentChat
-      ? 'Chat desabilitado por feature flag (VITE_FEATURE_DOCUMENT_CHAT=false).'
+      ? 'Chat temporariamente indisponível: feature flag local desativada.'
       : undefined;
 
   return (
@@ -230,7 +230,7 @@ export function DocumentDetailsPage() {
         </Link>
       </div>
 
-      <div className="card" style={{ marginBottom: '1rem', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap' }}>
+      <div className="card details-hero-card" style={{ marginBottom: '1rem', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', minWidth: '16rem' }}>
           <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, color: '#6366f1' }}>{t('details.header.title')}</span>
           <h1 style={{ margin: 0, fontSize: '1.75rem', color: '#0f172a', wordBreak: 'break-all', lineHeight: 1.2 }}>{entry?.name ?? t('details.untitled')}</h1>
@@ -316,18 +316,16 @@ export function DocumentDetailsPage() {
             )}
           </div>
 
-          <div className="card">
-            <h2 style={{ marginTop: 0 }}>RAG por documento (skeleton local)</h2>
-            <p style={{ margin: 0, color: '#475569' }}>{env.featureRagLocalMvp ? (ragContextQuery.data?.message || 'Carregando status do RAG...') : 'Feature flag desabilitada (VITE_FEATURE_RAG_LOCAL_MVP=false).'}</p>
-          </div>
-
-          <div className="card">
-            <h2 style={{ marginTop: 0 }}>Chat do documento (MVP local)</h2>
-            <p style={{ color: '#64748b', marginTop: 0 }}>Pergunte sobre OCR/metadados. O backend usa RAG local por documento.</p>
-            {isChatDisabled ? (
-              <div className="alert" style={{ marginBottom: '0.75rem' }}>
-                {chatDisabledReason}
-              </div>
+          <div className="card details-chat-card">
+            <h2 style={{ marginTop: 0 }}>Chat do documento</h2>
+            <p style={{ color: '#64748b', marginTop: 0 }}>Pergunte sobre OCR/metadados. O contexto RAG é aplicado internamente no pipeline do chat.</p>
+            {!isChatDisabled && ragContextQuery.data?.message ? (
+              <p style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '-0.2rem' }}>{ragContextQuery.data.message}</p>
+            ) : null}
+            {isChatDisabled && chatUnavailableHint ? (
+              <p className="details-inline-hint" style={{ marginBottom: '0.75rem' }}>
+                {chatUnavailableHint}
+              </p>
             ) : null}
             <textarea
               className="text-input"
@@ -336,7 +334,7 @@ export function DocumentDetailsPage() {
               onChange={(event) => setChatInput(event.target.value)}
               placeholder={isChatDisabled ? 'Chat indisponível no momento.' : 'Digite uma pergunta sobre este documento...'}
               disabled={isChatDisabled || chatMutation.isPending}
-              style={{ width: '100%', resize: 'vertical', background: isChatDisabled ? '#f8fafc' : undefined }}
+              style={{ width: '100%', resize: 'vertical', background: isChatDisabled ? '#f8fafc' : undefined, borderColor: isChatDisabled ? '#cbd5e1' : undefined }}
             />
             <div style={{ marginTop: '0.6rem', display: 'flex', gap: '0.5rem' }}>
               <button type="button" className="button button--primary" onClick={handleSendChat} disabled={isChatDisabled || chatMutation.isPending || !chatInput.trim()}>
@@ -348,7 +346,7 @@ export function DocumentDetailsPage() {
                 </button>
               ) : null}
             </div>
-            {chatMutation.isError ? <p style={{ color: '#b91c1c', marginBottom: 0 }}>Não foi possível responder agora.</p> : null}
+            {chatMutation.isError ? <p className="details-inline-hint" style={{ marginBottom: 0 }}>Não foi possível responder agora. Tente novamente em instantes.</p> : null}
             {chatMutation.data ? (
               <div style={{ marginTop: '0.75rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem' }}>
                 <p style={{ marginTop: 0, marginBottom: '0.5rem' }}><strong>Status:</strong> {chatMutation.data.status} · {chatMutation.data.message}</p>

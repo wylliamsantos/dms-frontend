@@ -39,6 +39,14 @@ const runtimeDefaultRedirect = (() => {
   return undefined;
 })();
 
+const defaultLocalFeatureEnabled = import.meta.env.DEV;
+
+function booleanEnv(key: string, fallback: boolean): boolean {
+  const raw = optionalEnv(key);
+  if (!raw) return fallback;
+  return raw.toLowerCase() === 'true';
+}
+
 export const env = {
   documentApiBaseUrl: requireEnv('VITE_DOCUMENT_API_BASE_URL'),
   searchApiBaseUrl: requireEnv('VITE_SEARCH_API_BASE_URL'),
@@ -63,8 +71,6 @@ export const env = {
   ),
   idpAutoLogin:
     (optionalEnv('VITE_IDP_AUTO_LOGIN') ?? 'true').toLowerCase() === 'true',
-  featureRagLocalMvp:
-    (optionalEnv('VITE_FEATURE_RAG_LOCAL_MVP') ?? 'false').toLowerCase() === 'true',
-  featureDocumentChat:
-    (optionalEnv('VITE_FEATURE_DOCUMENT_CHAT') ?? 'false').toLowerCase() === 'true'
+  featureRagLocalMvp: booleanEnv('VITE_FEATURE_RAG_LOCAL_MVP', defaultLocalFeatureEnabled),
+  featureDocumentChat: booleanEnv('VITE_FEATURE_DOCUMENT_CHAT', defaultLocalFeatureEnabled)
 };
