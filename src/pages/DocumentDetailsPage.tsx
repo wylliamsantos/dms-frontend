@@ -342,6 +342,16 @@ export function DocumentDetailsPage() {
                   </div>
                 ) : null}
                 {insightQuery.data?.warnings?.length ? <ul style={{ marginBottom: '0.75rem' }}>{insightQuery.data.warnings.map((warning) => (<li key={warning}>{warning}</li>))}</ul> : null}
+                {insightQuery.data?.importantPersistedMetadata && Object.keys(insightQuery.data.importantPersistedMetadata).length ? (
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Metadados importantes (persistidos)</strong>
+                    <div className="metadata-grid">
+                      {Object.entries(insightQuery.data.importantPersistedMetadata).map(([key, value]) => (
+                        <div className="metadata-item" key={`important-${key}`}><strong>{key}</strong><span>{value == null ? '-' : String(value)}</span></div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 {insightQuery.data?.persistedMetadataPreview && Object.keys(insightQuery.data.persistedMetadataPreview).length ? (
                   <div style={{ marginBottom: '0.75rem' }}>
                     <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Metadados persistidos (preview)</strong>
