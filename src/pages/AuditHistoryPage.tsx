@@ -5,6 +5,7 @@ import { exportAuditEvents, listActiveAuditAlerts, listAuditEvents } from '@/api
 import { LoadingState } from '@/components/LoadingState';
 import { env } from '@/utils/env';
 import { formatDateTime } from '@/utils/format';
+import { AUDIT_EVENT_OPTIONS, auditEventLabel } from '@/utils/labels';
 
 const normalizeIso = (iso?: string) => {
   if (!iso) return undefined;
@@ -51,10 +52,11 @@ export function AuditHistoryPage() {
 
   const filters = {
     tenantId,
-    entityId: entityId || undefined,
-    userId: userId || undefined,
+    entityType: 'DOCUMENT',
+    entityId: entityId.trim() || undefined,
+    userId: userId.trim() || undefined,
     eventType: eventType || undefined,
-    ip: ip || undefined,
+    ip: ip.trim() || undefined,
     occurredAtFrom: normalizeIso(occurredAtFrom),
     occurredAtTo: normalizeIso(occurredAtTo)
   };
@@ -110,12 +112,18 @@ export function AuditHistoryPage() {
             onChange={(event) => setUserId(event.target.value)}
             placeholder="Usuário (userId)"
           />
-          <input
-            className="text-input"
+          <select
+            className="select-input"
             value={eventType}
             onChange={(event) => setEventType(event.target.value)}
-            placeholder="Tipo de evento (ex: DOCUMENT_VIEWED)"
-          />
+          >
+            <option value="">Todos os eventos</option>
+            {AUDIT_EVENT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
           <input
             className="text-input"
             value={ip}
@@ -123,16 +131,18 @@ export function AuditHistoryPage() {
             placeholder="IP (ex: 203.0.113.10)"
           />
           <input
+            type="datetime-local"
             className="text-input"
             value={occurredAtFrom}
             onChange={(event) => setOccurredAtFrom(event.target.value)}
-            placeholder="Data inicial ISO (ex: 2026-03-01T00:00:00Z)"
+            placeholder="Data inicial"
           />
           <input
+            type="datetime-local"
             className="text-input"
             value={occurredAtTo}
             onChange={(event) => setOccurredAtTo(event.target.value)}
-            placeholder="Data final ISO (ex: 2026-03-05T23:59:59Z)"
+            placeholder="Data final"
           />
         </div>
 
@@ -187,7 +197,7 @@ export function AuditHistoryPage() {
               <div key={event.id} className="timeline__item">
                 <div className="timeline__dot" />
                 <div className="timeline__content">
-                  <strong>{event.eventType}</strong>
+                  <strong>{auditEventLabel(event.eventType)}</strong>
                   <div style={{ fontSize: '0.9rem', color: '#475569' }}>
                     {(event.userId || 'system') + (event.entityId ? ` · ${event.entityId}` : '')}
                   </div>

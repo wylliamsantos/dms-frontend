@@ -18,6 +18,7 @@ import {
 import { listWorkflowHistory } from '@/api/workflow';
 import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
 import { formatDateTime } from '@/utils/format';
+import { workflowStatusLabel } from '@/utils/labels';
 
 const normalizeIso = (iso?: string) => {
   if (!iso) return undefined;
@@ -113,7 +114,7 @@ export function DocumentDetailsPage() {
   const timelineEvents = useMemo(() => {
     const workflow = (workflowHistoryQuery.data ?? []).map((item) => ({
       when: item.changedAt,
-      title: `${item.fromStatus} → ${item.toStatus}`,
+      title: `${workflowStatusLabel(item.fromStatus)} → ${workflowStatusLabel(item.toStatus)}`,
       detail: `${item.actor || 'system'} · ${item.reason || '-'}`,
       kind: 'workflow'
     }));
@@ -268,7 +269,7 @@ export function DocumentDetailsPage() {
               >
                 Status workflow
               </span>
-              <strong style={{ color: '#0f172a' }}>{entry.workflowStatus}</strong>
+              <strong style={{ color: '#0f172a' }}>{workflowStatusLabel(entry.workflowStatus)}</strong>
             </div>
           ) : null}
 
