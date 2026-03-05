@@ -62,5 +62,9 @@ export const env = {
     optionalEnv('VITE_IDP_REFRESH_LEEWAY_SECONDS') ?? '60'
   ),
   idpAutoLogin:
-    (optionalEnv('VITE_IDP_AUTO_LOGIN') ?? 'true').toLowerCase() === 'true'
+    (optionalEnv('VITE_IDP_AUTO_LOGIN') ?? 'true').toLowerCase() === 'true',
+  featureRagLocalMvp:
+    (optionalEnv('VITE_FEATURE_RAG_LOCAL_MVP') ?? 'false').toLowerCase() === 'true',
+  featureDocumentChat:
+    (optionalEnv('VITE_FEATURE_DOCUMENT_CHAT') ?? 'false').toLowerCase() === 'true'
 };
