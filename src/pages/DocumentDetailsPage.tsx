@@ -63,6 +63,7 @@ export function DocumentDetailsPage() {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [ocrHintLookbackDays, setOcrHintLookbackDays] = useState(30);
+  const [ocrHintHistoryAction, setOcrHintHistoryAction] = useState<'ALL' | 'APPLIED' | 'CANCELLED' | 'ERROR'>('ALL');
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -284,7 +285,13 @@ export function DocumentDetailsPage() {
   const ragContext = ragContextQuery.data;
   const metadataHints = insight?.metadataActionHints ?? [];
   const ocrHintHistory = (insight?.metadataUpdateHistory ?? [])
-    .filter((item) => String(item.source ?? '').toUpperCase() === 'OCR_HINT')
+    .filter((item) => {
+      const source = String(item.source ?? '').toUpperCase();
+      if (ocrHintHistoryAction === 'APPLIED') return source === 'OCR_HINT';
+      if (ocrHintHistoryAction === 'CANCELLED') return source === 'OCR_HINT_CANCEL' || source === 'OCR_HINT_DISMISSED';
+      if (ocrHintHistoryAction === 'ERROR') return source === 'OCR_HINT_ERROR';
+      return source.startsWith('OCR_HINT');
+    })
     .slice(0, 5);
 
   return (
@@ -458,7 +465,23 @@ export function DocumentDetailsPage() {
                     ) : null}
 
                     <div style={{ marginTop: '0.9rem' }}>
-                      <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Histórico curto (origem OCR_HINT)</strong>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <strong style={{ display: 'block' }}>Histórico curto OCR_HINT</strong>
+                        <label style={{ fontSize: '0.76rem', color: '#64748b', display: 'inline-flex', gap: '0.35rem', alignItems: 'center' }}>
+                          Ação
+                          <select
+                            className="select-input"
+                            value={ocrHintHistoryAction}
+                            onChange={(event) => setOcrHintHistoryAction(event.target.value as 'ALL' | 'APPLIED' | 'CANCELLED' | 'ERROR')}
+                            style={{ fontSize: '0.76rem', padding: '0.2rem 0.35rem', minWidth: '6.5rem' }}
+                          >
+                            <option value="ALL">Todas</option>
+                            <option value="APPLIED">Aplicado</option>
+                            <option value="CANCELLED">Cancelado</option>
+                            <option value="ERROR">Erro</option>
+                          </select>
+                        </label>
+                      </div>
                       {ocrHintHistory.length ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                           {ocrHintHistory.map((item, index) => (
@@ -473,7 +496,7 @@ export function DocumentDetailsPage() {
                           ))}
                         </div>
                       ) : (
-                        <p style={{ color: '#64748b', margin: 0 }}>Sem mudanças por OCR_HINT neste documento.</p>
+                        <p style={{ color: '#64748b', margin: 0 }}>Sem mudanças OCR_HINT para o filtro selecionado.</p>
                       )}
                     </div>
                   </>
