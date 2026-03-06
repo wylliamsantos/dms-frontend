@@ -64,8 +64,9 @@ export function SearchPage() {
   });
 
   const normalizedSuggestionQuery = debouncedTextQuery.trim().toLowerCase();
+  const normalizedLiveSuggestionQuery = textQuery.trim().toLowerCase();
   const suggestionOptions = useMemo(() => {
-    if (normalizedSuggestionQuery.length < 2) {
+    if (normalizedLiveSuggestionQuery.length < 2) {
       return [];
     }
 
@@ -73,12 +74,12 @@ export function SearchPage() {
     for (const suggestion of suggestionsQuery.data ?? []) {
       const normalized = suggestion.trim();
       if (!normalized) continue;
-      if (!normalized.toLowerCase().includes(normalizedSuggestionQuery)) continue;
+      if (!normalized.toLowerCase().includes(normalizedLiveSuggestionQuery)) continue;
       unique.add(normalized);
       if (unique.size >= 8) break;
     }
     return Array.from(unique);
-  }, [suggestionsQuery.data, normalizedSuggestionQuery]);
+  }, [suggestionsQuery.data, normalizedLiveSuggestionQuery]);
 
   const isSuggestionsRefreshing = normalizedSuggestionQuery.length >= 2 && suggestionsQuery.isFetching && suggestionOptions.length > 0;
 
