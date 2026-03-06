@@ -58,6 +58,10 @@ export function DocumentDetailsPage() {
   const [chatInput, setChatInput] = useState('');
   const [metadataHintFeedback, setMetadataHintFeedback] = useState<string | null>(null);
   const [metadataHistoryPage, setMetadataHistoryPage] = useState(0);
+  const [metadataHistorySource, setMetadataHistorySource] = useState('');
+  const [metadataHistoryField, setMetadataHistoryField] = useState('');
+  const [metadataHistoryUpdatedFrom, setMetadataHistoryUpdatedFrom] = useState('');
+  const [metadataHistoryUpdatedTo, setMetadataHistoryUpdatedTo] = useState('');
   const { t, i18n } = useTranslation();
 
   const informationQuery = useDocumentInformation(documentId, activeVersion);
@@ -70,8 +74,22 @@ export function DocumentDetailsPage() {
     enabled: Boolean(documentId)
   });
   const metadataHistoryQuery = useQuery({
-    queryKey: ['document-metadata-history', documentId, activeVersion, metadataHistoryPage],
-    queryFn: () => fetchDocumentMetadataHistory(documentId as string, metadataHistoryPage, 10, activeVersion),
+    queryKey: [
+      'document-metadata-history',
+      documentId,
+      activeVersion,
+      metadataHistoryPage,
+      metadataHistorySource,
+      metadataHistoryField,
+      metadataHistoryUpdatedFrom,
+      metadataHistoryUpdatedTo
+    ],
+    queryFn: () => fetchDocumentMetadataHistory(documentId as string, metadataHistoryPage, 10, activeVersion, {
+      source: metadataHistorySource || undefined,
+      field: metadataHistoryField || undefined,
+      updatedFrom: metadataHistoryUpdatedFrom || undefined,
+      updatedTo: metadataHistoryUpdatedTo || undefined
+    }),
     enabled: Boolean(documentId)
   });
   const chatMutation = useMutation({
@@ -139,6 +157,10 @@ export function DocumentDetailsPage() {
 
   useEffect(() => {
     setMetadataHistoryPage(0);
+    setMetadataHistorySource('');
+    setMetadataHistoryField('');
+    setMetadataHistoryUpdatedFrom('');
+    setMetadataHistoryUpdatedTo('');
   }, [activeVersion]);
 
   useEffect(() => {
@@ -517,20 +539,62 @@ export function DocumentDetailsPage() {
                     ) : null}
                   </div>
                 ) : null}
-                {metadataHistoryItems.length ? (
+                {(metadataHistoryQuery.data || metadataHistoryItems.length) ? (
                   <div style={{ marginBottom: '0.75rem' }}>
                     <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Histórico de ajustes de metadados</strong>
-                    <ul style={{ margin: 0, paddingLeft: '1.1rem', color: '#334155' }}>
-                      {metadataHistoryItems.map((entry, idx) => (
-                        <li key={`history-${entry.field}-${entry.updatedAt ?? idx}`} style={{ marginBottom: '0.3rem' }}>
-                          <strong>{entry.field}</strong>: <code>{entry.previousValue ?? '∅'}</code> → <code>{entry.newValue ?? '∅'}</code>
-                          <span style={{ color: '#64748b' }}>
-                            {' '}
-                            ({entry.source || 'MANUAL'}{entry.updatedBy ? ` · ${entry.updatedBy}` : ''}{entry.updatedAt ? ` · ${formatDateTime(normalizeIso(entry.updatedAt))}` : ''})
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.45rem', marginBottom: '0.5rem' }}>
+                      <input
+                        value={metadataHistorySource}
+                        onChange={(event) => {
+                          setMetadataHistoryPage(0);
+                          setMetadataHistorySource(event.target.value);
+                        }}
+                        placeholder="Filtrar source (ex.: OCR_HINT)"
+                        style={{ border: '1px solid #cbd5e1', borderRadius: '0.45rem', padding: '0.35rem 0.45rem', fontSize: '0.78rem' }}
+                      />
+                      <input
+                        value={metadataHistoryField}
+                        onChange={(event) => {
+                          setMetadataHistoryPage(0);
+                          setMetadataHistoryField(event.target.value);
+                        }}
+                        placeholder="Filtrar campo (ex.: valor)"
+                        style={{ border: '1px solid #cbd5e1', borderRadius: '0.45rem', padding: '0.35rem 0.45rem', fontSize: '0.78rem' }}
+                      />
+                      <input
+                        value={metadataHistoryUpdatedFrom}
+                        onChange={(event) => {
+                          setMetadataHistoryPage(0);
+                          setMetadataHistoryUpdatedFrom(event.target.value);
+                        }}
+                        placeholder="updatedFrom ISO (ex.: 2026-03-06T08:00:00Z)"
+                        style={{ border: '1px solid #cbd5e1', borderRadius: '0.45rem', padding: '0.35rem 0.45rem', fontSize: '0.78rem' }}
+                      />
+                      <input
+                        value={metadataHistoryUpdatedTo}
+                        onChange={(event) => {
+                          setMetadataHistoryPage(0);
+                          setMetadataHistoryUpdatedTo(event.target.value);
+                        }}
+                        placeholder="updatedTo ISO (ex.: 2026-03-06T09:00:00Z)"
+                        style={{ border: '1px solid #cbd5e1', borderRadius: '0.45rem', padding: '0.35rem 0.45rem', fontSize: '0.78rem' }}
+                      />
+                    </div>
+                    {metadataHistoryItems.length ? (
+                      <ul style={{ margin: 0, paddingLeft: '1.1rem', color: '#334155' }}>
+                        {metadataHistoryItems.map((entry, idx) => (
+                          <li key={`history-${entry.field}-${entry.updatedAt ?? idx}`} style={{ marginBottom: '0.3rem' }}>
+                            <strong>{entry.field}</strong>: <code>{entry.previousValue ?? '∅'}</code> → <code>{entry.newValue ?? '∅'}</code>
+                            <span style={{ color: '#64748b' }}>
+                              {' '}
+                              ({entry.source || 'MANUAL'}{entry.updatedBy ? ` · ${entry.updatedBy}` : ''}{entry.updatedAt ? ` · ${formatDateTime(normalizeIso(entry.updatedAt))}` : ''})
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p style={{ margin: '0 0 0.35rem', color: '#64748b', fontSize: '0.82rem' }}>Nenhum ajuste encontrado com os filtros atuais.</p>
+                    )}
                     <div style={{ marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <button
                         type="button"
