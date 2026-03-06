@@ -75,6 +75,13 @@ export interface MetadataUpdateHistoryEntry {
   updatedBy?: string;
 }
 
+export interface MetadataUpdateHistoryPageResponse {
+  content: MetadataUpdateHistoryEntry[];
+  totalElements: number;
+  number: number;
+  size: number;
+}
+
 export interface DocumentInsightResponse {
   documentId: string;
   version?: string;
