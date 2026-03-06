@@ -17,7 +17,7 @@ import {
   useDocumentRagContext,
   useDocumentVersions
 } from '@/hooks/useDocumentDetails';
-import { chatByDocument, fetchDocumentMetadataHistory, updateDocumentMetadata } from '@/api/document';
+import { chatByDocument, fetchDocumentMetadataHistory, fetchDocumentMetadataHistorySummary, updateDocumentMetadata } from '@/api/document';
 import { listWorkflowHistory } from '@/api/workflow';
 import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
 import { formatDateTime } from '@/utils/format';
@@ -92,6 +92,24 @@ export function DocumentDetailsPage() {
     }),
     enabled: Boolean(documentId)
   });
+  const metadataHistorySummaryQuery = useQuery({
+    queryKey: [
+      'document-metadata-history-summary',
+      documentId,
+      activeVersion,
+      metadataHistorySource,
+      metadataHistoryField,
+      metadataHistoryUpdatedFrom,
+      metadataHistoryUpdatedTo
+    ],
+    queryFn: () => fetchDocumentMetadataHistorySummary(documentId as string, activeVersion, {
+      source: metadataHistorySource || undefined,
+      field: metadataHistoryField || undefined,
+      updatedFrom: metadataHistoryUpdatedFrom || undefined,
+      updatedTo: metadataHistoryUpdatedTo || undefined
+    }),
+    enabled: Boolean(documentId)
+  });
   const chatMutation = useMutation({
     mutationFn: (message: string) => chatByDocument(documentId as string, message, activeVersion),
     onError: () => {
@@ -126,7 +144,8 @@ export function DocumentDetailsPage() {
         informationQuery.refetch(),
         insightQuery.refetch(),
         ragContextQuery.refetch(),
-        metadataHistoryQuery.refetch()
+        metadataHistoryQuery.refetch(),
+        metadataHistorySummaryQuery.refetch()
       ]);
       window.setTimeout(() => setMetadataHintFeedback(null), 2600);
     },
@@ -580,6 +599,24 @@ export function DocumentDetailsPage() {
                         style={{ border: '1px solid #cbd5e1', borderRadius: '0.45rem', padding: '0.35rem 0.45rem', fontSize: '0.78rem' }}
                       />
                     </div>
+                    {metadataHistorySummaryQuery.data ? (
+                      <div style={{ marginBottom: '0.55rem', border: '1px solid #e2e8f0', borderRadius: '0.55rem', padding: '0.45rem 0.6rem', background: '#f8fafc' }}>
+                        <p style={{ margin: 0, fontSize: '0.78rem', color: '#475569' }}>
+                          Resumo filtros: {metadataHistorySummaryQuery.data.filteredEntries} de {metadataHistorySummaryQuery.data.totalEntries} ajustes
+                          {metadataHistorySummaryQuery.data.latestUpdatedAt ? ` · último em ${formatDateTime(normalizeIso(metadataHistorySummaryQuery.data.latestUpdatedAt))}` : ''}
+                        </p>
+                        {metadataHistorySummaryQuery.data.bySource.length ? (
+                          <p style={{ margin: '0.2rem 0 0', fontSize: '0.76rem', color: '#334155' }}>
+                            Top sources: {metadataHistorySummaryQuery.data.bySource.map((bucket) => `${bucket.key} (${bucket.count})`).join(' · ')}
+                          </p>
+                        ) : null}
+                        {metadataHistorySummaryQuery.data.byField.length ? (
+                          <p style={{ margin: '0.2rem 0 0', fontSize: '0.76rem', color: '#334155' }}>
+                            Top campos: {metadataHistorySummaryQuery.data.byField.map((bucket) => `${bucket.key} (${bucket.count})`).join(' · ')}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
                     {metadataHistoryItems.length ? (
                       <ul style={{ margin: 0, paddingLeft: '1.1rem', color: '#334155' }}>
                         {metadataHistoryItems.map((entry, idx) => (

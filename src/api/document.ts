@@ -9,7 +9,8 @@ import {
   DocumentInsightResponse,
   DocumentRagContextResponse,
   DocumentChatResponse,
-  MetadataUpdateHistoryPageResponse
+  MetadataUpdateHistoryPageResponse,
+  MetadataUpdateHistorySummaryResponse
 } from '@/types/document';
 
 export async function listCategories(): Promise<DocumentCategory[]> {
@@ -67,6 +68,25 @@ export async function fetchDocumentMetadataHistory(
     params: {
       page,
       size,
+      source: filters?.source,
+      field: filters?.field,
+      updatedFrom: filters?.updatedFrom,
+      updatedTo: filters?.updatedTo
+    }
+  });
+  return response.data;
+}
+
+export async function fetchDocumentMetadataHistorySummary(
+  documentId: string,
+  version?: string,
+  filters?: MetadataHistoryFilters
+) {
+  const path = version
+    ? `/v1/documents/${documentId}/${version}/metadata/history/summary`
+    : `/v1/documents/${documentId}/metadata/history/summary`;
+  const response = await documentApi.get<MetadataUpdateHistorySummaryResponse>(path, {
+    params: {
       source: filters?.source,
       field: filters?.field,
       updatedFrom: filters?.updatedFrom,
