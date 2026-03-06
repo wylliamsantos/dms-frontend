@@ -55,6 +55,7 @@ export function SearchPage() {
   const textQuery = watch('textQuery');
   const debouncedTextQuery = useDebouncedValue(textQuery ?? '', 350);
   const [showSuggestionsLoading, setShowSuggestionsLoading] = useState(false);
+  const [displayedSuggestionOptions, setDisplayedSuggestionOptions] = useState<string[]>([]);
   const suggestionsLoadingShownAtRef = useRef<number | null>(null);
 
   const suggestionsQuery = useSearchSuggestions({
@@ -81,7 +82,8 @@ export function SearchPage() {
     return Array.from(unique);
   }, [suggestionsQuery.data, normalizedLiveSuggestionQuery]);
 
-  const isSuggestionsRefreshing = normalizedSuggestionQuery.length >= 2 && suggestionsQuery.isFetching && suggestionOptions.length > 0;
+  const isDebouncingSuggestions = normalizedLiveSuggestionQuery.length >= 2 && normalizedLiveSuggestionQuery !== normalizedSuggestionQuery;
+  const isSuggestionsRefreshing = normalizedSuggestionQuery.length >= 2 && suggestionsQuery.isFetching && displayedSuggestionOptions.length > 0;
 
   useEffect(() => {
     if (categories.length && !selectedCategories?.length) {
@@ -90,8 +92,19 @@ export function SearchPage() {
   }, [categories, selectedCategories?.length, setValue]);
 
   useEffect(() => {
+    if (normalizedLiveSuggestionQuery.length < 2) {
+      setDisplayedSuggestionOptions([]);
+      return;
+    }
+
+    if (suggestionOptions.length > 0 || !suggestionsQuery.isFetching) {
+      setDisplayedSuggestionOptions(suggestionOptions);
+    }
+  }, [normalizedLiveSuggestionQuery.length, suggestionOptions, suggestionsQuery.isFetching]);
+
+  useEffect(() => {
     const hasQuery = debouncedTextQuery.trim().length >= 2;
-    const hasPreviousSuggestions = Boolean(suggestionOptions.length);
+    const hasPreviousSuggestions = Boolean(displayedSuggestionOptions.length);
 
     if (!hasQuery || !suggestionsQuery.isFetching || hasPreviousSuggestions) {
       if (!showSuggestionsLoading) {
@@ -113,7 +126,7 @@ export function SearchPage() {
     }, 280);
 
     return () => window.clearTimeout(timeout);
-  }, [debouncedTextQuery, suggestionsQuery.isFetching, suggestionOptions.length, showSuggestionsLoading]);
+  }, [debouncedTextQuery, suggestionsQuery.isFetching, displayedSuggestionOptions.length, showSuggestionsLoading]);
 
   const selectedCategoryDetails = useMemo(
     () => categories.filter((category) => (selectedCategories ?? []).includes(category.name)),
@@ -260,17 +273,20 @@ export function SearchPage() {
                 {...register('textQuery')}
               />
               <datalist id="search-text-suggestions">
-                {suggestionOptions.map((suggestion) => (
+                {displayedSuggestionOptions.map((suggestion) => (
                   <option key={suggestion} value={suggestion} />
                 ))}
               </datalist>
               {showSuggestionsLoading ? (
                 <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Carregando sugestões...</span>
               ) : null}
-              {!showSuggestionsLoading && isSuggestionsRefreshing ? (
+              {!showSuggestionsLoading && isDebouncingSuggestions ? (
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Aguardando pausa na digitação…</span>
+              ) : null}
+              {!showSuggestionsLoading && !isDebouncingSuggestions && isSuggestionsRefreshing ? (
                 <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Atualizando sugestões…</span>
               ) : null}
-              {!showSuggestionsLoading && !isSuggestionsRefreshing && textQuery.trim().length > 0 && textQuery.trim().length < 2 ? (
+              {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && textQuery.trim().length > 0 && textQuery.trim().length < 2 ? (
                 <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Digite ao menos 2 caracteres para sugerir termos.</span>
               ) : null}
             </div>

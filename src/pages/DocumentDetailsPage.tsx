@@ -383,6 +383,23 @@ export function DocumentDetailsPage() {
                     ))}
                   </div>
                 ) : null}
+                {insightQuery.data?.expectedRequiredMetadata?.length ? (
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Cobertura de metadados obrigatórios</strong>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#475569' }}>
+                      Esperados: {insightQuery.data.expectedRequiredMetadata.join(', ')}
+                    </p>
+                    {insightQuery.data.missingRequiredMetadata?.length ? (
+                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#b45309' }}>
+                        Faltando: {insightQuery.data.missingRequiredMetadata.join(', ')}
+                      </p>
+                    ) : (
+                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#166534' }}>
+                        Todos os metadados obrigatórios estão persistidos.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
                 <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 0 }}>
                   Fonte: {insightQuery.data?.source || 'n/a'} · confiança {(insightQuery.data?.confidence ?? 0).toFixed(2)}
                   {insightQuery.data?.confidenceBand ? ` (${insightQuery.data.confidenceBand})` : ''}
