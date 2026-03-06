@@ -405,6 +405,18 @@ export function DocumentDetailsPage() {
                     )}
                   </div>
                 ) : null}
+                {insightQuery.data?.metadataActionHints?.length ? (
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Próximas ações recomendadas</strong>
+                    <ul style={{ margin: 0, paddingLeft: '1.1rem', color: '#334155' }}>
+                      {insightQuery.data.metadataActionHints.map((hint, idx) => (
+                        <li key={`hint-${hint.field}-${idx}`} style={{ marginBottom: '0.35rem' }}>
+                          <strong>{hint.field}</strong> · {hint.action} · {hint.reason}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
                 <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 0 }}>
                   Fonte: {insightQuery.data?.source || 'n/a'} · confiança {(insightQuery.data?.confidence ?? 0).toFixed(2)}
                   {insightQuery.data?.confidenceBand ? ` (${insightQuery.data.confidenceBand})` : ''}
