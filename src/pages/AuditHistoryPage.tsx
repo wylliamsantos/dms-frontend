@@ -66,7 +66,6 @@ export function AuditHistoryPage() {
 
   const filters = {
     tenantId,
-    entityType: 'DOCUMENT',
     entityId: entityId.trim() || undefined,
     userId: userId.trim() || undefined,
     eventType: eventType || undefined,
