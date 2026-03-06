@@ -56,6 +56,7 @@ export function SearchPage() {
   const debouncedTextQuery = useDebouncedValue(textQuery ?? '', 350);
   const [showSuggestionsLoading, setShowSuggestionsLoading] = useState(false);
   const [displayedSuggestionOptions, setDisplayedSuggestionOptions] = useState<string[]>([]);
+  const [lastSuggestionsUpdateAt, setLastSuggestionsUpdateAt] = useState<number | null>(null);
   const suggestionsLoadingShownAtRef = useRef<number | null>(null);
 
   const suggestionsQuery = useSearchSuggestions({
@@ -84,6 +85,14 @@ export function SearchPage() {
 
   const isDebouncingSuggestions = normalizedLiveSuggestionQuery.length >= 2 && normalizedLiveSuggestionQuery !== normalizedSuggestionQuery;
   const isSuggestionsRefreshing = normalizedSuggestionQuery.length >= 2 && suggestionsQuery.isFetching && displayedSuggestionOptions.length > 0;
+  const suggestionsFreshnessLabel = useMemo(() => {
+    if (!lastSuggestionsUpdateAt) return null;
+    const seconds = Math.max(0, Math.round((Date.now() - lastSuggestionsUpdateAt) / 1000));
+    if (seconds <= 4) return 'Sugestões atualizadas agora.';
+    if (seconds < 60) return `Sugestões atualizadas há ${seconds}s.`;
+    const minutes = Math.round(seconds / 60);
+    return `Sugestões atualizadas há ${minutes}min.`;
+  }, [lastSuggestionsUpdateAt, suggestionsQuery.data]);
 
   useEffect(() => {
     if (categories.length && !selectedCategories?.length) {
@@ -103,6 +112,7 @@ export function SearchPage() {
 
     if (suggestionOptions.length > 0 || (!suggestionsQuery.isFetching && !suggestionsQuery.isError)) {
       setDisplayedSuggestionOptions(suggestionOptions);
+      setLastSuggestionsUpdateAt(Date.now());
     }
   }, [normalizedLiveSuggestionQuery.length, suggestionOptions, suggestionsQuery.isFetching, suggestionsQuery.isError, displayedSuggestionOptions.length]);
 
@@ -295,6 +305,12 @@ export function SearchPage() {
               ) : null}
               {!showSuggestionsLoading && suggestionsQuery.isError && displayedSuggestionOptions.length > 0 ? (
                 <span style={{ fontSize: '0.8rem', color: '#b45309' }}>Não foi possível atualizar sugestões agora. Mantendo últimas opções.</span>
+              ) : null}
+              {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && normalizedLiveSuggestionQuery.length >= 2 && !suggestionsQuery.isFetching && !suggestionsQuery.isError && displayedSuggestionOptions.length === 0 ? (
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Sem sugestões para o termo atual.</span>
+              ) : null}
+              {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && suggestionsFreshnessLabel ? (
+                <span style={{ fontSize: '0.76rem', color: '#94a3b8' }}>{suggestionsFreshnessLabel}</span>
               ) : null}
             </div>
 

@@ -62,6 +62,8 @@ export interface DocumentInsightActionHint {
   action: string;
   reason: string;
   priority: 'HIGH' | 'MEDIUM' | 'LOW' | string;
+  suggestedValue?: string;
+  evidenceExcerpt?: string;
 }
 
 export interface DocumentInsightResponse {
