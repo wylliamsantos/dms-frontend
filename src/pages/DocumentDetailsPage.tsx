@@ -419,6 +419,25 @@ export function DocumentDetailsPage() {
                       </div>
                     ) : null}
 
+                    {insight.ocrHintAdoption ? (
+                      <div style={{ marginTop: '0.9rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Adoção OCR_HINT</strong>
+                        <div style={{ fontSize: '0.82rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          <span>Documento: {Math.round((insight.ocrHintAdoption.documentOcrHintRate ?? 0) * 100)}% ({insight.ocrHintAdoption.documentOcrHintUpdates}/{insight.ocrHintAdoption.documentTotalUpdates})</span>
+                          <span>Categoria: {Math.round((insight.ocrHintAdoption.categoryOcrHintRate ?? 0) * 100)}% ({insight.ocrHintAdoption.categoryOcrHintUpdates}/{insight.ocrHintAdoption.categoryTotalUpdates})</span>
+                        </div>
+                        {insight.ocrHintAdoption.trend?.length ? (
+                          <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            {insight.ocrHintAdoption.trend.map((point) => (
+                              <div key={point.label} style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                                {point.label}: {Math.round((point.ocrHintRate ?? 0) * 100)}% OCR_HINT ({point.ocrHintUpdates}/{point.totalUpdates})
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+
                     <div style={{ marginTop: '0.9rem' }}>
                       <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Histórico curto (origem OCR_HINT)</strong>
                       {ocrHintHistory.length ? (

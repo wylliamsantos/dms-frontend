@@ -106,6 +106,23 @@ export interface MetadataUpdateHistoryCategorySummaryResponse {
   byField: MetadataUpdateHistoryBucket[];
 }
 
+export interface MetadataUpdateAdoptionTrendPoint {
+  label: string;
+  totalUpdates: number;
+  ocrHintUpdates: number;
+  ocrHintRate: number;
+}
+
+export interface MetadataUpdateOcrHintAdoption {
+  documentTotalUpdates: number;
+  documentOcrHintUpdates: number;
+  documentOcrHintRate: number;
+  categoryTotalUpdates: number;
+  categoryOcrHintUpdates: number;
+  categoryOcrHintRate: number;
+  trend: MetadataUpdateAdoptionTrendPoint[];
+}
+
 export interface MetadataRegressionAlert {
   dimension: 'SOURCE' | 'FIELD' | string;
   key: string;
@@ -139,6 +156,7 @@ export interface DocumentInsightResponse {
   metadataActionHints?: DocumentInsightActionHint[];
   metadataUpdateHistory?: MetadataUpdateHistoryEntry[];
   metadataRegressionAlerts?: MetadataRegressionAlert[];
+  ocrHintAdoption?: MetadataUpdateOcrHintAdoption;
   ocrStats?: Record<string, unknown>;
 }
 
