@@ -120,6 +120,7 @@ export interface MetadataUpdateOcrHintAdoption {
   categoryTotalUpdates: number;
   categoryOcrHintUpdates: number;
   categoryOcrHintRate: number;
+  lookbackDaysApplied: number;
   trend: MetadataUpdateAdoptionTrendPoint[];
 }
 

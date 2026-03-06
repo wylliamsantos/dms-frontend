@@ -40,11 +40,13 @@ export async function fetchDocumentVersionDiff(documentId: string, baseVersion: 
   return response.data;
 }
 
-export async function fetchDocumentInsight(documentId: string, version?: string) {
+export async function fetchDocumentInsight(documentId: string, version?: string, ocrHintLookbackDays = 30) {
   const path = version
     ? `/v1/documents/${documentId}/${version}/insights`
     : `/v1/documents/${documentId}/insights`;
-  const response = await documentApi.get<DocumentInsightResponse>(path);
+  const response = await documentApi.get<DocumentInsightResponse>(path, {
+    params: { ocrHintLookbackDays }
+  });
   return response.data;
 }
 

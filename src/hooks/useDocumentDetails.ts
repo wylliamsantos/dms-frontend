@@ -72,12 +72,12 @@ export function useDocumentVersionDiff(
   });
 }
 
-export function useDocumentInsight(documentId: string | undefined, version?: string) {
+export function useDocumentInsight(documentId: string | undefined, version?: string, ocrHintLookbackDays = 30) {
   return useQuery({
-    queryKey: ['document-insight', documentId, version],
+    queryKey: ['document-insight', documentId, version, ocrHintLookbackDays],
     queryFn: () => {
       if (!documentId) throw new Error('documentId is required');
-      return fetchDocumentInsight(documentId, version);
+      return fetchDocumentInsight(documentId, version, ocrHintLookbackDays);
     },
     enabled: Boolean(documentId)
   });
