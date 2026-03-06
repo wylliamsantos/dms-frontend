@@ -240,7 +240,9 @@ export function DocumentDetailsPage() {
       ? 'Chat temporariamente indisponível: feature flag local desativada.'
       : undefined;
   const ragStatus = ragContextQuery.data?.status;
-  const missingRequiredMetadata = insightQuery.data?.missingRequiredMetadata ?? [];
+  const missingRequiredMetadata = ragContextQuery.data?.missingRequiredMetadata?.length
+    ? ragContextQuery.data.missingRequiredMetadata
+    : (insightQuery.data?.missingRequiredMetadata ?? []);
   const ragStatusTone = ragStatus === 'READY'
     ? { background: '#ecfdf5', color: '#166534', border: '#86efac' }
     : ragStatus === 'QUALITY_GATED'

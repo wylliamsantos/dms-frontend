@@ -94,6 +94,7 @@ export interface DocumentRagContextResponse {
   averageScore?: number;
   latencyMs?: number;
   qualityBand?: 'HIGH' | 'MEDIUM' | 'LOW' | 'BLOCKED' | string;
+  missingRequiredMetadata?: string[];
   chunks: DocumentRagChunk[];
 }
 
