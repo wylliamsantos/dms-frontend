@@ -55,6 +55,7 @@ export interface MetadataHistoryFilters {
   field?: string;
   updatedFrom?: string;
   updatedTo?: string;
+  ocrHintAction?: 'APPLIED' | 'CANCELLED' | 'ERROR' | 'ALL' | string;
 }
 
 export async function fetchDocumentMetadataHistory(
@@ -74,7 +75,8 @@ export async function fetchDocumentMetadataHistory(
       source: filters?.source,
       field: filters?.field,
       updatedFrom: filters?.updatedFrom,
-      updatedTo: filters?.updatedTo
+      updatedTo: filters?.updatedTo,
+      ocrHintAction: filters?.ocrHintAction
     }
   });
   return response.data;
@@ -93,7 +95,8 @@ export async function fetchDocumentMetadataHistorySummary(
       source: filters?.source,
       field: filters?.field,
       updatedFrom: filters?.updatedFrom,
-      updatedTo: filters?.updatedTo
+      updatedTo: filters?.updatedTo,
+      ocrHintAction: filters?.ocrHintAction
     }
   });
   return response.data;
@@ -112,7 +115,8 @@ export async function fetchDocumentMetadataHistoryCategorySummary(
       source: filters?.source,
       field: filters?.field,
       updatedFrom: filters?.updatedFrom,
-      updatedTo: filters?.updatedTo
+      updatedTo: filters?.updatedTo,
+      ocrHintAction: filters?.ocrHintAction
     }
   });
   return response.data;
