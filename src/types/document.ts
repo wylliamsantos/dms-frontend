@@ -95,6 +95,17 @@ export interface MetadataUpdateHistorySummaryResponse {
   byField: MetadataUpdateHistoryBucket[];
 }
 
+export interface MetadataUpdateHistoryCategorySummaryResponse {
+  category?: string;
+  totalDocumentsInCategory: number;
+  totalDocumentsWithUpdates: number;
+  totalEntries: number;
+  filteredEntries: number;
+  latestUpdatedAt?: string;
+  bySource: MetadataUpdateHistoryBucket[];
+  byField: MetadataUpdateHistoryBucket[];
+}
+
 export interface DocumentInsightResponse {
   documentId: string;
   version?: string;
