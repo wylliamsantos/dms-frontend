@@ -17,7 +17,7 @@ import {
   useDocumentRagContext,
   useDocumentVersions
 } from '@/hooks/useDocumentDetails';
-import { chatByDocument, updateDocumentMetadata } from '@/api/document';
+import { chatByDocument, fetchDocumentMetadataHistory, updateDocumentMetadata } from '@/api/document';
 import { listWorkflowHistory } from '@/api/workflow';
 import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
 import { formatDateTime } from '@/utils/format';
@@ -57,6 +57,7 @@ export function DocumentDetailsPage() {
   const [showFullOcrText, setShowFullOcrText] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [metadataHintFeedback, setMetadataHintFeedback] = useState<string | null>(null);
+  const [metadataHistoryPage, setMetadataHistoryPage] = useState(0);
   const { t, i18n } = useTranslation();
 
   const informationQuery = useDocumentInformation(documentId, activeVersion);
@@ -66,6 +67,11 @@ export function DocumentDetailsPage() {
   const workflowHistoryQuery = useQuery({
     queryKey: ['workflow-history', documentId],
     queryFn: () => listWorkflowHistory(documentId as string),
+    enabled: Boolean(documentId)
+  });
+  const metadataHistoryQuery = useQuery({
+    queryKey: ['document-metadata-history', documentId, activeVersion, metadataHistoryPage],
+    queryFn: () => fetchDocumentMetadataHistory(documentId as string, metadataHistoryPage, 10, activeVersion),
     enabled: Boolean(documentId)
   });
   const chatMutation = useMutation({
@@ -101,7 +107,8 @@ export function DocumentDetailsPage() {
       await Promise.all([
         informationQuery.refetch(),
         insightQuery.refetch(),
-        ragContextQuery.refetch()
+        ragContextQuery.refetch(),
+        metadataHistoryQuery.refetch()
       ]);
       window.setTimeout(() => setMetadataHintFeedback(null), 2600);
     },
@@ -129,6 +136,10 @@ export function DocumentDetailsPage() {
       setActiveVersion(infoEntry.version);
     }
   }, [informationQuery.data?.entry, activeVersion]);
+
+  useEffect(() => {
+    setMetadataHistoryPage(0);
+  }, [activeVersion]);
 
   useEffect(() => {
     if (!preferBinaryPreview) {
@@ -300,6 +311,12 @@ export function DocumentDetailsPage() {
       : ragStatus === 'TENANT_DISABLED' || ragStatus === 'DISABLED' || ragStatus === 'CATEGORY_DISABLED'
         ? { background: '#fffbeb', color: '#92400e', border: '#fcd34d' }
         : { background: '#f8fafc', color: '#475569', border: '#cbd5e1' };
+  const metadataHistoryItems = metadataHistoryQuery.data?.content?.length
+    ? metadataHistoryQuery.data.content
+    : (insightQuery.data?.metadataUpdateHistory ?? []);
+  const metadataHistoryTotal = metadataHistoryQuery.data?.totalElements ?? metadataHistoryItems.length;
+  const metadataHistorySize = metadataHistoryQuery.data?.size ?? 10;
+  const metadataHistoryPageCount = Math.max(1, Math.ceil(metadataHistoryTotal / Math.max(1, metadataHistorySize)));
 
   return (
     <div className="page-document-details">
@@ -500,11 +517,11 @@ export function DocumentDetailsPage() {
                     ) : null}
                   </div>
                 ) : null}
-                {insightQuery.data?.metadataUpdateHistory?.length ? (
+                {metadataHistoryItems.length ? (
                   <div style={{ marginBottom: '0.75rem' }}>
-                    <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Histórico recente de ajustes de metadados</strong>
+                    <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Histórico de ajustes de metadados</strong>
                     <ul style={{ margin: 0, paddingLeft: '1.1rem', color: '#334155' }}>
-                      {insightQuery.data.metadataUpdateHistory.slice(0, 5).map((entry, idx) => (
+                      {metadataHistoryItems.map((entry, idx) => (
                         <li key={`history-${entry.field}-${entry.updatedAt ?? idx}`} style={{ marginBottom: '0.3rem' }}>
                           <strong>{entry.field}</strong>: <code>{entry.previousValue ?? '∅'}</code> → <code>{entry.newValue ?? '∅'}</code>
                           <span style={{ color: '#64748b' }}>
@@ -514,6 +531,29 @@ export function DocumentDetailsPage() {
                         </li>
                       ))}
                     </ul>
+                    <div style={{ marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <button
+                        type="button"
+                        className="button button--ghost"
+                        onClick={() => setMetadataHistoryPage((current) => Math.max(0, current - 1))}
+                        disabled={metadataHistoryPage <= 0 || metadataHistoryQuery.isLoading}
+                        style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem' }}
+                      >
+                        Anterior
+                      </button>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                        Página {Math.min(metadataHistoryPage + 1, metadataHistoryPageCount)} de {metadataHistoryPageCount} · {metadataHistoryTotal} itens
+                      </span>
+                      <button
+                        type="button"
+                        className="button button--ghost"
+                        onClick={() => setMetadataHistoryPage((current) => Math.min(metadataHistoryPageCount - 1, current + 1))}
+                        disabled={metadataHistoryPage >= metadataHistoryPageCount - 1 || metadataHistoryQuery.isLoading}
+                        style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem' }}
+                      >
+                        Próxima
+                      </button>
+                    </div>
                   </div>
                 ) : null}
                 <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 0 }}>
