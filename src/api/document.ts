@@ -10,7 +10,8 @@ import {
   DocumentRagContextResponse,
   DocumentChatResponse,
   MetadataUpdateHistoryPageResponse,
-  MetadataUpdateHistorySummaryResponse
+  MetadataUpdateHistorySummaryResponse,
+  MetadataUpdateHistoryCategorySummaryResponse
 } from '@/types/document';
 
 export async function listCategories(): Promise<DocumentCategory[]> {
@@ -86,6 +87,25 @@ export async function fetchDocumentMetadataHistorySummary(
     ? `/v1/documents/${documentId}/${version}/metadata/history/summary`
     : `/v1/documents/${documentId}/metadata/history/summary`;
   const response = await documentApi.get<MetadataUpdateHistorySummaryResponse>(path, {
+    params: {
+      source: filters?.source,
+      field: filters?.field,
+      updatedFrom: filters?.updatedFrom,
+      updatedTo: filters?.updatedTo
+    }
+  });
+  return response.data;
+}
+
+export async function fetchDocumentMetadataHistoryCategorySummary(
+  documentId: string,
+  version?: string,
+  filters?: MetadataHistoryFilters
+) {
+  const path = version
+    ? `/v1/documents/${documentId}/${version}/metadata/history/summary/category`
+    : `/v1/documents/${documentId}/metadata/history/summary/category`;
+  const response = await documentApi.get<MetadataUpdateHistoryCategorySummaryResponse>(path, {
     params: {
       source: filters?.source,
       field: filters?.field,

@@ -17,7 +17,7 @@ import {
   useDocumentRagContext,
   useDocumentVersions
 } from '@/hooks/useDocumentDetails';
-import { chatByDocument, fetchDocumentMetadataHistory, fetchDocumentMetadataHistorySummary, updateDocumentMetadata } from '@/api/document';
+import { chatByDocument, fetchDocumentMetadataHistory, fetchDocumentMetadataHistoryCategorySummary, fetchDocumentMetadataHistorySummary, updateDocumentMetadata } from '@/api/document';
 import { listWorkflowHistory } from '@/api/workflow';
 import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
 import { formatDateTime } from '@/utils/format';
@@ -110,6 +110,24 @@ export function DocumentDetailsPage() {
     }),
     enabled: Boolean(documentId)
   });
+  const metadataHistoryCategorySummaryQuery = useQuery({
+    queryKey: [
+      'document-metadata-history-summary-category',
+      documentId,
+      activeVersion,
+      metadataHistorySource,
+      metadataHistoryField,
+      metadataHistoryUpdatedFrom,
+      metadataHistoryUpdatedTo
+    ],
+    queryFn: () => fetchDocumentMetadataHistoryCategorySummary(documentId as string, activeVersion, {
+      source: metadataHistorySource || undefined,
+      field: metadataHistoryField || undefined,
+      updatedFrom: metadataHistoryUpdatedFrom || undefined,
+      updatedTo: metadataHistoryUpdatedTo || undefined
+    }),
+    enabled: Boolean(documentId)
+  });
   const chatMutation = useMutation({
     mutationFn: (message: string) => chatByDocument(documentId as string, message, activeVersion),
     onError: () => {
@@ -145,7 +163,8 @@ export function DocumentDetailsPage() {
         insightQuery.refetch(),
         ragContextQuery.refetch(),
         metadataHistoryQuery.refetch(),
-        metadataHistorySummaryQuery.refetch()
+        metadataHistorySummaryQuery.refetch(),
+        metadataHistoryCategorySummaryQuery.refetch()
       ]);
       window.setTimeout(() => setMetadataHintFeedback(null), 2600);
     },
@@ -613,6 +632,20 @@ export function DocumentDetailsPage() {
                         {metadataHistorySummaryQuery.data.byField.length ? (
                           <p style={{ margin: '0.2rem 0 0', fontSize: '0.76rem', color: '#334155' }}>
                             Top campos: {metadataHistorySummaryQuery.data.byField.map((bucket) => `${bucket.key} (${bucket.count})`).join(' · ')}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {metadataHistoryCategorySummaryQuery.data ? (
+                      <div style={{ marginBottom: '0.55rem', border: '1px solid #dbeafe', borderRadius: '0.55rem', padding: '0.45rem 0.6rem', background: '#eff6ff' }}>
+                        <p style={{ margin: 0, fontSize: '0.78rem', color: '#1e3a8a' }}>
+                          Benchmark categoria {metadataHistoryCategorySummaryQuery.data.category || 'N/A'}: {metadataHistoryCategorySummaryQuery.data.filteredEntries} de {metadataHistoryCategorySummaryQuery.data.totalEntries} ajustes
+                          {' · '}
+                          docs com histórico {metadataHistoryCategorySummaryQuery.data.totalDocumentsWithUpdates}/{metadataHistoryCategorySummaryQuery.data.totalDocumentsInCategory}
+                        </p>
+                        {metadataHistoryCategorySummaryQuery.data.bySource.length ? (
+                          <p style={{ margin: '0.2rem 0 0', fontSize: '0.76rem', color: '#1e40af' }}>
+                            Top sources (categoria): {metadataHistoryCategorySummaryQuery.data.bySource.map((bucket) => `${bucket.key} (${bucket.count})`).join(' · ')}
                           </p>
                         ) : null}
                       </div>
