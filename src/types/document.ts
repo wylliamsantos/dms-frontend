@@ -72,6 +72,8 @@ export interface DocumentInsightResponse {
   importantPersistedMetadata?: Record<string, unknown>;
   persistedMetadataCount?: number;
   hasPersistedOcrText?: boolean;
+  expectedRequiredMetadata?: string[];
+  missingRequiredMetadata?: string[];
   ocrStats?: Record<string, unknown>;
 }
 
