@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { DocumentPreview } from '@/components/DocumentPreview';
 import { ErrorState } from '@/components/ErrorState';
@@ -13,9 +13,11 @@ import {
   useDocumentBase64,
   useDocumentBinary,
   useDocumentInformation,
+  useDocumentInsight,
+  useDocumentRagContext,
   useDocumentVersions
 } from '@/hooks/useDocumentDetails';
-import { chatByDocument } from '@/api/document';
+import { chatByDocument, updateDocumentMetadata } from '@/api/document';
 import { listWorkflowHistory } from '@/api/workflow';
 import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
 import { formatDateTime } from '@/utils/format';
@@ -61,6 +63,7 @@ export function DocumentDetailsPage() {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
 
   const informationQuery = useDocumentInformation(documentId, activeVersion);
   const versionsQuery = useDocumentVersions(documentId);
@@ -68,6 +71,36 @@ export function DocumentDetailsPage() {
     queryKey: ['workflow-history', documentId],
     queryFn: () => listWorkflowHistory(documentId as string),
     enabled: Boolean(documentId)
+  });
+  const insightQuery = useDocumentInsight(documentId, activeVersion);
+  const ragContextQuery = useDocumentRagContext(documentId, activeVersion);
+
+  const applyMetadataHintMutation = useMutation({
+    mutationFn: async ({ field, suggestedValue }: { field: string; suggestedValue: string }) => {
+      if (!documentId || !entry?.name) throw new Error('Documento sem contexto para atualização de metadados.');
+      const currentProperties = (entry.properties ?? {}) as Record<string, unknown>;
+      const mergedProperties = {
+        ...currentProperties,
+        [field]: suggestedValue
+      };
+      await updateDocumentMetadata(
+        documentId,
+        {
+          fileName: entry.name,
+          properties: mergedProperties
+        },
+        {
+          source: 'OCR_HINT'
+        }
+      );
+      return { field, suggestedValue };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['document-information', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['document-insight', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['document-rag-context', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['document-versions', documentId] });
+    }
   });
 
   const chatMutation = useMutation({
@@ -207,6 +240,13 @@ export function DocumentDetailsPage() {
     await chatMutation.mutateAsync(message);
   };
 
+  const handleApplyHint = async (field: string, suggestedValue?: string) => {
+    if (!field || !suggestedValue) return;
+    const confirmed = window.confirm(`Aplicar sugestão OCR para "${field}" com valor "${suggestedValue}"?`);
+    if (!confirmed) return;
+    await applyMetadataHintMutation.mutateAsync({ field, suggestedValue });
+  };
+
   if (!documentId) {
     return <ErrorState title={t('details.invalidTitle')} description={t('details.invalidDescription')} />;
   }
@@ -238,6 +278,13 @@ export function DocumentDetailsPage() {
   const currentVersionLabel = entry?.version
     ? `${entry.version}${entry?.versionType ? ` · ${entry.versionType}` : ''}`
     : undefined;
+
+  const insight = insightQuery.data;
+  const ragContext = ragContextQuery.data;
+  const metadataHints = insight?.metadataActionHints ?? [];
+  const ocrHintHistory = (insight?.metadataUpdateHistory ?? [])
+    .filter((item) => String(item.source ?? '').toUpperCase() === 'OCR_HINT')
+    .slice(0, 5);
 
   return (
     <div className="page-document-details">
@@ -317,6 +364,102 @@ export function DocumentDetailsPage() {
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+
+              <div className="card" style={{ marginTop: '1rem' }}>
+                <h3 style={{ marginTop: 0 }}>Insights de OCR/IA</h3>
+                {insightQuery.isLoading ? (
+                  <p style={{ color: '#64748b' }}>Carregando insights...</p>
+                ) : insightQuery.isError || !insight ? (
+                  <p style={{ color: '#b91c1c' }}>Não foi possível carregar os insights do documento.</p>
+                ) : (
+                  <>
+                    <p style={{ marginTop: 0 }}>{insight.summary || 'Sem resumo disponível.'}</p>
+                    {insight.generatedAt ? (
+                      <p style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                        Atualizado em: {formatDate(insight.generatedAt, locale) || insight.generatedAt}
+                      </p>
+                    ) : null}
+                    {(insight.persistedMetadataCount !== undefined || insight.hasPersistedOcrText !== undefined) ? (
+                      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', fontSize: '0.82rem', marginBottom: '0.75rem' }}>
+                        {insight.persistedMetadataCount !== undefined ? <span className="status-pill">Metadados persistidos: {insight.persistedMetadataCount}</span> : null}
+                        {insight.hasPersistedOcrText !== undefined ? <span className="status-pill">OCR persistido: {insight.hasPersistedOcrText ? 'sim' : 'não'}</span> : null}
+                      </div>
+                    ) : null}
+
+                    {metadataHints.length ? (
+                      <div style={{ marginTop: '0.75rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Sugestões acionáveis</strong>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {metadataHints.slice(0, 4).map((hint) => (
+                            <div key={`${hint.field}-${hint.action}`} style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.6rem 0.7rem' }}>
+                              <div style={{ fontSize: '0.85rem', color: '#0f172a' }}>
+                                <strong>{hint.field}</strong> · {hint.reason}
+                              </div>
+                              {hint.suggestedValue ? (
+                                <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '0.25rem' }}>Sugestão: <code>{hint.suggestedValue}</code></div>
+                              ) : null}
+                              {hint.evidenceExcerpt ? (
+                                <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.25rem' }}>Evidência: {hint.evidenceExcerpt}</div>
+                              ) : null}
+                              <div style={{ marginTop: '0.5rem' }}>
+                                <button
+                                  type="button"
+                                  className="button button--ghost"
+                                  onClick={() => handleApplyHint(hint.field, hint.suggestedValue)}
+                                  disabled={applyMetadataHintMutation.isPending || !hint.suggestedValue}
+                                >
+                                  Aplicar sugestão
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div style={{ marginTop: '0.9rem' }}>
+                      <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Histórico curto (origem OCR_HINT)</strong>
+                      {ocrHintHistory.length ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                          {ocrHintHistory.map((item, index) => (
+                            <div key={`${item.field}-${item.updatedAt}-${index}`} style={{ borderLeft: '3px solid #6366f1', paddingLeft: '0.6rem' }}>
+                              <div style={{ fontSize: '0.82rem', color: '#0f172a' }}>
+                                <strong>{item.field}</strong>: <code>{item.previousValue || '-'}</code> → <code>{item.newValue || '-'}</code>
+                              </div>
+                              <div style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                                {formatDate(item.updatedAt, locale) || item.updatedAt || '-'} · {item.updatedBy || 'system'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={{ color: '#64748b', margin: 0 }}>Sem mudanças por OCR_HINT neste documento.</p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="card" style={{ marginTop: '1rem' }}>
+                <h3 style={{ marginTop: 0 }}>RAG documental (MVP)</h3>
+                {ragContextQuery.isLoading ? (
+                  <p style={{ color: '#64748b' }}>Carregando contexto RAG...</p>
+                ) : ragContextQuery.isError || !ragContext ? (
+                  <p style={{ color: '#b91c1c' }}>Não foi possível carregar o contexto RAG.</p>
+                ) : (
+                  <>
+                    <p style={{ marginTop: 0 }}>
+                      Status: <strong>{ragContext.status}</strong> · {ragContext.message}
+                    </p>
+                    {ragContext.qualityBand ? <p style={{ fontSize: '0.84rem', color: '#475569' }}>Faixa de qualidade: {ragContext.qualityBand}</p> : null}
+                    {ragContext.missingRequiredMetadata?.length ? (
+                      <p style={{ fontSize: '0.84rem', color: '#92400e' }}>
+                        Campos obrigatórios faltando: {ragContext.missingRequiredMetadata.join(', ')}
+                      </p>
+                    ) : null}
+                  </>
                 )}
               </div>
             </aside>
