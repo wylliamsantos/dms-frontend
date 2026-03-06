@@ -240,11 +240,14 @@ export function DocumentDetailsPage() {
       ? 'Chat temporariamente indisponível: feature flag local desativada.'
       : undefined;
   const ragStatus = ragContextQuery.data?.status;
+  const missingRequiredMetadata = insightQuery.data?.missingRequiredMetadata ?? [];
   const ragStatusTone = ragStatus === 'READY'
     ? { background: '#ecfdf5', color: '#166534', border: '#86efac' }
-    : ragStatus === 'TENANT_DISABLED' || ragStatus === 'DISABLED'
-      ? { background: '#fffbeb', color: '#92400e', border: '#fcd34d' }
-      : { background: '#f8fafc', color: '#475569', border: '#cbd5e1' };
+    : ragStatus === 'QUALITY_GATED'
+      ? { background: '#fff7ed', color: '#9a3412', border: '#fdba74' }
+      : ragStatus === 'TENANT_DISABLED' || ragStatus === 'DISABLED' || ragStatus === 'CATEGORY_DISABLED'
+        ? { background: '#fffbeb', color: '#92400e', border: '#fcd34d' }
+        : { background: '#f8fafc', color: '#475569', border: '#cbd5e1' };
 
   return (
     <div className="page-document-details">
@@ -427,6 +430,11 @@ export function DocumentDetailsPage() {
             ) : null}
             {!isChatDisabled && ragContextQuery.data?.message ? (
               <p style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '-0.2rem' }}>{ragContextQuery.data.message}</p>
+            ) : null}
+            {!isChatDisabled && ragStatus === 'QUALITY_GATED' && missingRequiredMetadata.length ? (
+              <p style={{ fontSize: '0.82rem', color: '#b45309', marginTop: '-0.1rem' }}>
+                Para liberar o chat com RAG, complete os metadados obrigatórios faltantes: {missingRequiredMetadata.join(', ')}.
+              </p>
             ) : null}
             {!isChatDisabled && ragContextQuery.data ? (
               <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '-0.25rem' }}>
