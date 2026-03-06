@@ -110,15 +110,21 @@ export interface MetadataUpdateAdoptionTrendPoint {
   label: string;
   totalUpdates: number;
   ocrHintUpdates: number;
+  ocrHintCancelUpdates: number;
+  ocrHintErrorUpdates: number;
   ocrHintRate: number;
 }
 
 export interface MetadataUpdateOcrHintAdoption {
   documentTotalUpdates: number;
   documentOcrHintUpdates: number;
+  documentOcrHintCancelUpdates: number;
+  documentOcrHintErrorUpdates: number;
   documentOcrHintRate: number;
   categoryTotalUpdates: number;
   categoryOcrHintUpdates: number;
+  categoryOcrHintCancelUpdates: number;
+  categoryOcrHintErrorUpdates: number;
   categoryOcrHintRate: number;
   lookbackDaysApplied: number;
   trend: MetadataUpdateAdoptionTrendPoint[];

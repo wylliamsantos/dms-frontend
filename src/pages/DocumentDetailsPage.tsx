@@ -439,15 +439,17 @@ export function DocumentDetailsPage() {
                           </label>
                         </div>
                         <div style={{ fontSize: '0.82rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                          <span>Documento: {Math.round((insight.ocrHintAdoption.documentOcrHintRate ?? 0) * 100)}% ({insight.ocrHintAdoption.documentOcrHintUpdates}/{insight.ocrHintAdoption.documentTotalUpdates})</span>
-                          <span>Categoria: {Math.round((insight.ocrHintAdoption.categoryOcrHintRate ?? 0) * 100)}% ({insight.ocrHintAdoption.categoryOcrHintUpdates}/{insight.ocrHintAdoption.categoryTotalUpdates})</span>
+                          <span>Documento: {Math.round((insight.ocrHintAdoption.documentOcrHintRate ?? 0) * 100)}% aplicado ({insight.ocrHintAdoption.documentOcrHintUpdates}/{insight.ocrHintAdoption.documentTotalUpdates})</span>
+                          <span style={{ fontSize: '0.76rem', color: '#64748b' }}>Funil doc: aplicado {insight.ocrHintAdoption.documentOcrHintUpdates} · cancelado {insight.ocrHintAdoption.documentOcrHintCancelUpdates} · erro {insight.ocrHintAdoption.documentOcrHintErrorUpdates}</span>
+                          <span>Categoria: {Math.round((insight.ocrHintAdoption.categoryOcrHintRate ?? 0) * 100)}% aplicado ({insight.ocrHintAdoption.categoryOcrHintUpdates}/{insight.ocrHintAdoption.categoryTotalUpdates})</span>
+                          <span style={{ fontSize: '0.76rem', color: '#64748b' }}>Funil categoria: aplicado {insight.ocrHintAdoption.categoryOcrHintUpdates} · cancelado {insight.ocrHintAdoption.categoryOcrHintCancelUpdates} · erro {insight.ocrHintAdoption.categoryOcrHintErrorUpdates}</span>
                           <span style={{ fontSize: '0.76rem', color: '#64748b' }}>Período aplicado: últimos {insight.ocrHintAdoption.lookbackDaysApplied} dias.</span>
                         </div>
                         {insight.ocrHintAdoption.trend?.length ? (
                           <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                             {insight.ocrHintAdoption.trend.map((point) => (
                               <div key={point.label} style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                                {point.label}: {Math.round((point.ocrHintRate ?? 0) * 100)}% OCR_HINT ({point.ocrHintUpdates}/{point.totalUpdates})
+                                {point.label}: {Math.round((point.ocrHintRate ?? 0) * 100)}% aplicado ({point.ocrHintUpdates}/{point.totalUpdates}) · cxl {point.ocrHintCancelUpdates} · erro {point.ocrHintErrorUpdates}
                               </div>
                             ))}
                           </div>
