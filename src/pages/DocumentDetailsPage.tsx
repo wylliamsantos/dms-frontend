@@ -62,6 +62,7 @@ export function DocumentDetailsPage() {
   const [chatUnreadCount, setChatUnreadCount] = useState(0);
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [ocrHintLookbackDays, setOcrHintLookbackDays] = useState(30);
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -72,7 +73,7 @@ export function DocumentDetailsPage() {
     queryFn: () => listWorkflowHistory(documentId as string),
     enabled: Boolean(documentId)
   });
-  const insightQuery = useDocumentInsight(documentId, activeVersion);
+  const insightQuery = useDocumentInsight(documentId, activeVersion, ocrHintLookbackDays);
   const ragContextQuery = useDocumentRagContext(documentId, activeVersion);
 
   const applyMetadataHintMutation = useMutation({
@@ -421,10 +422,26 @@ export function DocumentDetailsPage() {
 
                     {insight.ocrHintAdoption ? (
                       <div style={{ marginTop: '0.9rem' }}>
-                        <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Adoção OCR_HINT</strong>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                          <strong style={{ display: 'block' }}>Adoção OCR_HINT</strong>
+                          <label style={{ fontSize: '0.76rem', color: '#64748b', display: 'inline-flex', gap: '0.35rem', alignItems: 'center' }}>
+                            Janela
+                            <select
+                              className="select-input"
+                              value={ocrHintLookbackDays}
+                              onChange={(event) => setOcrHintLookbackDays(Number(event.target.value))}
+                              style={{ fontSize: '0.76rem', padding: '0.2rem 0.35rem', minWidth: '5.5rem' }}
+                            >
+                              <option value={7}>7 dias</option>
+                              <option value={30}>30 dias</option>
+                              <option value={90}>90 dias</option>
+                            </select>
+                          </label>
+                        </div>
                         <div style={{ fontSize: '0.82rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                           <span>Documento: {Math.round((insight.ocrHintAdoption.documentOcrHintRate ?? 0) * 100)}% ({insight.ocrHintAdoption.documentOcrHintUpdates}/{insight.ocrHintAdoption.documentTotalUpdates})</span>
                           <span>Categoria: {Math.round((insight.ocrHintAdoption.categoryOcrHintRate ?? 0) * 100)}% ({insight.ocrHintAdoption.categoryOcrHintUpdates}/{insight.ocrHintAdoption.categoryTotalUpdates})</span>
+                          <span style={{ fontSize: '0.76rem', color: '#64748b' }}>Período aplicado: últimos {insight.ocrHintAdoption.lookbackDaysApplied} dias.</span>
                         </div>
                         {insight.ocrHintAdoption.trend?.length ? (
                           <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
