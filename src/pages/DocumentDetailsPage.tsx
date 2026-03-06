@@ -417,6 +417,16 @@ export function DocumentDetailsPage() {
                       {insightQuery.data.metadataActionHints.map((hint, idx) => (
                         <li key={`hint-${hint.field}-${idx}`} style={{ marginBottom: '0.35rem' }}>
                           <strong>{hint.field}</strong> · {hint.action} · {hint.reason}
+                          {hint.suggestedValue ? (
+                            <div style={{ fontSize: '0.82rem', color: '#0f766e', marginTop: '0.18rem' }}>
+                              Sugestão OCR: <code>{hint.suggestedValue}</code>
+                            </div>
+                          ) : null}
+                          {hint.evidenceExcerpt ? (
+                            <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.12rem' }}>
+                              {hint.evidenceExcerpt}
+                            </div>
+                          ) : null}
                         </li>
                       ))}
                     </ul>
