@@ -85,10 +85,16 @@ export function DocumentDetailsPage() {
         [field]: value
       };
 
-      return updateDocumentMetadata(documentId, {
-        fileName: entry.name,
-        properties: mergedProperties
-      });
+      return updateDocumentMetadata(
+        documentId,
+        {
+          fileName: entry.name,
+          properties: mergedProperties
+        },
+        {
+          source: 'OCR_HINT'
+        }
+      );
     },
     onSuccess: async () => {
       setMetadataHintFeedback('Metadado preenchido com sugestão OCR. Confirme e revise antes de seguir.');
@@ -492,6 +498,22 @@ export function DocumentDetailsPage() {
                         {metadataHintFeedback}
                       </p>
                     ) : null}
+                  </div>
+                ) : null}
+                {insightQuery.data?.metadataUpdateHistory?.length ? (
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Histórico recente de ajustes de metadados</strong>
+                    <ul style={{ margin: 0, paddingLeft: '1.1rem', color: '#334155' }}>
+                      {insightQuery.data.metadataUpdateHistory.slice(0, 5).map((entry, idx) => (
+                        <li key={`history-${entry.field}-${entry.updatedAt ?? idx}`} style={{ marginBottom: '0.3rem' }}>
+                          <strong>{entry.field}</strong>: <code>{entry.previousValue ?? '∅'}</code> → <code>{entry.newValue ?? '∅'}</code>
+                          <span style={{ color: '#64748b' }}>
+                            {' '}
+                            ({entry.source || 'MANUAL'}{entry.updatedBy ? ` · ${entry.updatedBy}` : ''}{entry.updatedAt ? ` · ${formatDateTime(normalizeIso(entry.updatedAt))}` : ''})
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 ) : null}
                 <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 0 }}>
