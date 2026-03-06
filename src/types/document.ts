@@ -82,6 +82,19 @@ export interface MetadataUpdateHistoryPageResponse {
   size: number;
 }
 
+export interface MetadataUpdateHistoryBucket {
+  key: string;
+  count: number;
+}
+
+export interface MetadataUpdateHistorySummaryResponse {
+  totalEntries: number;
+  filteredEntries: number;
+  latestUpdatedAt?: string;
+  bySource: MetadataUpdateHistoryBucket[];
+  byField: MetadataUpdateHistoryBucket[];
+}
+
 export interface DocumentInsightResponse {
   documentId: string;
   version?: string;
