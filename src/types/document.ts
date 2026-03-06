@@ -57,6 +57,13 @@ export interface DocumentInsightSignal {
   active: boolean;
 }
 
+export interface DocumentInsightActionHint {
+  field: string;
+  action: string;
+  reason: string;
+  priority: 'HIGH' | 'MEDIUM' | 'LOW' | string;
+}
+
 export interface DocumentInsightResponse {
   documentId: string;
   version?: string;
@@ -74,6 +81,7 @@ export interface DocumentInsightResponse {
   hasPersistedOcrText?: boolean;
   expectedRequiredMetadata?: string[];
   missingRequiredMetadata?: string[];
+  metadataActionHints?: DocumentInsightActionHint[];
   ocrStats?: Record<string, unknown>;
 }
 
