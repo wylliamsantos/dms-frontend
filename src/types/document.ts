@@ -106,6 +106,18 @@ export interface MetadataUpdateHistoryCategorySummaryResponse {
   byField: MetadataUpdateHistoryBucket[];
 }
 
+export interface MetadataRegressionAlert {
+  dimension: 'SOURCE' | 'FIELD' | string;
+  key: string;
+  documentCount: number;
+  categoryCount: number;
+  documentRatio: number;
+  categoryRatio: number;
+  deltaRatio: number;
+  severity: 'HIGH' | 'MEDIUM' | 'LOW' | string;
+  message: string;
+}
+
 export interface DocumentInsightResponse {
   documentId: string;
   version?: string;
@@ -126,6 +138,7 @@ export interface DocumentInsightResponse {
   requiredMetadataCoveragePercent?: number;
   metadataActionHints?: DocumentInsightActionHint[];
   metadataUpdateHistory?: MetadataUpdateHistoryEntry[];
+  metadataRegressionAlerts?: MetadataRegressionAlert[];
   ocrStats?: Record<string, unknown>;
 }
 

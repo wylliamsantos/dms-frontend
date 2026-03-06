@@ -377,6 +377,16 @@ export function DocumentDetailsPage() {
   const metadataHistoryTotal = metadataHistoryQuery.data?.totalElements ?? metadataHistoryItems.length;
   const metadataHistorySize = metadataHistoryQuery.data?.size ?? 10;
   const metadataHistoryPageCount = Math.max(1, Math.ceil(metadataHistoryTotal / Math.max(1, metadataHistorySize)));
+  const regressionAlertFields = new Set(
+    (insightQuery.data?.metadataRegressionAlerts ?? [])
+      .filter((alert) => alert.dimension === 'FIELD')
+      .map((alert) => alert.key.toLowerCase())
+  );
+  const prioritizedActionHints = [...(insightQuery.data?.metadataActionHints ?? [])].sort((a, b) => {
+    const aScore = regressionAlertFields.has(a.field.toLowerCase()) ? 1 : 0;
+    const bScore = regressionAlertFields.has(b.field.toLowerCase()) ? 1 : 0;
+    return bScore - aScore;
+  });
 
   return (
     <div className="page-document-details">
@@ -537,13 +547,28 @@ export function DocumentDetailsPage() {
                     ) : null}
                   </div>
                 ) : null}
-                {insightQuery.data?.metadataActionHints?.length ? (
+                {insightQuery.data?.metadataRegressionAlerts?.length ? (
+                  <div style={{ marginBottom: '0.75rem', border: '1px solid #fee2e2', borderRadius: '0.55rem', padding: '0.45rem 0.6rem', background: '#fff1f2' }}>
+                    <strong style={{ display: 'block', marginBottom: '0.35rem', color: '#9f1239' }}>Alertas de regressão (OCR/metadados)</strong>
+                    <ul style={{ margin: 0, paddingLeft: '1.1rem', color: '#881337' }}>
+                      {insightQuery.data.metadataRegressionAlerts.map((alert, idx) => (
+                        <li key={`regression-${alert.dimension}-${alert.key}-${idx}`} style={{ marginBottom: '0.25rem' }}>
+                          <strong>{alert.dimension}:{alert.key}</strong> · {alert.severity} · {alert.message}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {prioritizedActionHints.length ? (
                   <div style={{ marginBottom: '0.75rem' }}>
                     <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Próximas ações recomendadas</strong>
                     <ul style={{ margin: 0, paddingLeft: '1.1rem', color: '#334155' }}>
-                      {insightQuery.data.metadataActionHints.map((hint, idx) => (
+                      {prioritizedActionHints.map((hint, idx) => (
                         <li key={`hint-${hint.field}-${idx}`} style={{ marginBottom: '0.35rem' }}>
                           <strong>{hint.field}</strong> · {hint.action} · {hint.reason}
+                          {regressionAlertFields.has(hint.field.toLowerCase()) ? (
+                            <span style={{ marginLeft: '0.35rem', fontSize: '0.72rem', color: '#9f1239', fontWeight: 700 }}>[prioridade por alerta]</span>
+                          ) : null}
                           {hint.suggestedValue ? (
                             <div style={{ fontSize: '0.82rem', color: '#0f766e', marginTop: '0.18rem' }}>
                               Sugestão OCR: <code>{hint.suggestedValue}</code>
