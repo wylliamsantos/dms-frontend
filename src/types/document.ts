@@ -81,6 +81,7 @@ export interface DocumentInsightResponse {
   hasPersistedOcrText?: boolean;
   expectedRequiredMetadata?: string[];
   missingRequiredMetadata?: string[];
+  requiredMetadataCoveragePercent?: number;
   metadataActionHints?: DocumentInsightActionHint[];
   ocrStats?: Record<string, unknown>;
 }
