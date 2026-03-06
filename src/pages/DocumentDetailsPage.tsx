@@ -57,6 +57,7 @@ export function DocumentDetailsPage() {
   const [objectUrl, setObjectUrl] = useState<string | undefined>(undefined);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const { t, i18n } = useTranslation();
@@ -80,6 +81,7 @@ export function DocumentDetailsPage() {
           text: 'Não consegui responder agora. Tente novamente em instantes.'
         }
       ]);
+      if (!isChatOpen) setChatUnreadCount((current) => current + 1);
     },
     onSuccess: (response) => {
       const answer = response.answer?.trim() || response.message || 'Sem resposta no momento.';
@@ -91,6 +93,7 @@ export function DocumentDetailsPage() {
           text: answer
         }
       ]);
+      if (!isChatOpen) setChatUnreadCount((current) => current + 1);
     }
   });
 
@@ -185,6 +188,12 @@ export function DocumentDetailsPage() {
   };
 
   const isChatDisabled = !env.featureDocumentChat || !env.featureRagLocalMvp;
+
+  useEffect(() => {
+    if (isChatOpen) {
+      setChatUnreadCount(0);
+    }
+  }, [isChatOpen]);
 
   const handleSendChat = async () => {
     const message = chatInput.trim();
@@ -326,6 +335,7 @@ export function DocumentDetailsPage() {
         aria-label="Abrir chat do documento"
       >
         💬 Chat
+        {chatUnreadCount > 0 ? <span className="details-chat-fab__badge">{chatUnreadCount > 9 ? '9+' : chatUnreadCount}</span> : null}
       </button>
 
       {isChatOpen ? (
