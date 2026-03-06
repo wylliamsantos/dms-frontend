@@ -66,6 +66,15 @@ export interface DocumentInsightActionHint {
   evidenceExcerpt?: string;
 }
 
+export interface MetadataUpdateHistoryEntry {
+  field: string;
+  previousValue?: string;
+  newValue?: string;
+  source?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
 export interface DocumentInsightResponse {
   documentId: string;
   version?: string;
@@ -85,6 +94,7 @@ export interface DocumentInsightResponse {
   missingRequiredMetadata?: string[];
   requiredMetadataCoveragePercent?: number;
   metadataActionHints?: DocumentInsightActionHint[];
+  metadataUpdateHistory?: MetadataUpdateHistoryEntry[];
   ocrStats?: Record<string, unknown>;
 }
 
