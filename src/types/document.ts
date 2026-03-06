@@ -70,6 +70,8 @@ export interface DocumentInsightResponse {
   signals?: DocumentInsightSignal[];
   persistedMetadataPreview?: Record<string, unknown>;
   importantPersistedMetadata?: Record<string, unknown>;
+  persistedMetadataCount?: number;
+  hasPersistedOcrText?: boolean;
   ocrStats?: Record<string, unknown>;
 }
 

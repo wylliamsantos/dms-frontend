@@ -386,6 +386,8 @@ export function DocumentDetailsPage() {
                 <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 0 }}>
                   Fonte: {insightQuery.data?.source || 'n/a'} · confiança {(insightQuery.data?.confidence ?? 0).toFixed(2)}
                   {insightQuery.data?.confidenceBand ? ` (${insightQuery.data.confidenceBand})` : ''}
+                  {typeof insightQuery.data?.persistedMetadataCount === 'number' ? ` · metadados persistidos ${insightQuery.data.persistedMetadataCount}` : ''}
+                  {typeof insightQuery.data?.hasPersistedOcrText === 'boolean' ? ` · OCR persistido ${insightQuery.data.hasPersistedOcrText ? 'sim' : 'não'}` : ''}
                   {insightQuery.data?.ocrStats && Object.keys(insightQuery.data.ocrStats).length
                     ? ` · OCR ${String(insightQuery.data.ocrStats.words ?? '-')} palavras/${String(insightQuery.data.ocrStats.lines ?? '-')} linhas`
                     : ''}
