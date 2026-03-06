@@ -46,12 +46,32 @@ export async function fetchDocumentInsight(documentId: string, version?: string)
   return response.data;
 }
 
-export async function fetchDocumentMetadataHistory(documentId: string, page = 0, size = 10, version?: string) {
+export interface MetadataHistoryFilters {
+  source?: string;
+  field?: string;
+  updatedFrom?: string;
+  updatedTo?: string;
+}
+
+export async function fetchDocumentMetadataHistory(
+  documentId: string,
+  page = 0,
+  size = 10,
+  version?: string,
+  filters?: MetadataHistoryFilters
+) {
   const path = version
     ? `/v1/documents/${documentId}/${version}/metadata/history`
     : `/v1/documents/${documentId}/metadata/history`;
   const response = await documentApi.get<MetadataUpdateHistoryPageResponse>(path, {
-    params: { page, size }
+    params: {
+      page,
+      size,
+      source: filters?.source,
+      field: filters?.field,
+      updatedFrom: filters?.updatedFrom,
+      updatedTo: filters?.updatedTo
+    }
   });
   return response.data;
 }
