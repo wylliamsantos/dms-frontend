@@ -403,6 +403,11 @@ export function DocumentDetailsPage() {
                         Todos os metadados obrigatórios estão persistidos.
                       </p>
                     )}
+                    {typeof insightQuery.data.requiredMetadataCoveragePercent === 'number' ? (
+                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: '#475569' }}>
+                        Cobertura obrigatória: {insightQuery.data.requiredMetadataCoveragePercent}%
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
                 {insightQuery.data?.metadataActionHints?.length ? (

@@ -97,10 +97,14 @@ export function SearchPage() {
       return;
     }
 
-    if (suggestionOptions.length > 0 || !suggestionsQuery.isFetching) {
+    if (suggestionsQuery.isError && displayedSuggestionOptions.length > 0) {
+      return;
+    }
+
+    if (suggestionOptions.length > 0 || (!suggestionsQuery.isFetching && !suggestionsQuery.isError)) {
       setDisplayedSuggestionOptions(suggestionOptions);
     }
-  }, [normalizedLiveSuggestionQuery.length, suggestionOptions, suggestionsQuery.isFetching]);
+  }, [normalizedLiveSuggestionQuery.length, suggestionOptions, suggestionsQuery.isFetching, suggestionsQuery.isError, displayedSuggestionOptions.length]);
 
   useEffect(() => {
     const hasQuery = debouncedTextQuery.trim().length >= 2;
@@ -288,6 +292,9 @@ export function SearchPage() {
               ) : null}
               {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && textQuery.trim().length > 0 && textQuery.trim().length < 2 ? (
                 <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Digite ao menos 2 caracteres para sugerir termos.</span>
+              ) : null}
+              {!showSuggestionsLoading && suggestionsQuery.isError && displayedSuggestionOptions.length > 0 ? (
+                <span style={{ fontSize: '0.8rem', color: '#b45309' }}>Não foi possível atualizar sugestões agora. Mantendo últimas opções.</span>
               ) : null}
             </div>
 
