@@ -17,7 +17,7 @@ import {
   useDocumentRagContext,
   useDocumentVersions
 } from '@/hooks/useDocumentDetails';
-import { chatByDocument } from '@/api/document';
+import { chatByDocument, updateDocumentMetadata } from '@/api/document';
 import { listWorkflowHistory } from '@/api/workflow';
 import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
 import { formatDateTime } from '@/utils/format';
@@ -56,6 +56,7 @@ export function DocumentDetailsPage() {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [showFullOcrText, setShowFullOcrText] = useState(false);
   const [chatInput, setChatInput] = useState('');
+  const [metadataHintFeedback, setMetadataHintFeedback] = useState<string | null>(null);
   const { t, i18n } = useTranslation();
 
   const informationQuery = useDocumentInformation(documentId, activeVersion);
@@ -71,6 +72,35 @@ export function DocumentDetailsPage() {
     mutationFn: (message: string) => chatByDocument(documentId as string, message, activeVersion),
     onError: () => {
       // handled in UI
+    }
+  });
+  const applyMetadataHintMutation = useMutation({
+    mutationFn: ({ field, value }: { field: string; value: string }) => {
+      if (!documentId || !entry?.name) {
+        throw new Error('Documento inválido para atualização de metadados.');
+      }
+
+      const mergedProperties: Record<string, unknown> = {
+        ...(entry.properties || {}),
+        [field]: value
+      };
+
+      return updateDocumentMetadata(documentId, {
+        fileName: entry.name,
+        properties: mergedProperties
+      });
+    },
+    onSuccess: async () => {
+      setMetadataHintFeedback('Metadado preenchido com sugestão OCR. Confirme e revise antes de seguir.');
+      await Promise.all([
+        informationQuery.refetch(),
+        insightQuery.refetch(),
+        ragContextQuery.refetch()
+      ]);
+      window.setTimeout(() => setMetadataHintFeedback(null), 2600);
+    },
+    onError: () => {
+      setMetadataHintFeedback('Falha ao aplicar sugestão OCR no metadado.');
     }
   });
   const contentMimeType = entry?.content?.mimeType ?? '';
@@ -200,6 +230,20 @@ export function DocumentDetailsPage() {
     const message = chatInput.trim();
     if (!message || isChatDisabled || !documentId) return;
     chatMutation.mutate(message);
+  };
+
+  const handleApplyHintSuggestedValue = (field: string, suggestedValue?: string) => {
+    const value = suggestedValue?.trim();
+    if (!field || !value || applyMetadataHintMutation.isPending) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Aplicar sugestão OCR no campo "${field}" com o valor "${value}"?`);
+    if (!confirmed) {
+      return;
+    }
+
+    applyMetadataHintMutation.mutate({ field, value });
   };
 
   if (!documentId) {
@@ -422,6 +466,19 @@ export function DocumentDetailsPage() {
                               Sugestão OCR: <code>{hint.suggestedValue}</code>
                             </div>
                           ) : null}
+                          {hint.suggestedValue && hint.action === 'EXTRACT_FROM_OCR' ? (
+                            <div style={{ marginTop: '0.3rem' }}>
+                              <button
+                                type="button"
+                                className="button button--ghost"
+                                onClick={() => handleApplyHintSuggestedValue(hint.field, hint.suggestedValue)}
+                                disabled={applyMetadataHintMutation.isPending}
+                                style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem' }}
+                              >
+                                {applyMetadataHintMutation.isPending ? 'Aplicando...' : 'Aplicar sugestão'}
+                              </button>
+                            </div>
+                          ) : null}
                           {hint.evidenceExcerpt ? (
                             <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.12rem' }}>
                               {hint.evidenceExcerpt}
@@ -430,6 +487,11 @@ export function DocumentDetailsPage() {
                         </li>
                       ))}
                     </ul>
+                    {metadataHintFeedback ? (
+                      <p style={{ margin: '0.45rem 0 0', fontSize: '0.8rem', color: metadataHintFeedback.includes('Falha') ? '#b91c1c' : '#166534' }}>
+                        {metadataHintFeedback}
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
                 <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 0 }}>

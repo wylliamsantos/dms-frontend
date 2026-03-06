@@ -61,6 +61,19 @@ export async function chatByDocument(documentId: string, message: string, versio
   return response.data;
 }
 
+export interface UpdateDocumentMetadataPayload {
+  fileName: string;
+  properties: Record<string, unknown>;
+}
+
+export async function updateDocumentMetadata(documentId: string, payload: UpdateDocumentMetadataPayload) {
+  const response = await documentApi.put(`/v1/documents/${documentId}/metadata`, {
+    fileName: payload.fileName,
+    properties: JSON.stringify(payload.properties)
+  });
+  return response.data;
+}
+
 export async function fetchDocumentBase64(documentId: string, version?: string) {
   const path = version
     ? `/v1/documents/${documentId}/${version}/base64`
