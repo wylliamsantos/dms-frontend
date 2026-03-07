@@ -284,6 +284,9 @@ export function DocumentDetailsPage() {
   const insight = insightQuery.data;
   const ragContext = ragContextQuery.data;
   const metadataHints = insight?.metadataActionHints ?? [];
+  const importantPersistedMetadataEntries = Object.entries(insight?.importantPersistedMetadata ?? {}).slice(0, 6);
+  const persistedMetadataPreviewEntries = Object.entries(insight?.persistedMetadataPreview ?? {}).slice(0, 8);
+  const ocrStatsEntries = Object.entries(insight?.ocrStats ?? {}).filter(([, value]) => value !== null && value !== undefined && `${value}`.trim() !== '');
   const ocrHintHistory = (insight?.metadataUpdateHistory ?? [])
     .filter((item) => {
       const source = String(item.source ?? '').toUpperCase();
@@ -394,6 +397,45 @@ export function DocumentDetailsPage() {
                         {insight.persistedMetadataCount !== undefined ? <span className="status-pill">Metadados persistidos: {insight.persistedMetadataCount}</span> : null}
                         {insight.hasPersistedOcrText !== undefined ? <span className="status-pill">OCR persistido: {insight.hasPersistedOcrText ? 'sim' : 'não'}</span> : null}
                       </div>
+                    ) : null}
+
+                    {importantPersistedMetadataEntries.length ? (
+                      <div style={{ marginTop: '0.75rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.45rem' }}>Metadados importantes extraídos</strong>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.45rem' }}>
+                          {importantPersistedMetadataEntries.map(([key, value]) => (
+                            <div key={key} style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.45rem 0.55rem' }}>
+                              <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase' }}>{key}</div>
+                              <div style={{ fontSize: '0.82rem', color: '#0f172a', wordBreak: 'break-word' }}>{String(value)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {ocrStatsEntries.length ? (
+                      <div style={{ marginTop: '0.75rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Resumo OCR persistido</strong>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                          {ocrStatsEntries.map(([key, value]) => (
+                            <span key={key} className="status-pill">{key}: {String(value)}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {persistedMetadataPreviewEntries.length ? (
+                      <details style={{ marginTop: '0.8rem' }}>
+                        <summary style={{ cursor: 'pointer', color: '#334155', fontSize: '0.84rem' }}>Ver preview completo dos metadados persistidos</summary>
+                        <div style={{ marginTop: '0.45rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.45rem' }}>
+                          {persistedMetadataPreviewEntries.map(([key, value]) => (
+                            <div key={key} style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.45rem 0.55rem' }}>
+                              <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase' }}>{key}</div>
+                              <div style={{ fontSize: '0.82rem', color: '#0f172a', wordBreak: 'break-word' }}>{String(value)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
                     ) : null}
 
                     {metadataHints.length ? (

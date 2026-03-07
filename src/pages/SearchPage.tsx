@@ -57,6 +57,7 @@ export function SearchPage() {
   const [showSuggestionsLoading, setShowSuggestionsLoading] = useState(false);
   const [displayedSuggestionOptions, setDisplayedSuggestionOptions] = useState<string[]>([]);
   const [lastSuggestionsUpdateAt, setLastSuggestionsUpdateAt] = useState<number | null>(null);
+  const [lastResolvedSuggestionQuery, setLastResolvedSuggestionQuery] = useState('');
   const suggestionsLoadingShownAtRef = useRef<number | null>(null);
 
   const suggestionsQuery = useSearchSuggestions({
@@ -85,6 +86,10 @@ export function SearchPage() {
 
   const isDebouncingSuggestions = normalizedLiveSuggestionQuery.length >= 2 && normalizedLiveSuggestionQuery !== normalizedSuggestionQuery;
   const isSuggestionsRefreshing = normalizedSuggestionQuery.length >= 2 && suggestionsQuery.isFetching && displayedSuggestionOptions.length > 0;
+  const isSuggestionResultSettled = normalizedSuggestionQuery.length >= 2
+    && !suggestionsQuery.isFetching
+    && !suggestionsQuery.isError
+    && lastResolvedSuggestionQuery === normalizedSuggestionQuery;
   const suggestionsFreshnessLabel = useMemo(() => {
     if (!lastSuggestionsUpdateAt) return null;
     const seconds = Math.max(0, Math.round((Date.now() - lastSuggestionsUpdateAt) / 1000));
@@ -113,8 +118,11 @@ export function SearchPage() {
     if (suggestionOptions.length > 0 || (!suggestionsQuery.isFetching && !suggestionsQuery.isError)) {
       setDisplayedSuggestionOptions(suggestionOptions);
       setLastSuggestionsUpdateAt(Date.now());
+      if (!suggestionsQuery.isFetching && !suggestionsQuery.isError) {
+        setLastResolvedSuggestionQuery(normalizedSuggestionQuery);
+      }
     }
-  }, [normalizedLiveSuggestionQuery.length, suggestionOptions, suggestionsQuery.isFetching, suggestionsQuery.isError, displayedSuggestionOptions.length]);
+  }, [normalizedLiveSuggestionQuery.length, normalizedSuggestionQuery, suggestionOptions, suggestionsQuery.isFetching, suggestionsQuery.isError, displayedSuggestionOptions.length]);
 
   useEffect(() => {
     const hasQuery = debouncedTextQuery.trim().length >= 2;
@@ -306,7 +314,7 @@ export function SearchPage() {
               {!showSuggestionsLoading && suggestionsQuery.isError && displayedSuggestionOptions.length > 0 ? (
                 <span style={{ fontSize: '0.8rem', color: '#b45309' }}>Não foi possível atualizar sugestões agora. Mantendo últimas opções.</span>
               ) : null}
-              {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && normalizedLiveSuggestionQuery.length >= 2 && !suggestionsQuery.isFetching && !suggestionsQuery.isError && displayedSuggestionOptions.length === 0 ? (
+              {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && normalizedLiveSuggestionQuery.length >= 2 && isSuggestionResultSettled && displayedSuggestionOptions.length === 0 ? (
                 <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Sem sugestões para o termo atual.</span>
               ) : null}
               {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && suggestionsFreshnessLabel ? (
