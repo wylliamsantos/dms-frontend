@@ -317,7 +317,7 @@ export function SearchPage() {
               {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && normalizedLiveSuggestionQuery.length >= 2 && isSuggestionResultSettled && displayedSuggestionOptions.length === 0 ? (
                 <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Sem sugestões para o termo atual.</span>
               ) : null}
-              {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && suggestionsFreshnessLabel ? (
+              {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && normalizedLiveSuggestionQuery.length >= 2 && suggestionsFreshnessLabel ? (
                 <span style={{ fontSize: '0.76rem', color: '#94a3b8' }}>{suggestionsFreshnessLabel}</span>
               ) : null}
             </div>
