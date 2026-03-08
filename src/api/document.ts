@@ -52,6 +52,7 @@ export async function fetchDocumentInsight(documentId: string, version?: string,
 }
 
 export interface MetadataHistoryFilters {
+  category?: string;
   source?: string;
   field?: string;
   updatedFrom?: string;
@@ -113,6 +114,7 @@ export async function fetchDocumentMetadataHistoryCategorySummary(
     : `/v1/documents/${documentId}/metadata/history/summary/category`;
   const response = await documentApi.get<MetadataUpdateHistoryCategorySummaryResponse>(path, {
     params: {
+      category: filters?.category,
       source: filters?.source,
       field: filters?.field,
       updatedFrom: filters?.updatedFrom,
