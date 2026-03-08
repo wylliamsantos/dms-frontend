@@ -596,9 +596,13 @@ export function DocumentDetailsPage() {
                     {importantPersistedMetadataEntries.length ? (
                       <div style={{ marginTop: '0.75rem' }}>
                         <strong style={{ display: 'block', marginBottom: '0.45rem' }}>Metadados importantes extraídos</strong>
-                        {insight.importantPersistedMetadataCount !== undefined ? (
+                        {(insight.importantPersistedMetadataCount !== undefined || insight.importantExpectedMetadataCount !== undefined) ? (
                           <div style={{ margin: '0 0 0.45rem', fontSize: '0.76rem', color: '#475569' }}>
-                            Cobertura importante: {insight.importantPersistedMetadataCount} campo(s) destacado(s)
+                            Cobertura importante: {insight.importantPersistedMetadataCount ?? 0}
+                            {insight.importantExpectedMetadataCount !== undefined ? `/${insight.importantExpectedMetadataCount}` : ''}
+                            {' '}campo(s)
+                            {insight.importantMetadataCoveragePercent !== undefined ? ` · ${insight.importantMetadataCoveragePercent}%` : ''}
+                            {insight.importantMissingMetadataCount !== undefined ? ` · faltando ${insight.importantMissingMetadataCount}` : ''}
                           </div>
                         ) : null}
                         {insight.importantPersistedMetadataSummary ? (

@@ -190,6 +190,9 @@ export interface DocumentInsightResponse {
   importantPersistedMetadata?: Record<string, unknown>;
   importantPersistedMetadataSummary?: string;
   importantPersistedMetadataCount?: number;
+  importantExpectedMetadataCount?: number;
+  importantMissingMetadataCount?: number;
+  importantMetadataCoveragePercent?: number;
   persistedMetadataCount?: number;
   hasPersistedOcrText?: boolean;
   persistedOcrExcerpt?: string;
