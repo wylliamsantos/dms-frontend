@@ -187,8 +187,10 @@ export interface DocumentInsightResponse {
   signals?: DocumentInsightSignal[];
   persistedMetadataPreview?: Record<string, unknown>;
   importantPersistedMetadata?: Record<string, unknown>;
+  importantPersistedMetadataSummary?: string;
   persistedMetadataCount?: number;
   hasPersistedOcrText?: boolean;
+  persistedOcrExcerpt?: string;
   expectedRequiredMetadata?: string[];
   missingRequiredMetadata?: string[];
   requiredMetadataCoveragePercent?: number;
@@ -216,6 +218,10 @@ export interface DocumentRagContextResponse {
   averageScore?: number;
   latencyMs?: number;
   qualityBand?: 'HIGH' | 'MEDIUM' | 'LOW' | 'BLOCKED' | string;
+  rolloutGuard?: string;
+  featureFlagEnabled?: boolean;
+  tenantAllowed?: boolean;
+  categoryAllowed?: boolean;
   missingRequiredMetadata?: string[];
   chunks: DocumentRagChunk[];
 }

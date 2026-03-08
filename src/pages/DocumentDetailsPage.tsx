@@ -505,6 +505,9 @@ export function DocumentDetailsPage() {
                     {importantPersistedMetadataEntries.length ? (
                       <div style={{ marginTop: '0.75rem' }}>
                         <strong style={{ display: 'block', marginBottom: '0.45rem' }}>Metadados importantes extraídos</strong>
+                        {insight.importantPersistedMetadataSummary ? (
+                          <p style={{ margin: '0 0 0.45rem', fontSize: '0.78rem', color: '#64748b' }}>{insight.importantPersistedMetadataSummary}</p>
+                        ) : null}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.45rem' }}>
                           {importantPersistedMetadataEntries.map(([key, value]) => (
                             <div key={key} style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.45rem 0.55rem' }}>
@@ -523,6 +526,15 @@ export function DocumentDetailsPage() {
                           {ocrStatsEntries.map(([key, value]) => (
                             <span key={key} className="status-pill">{key}: {String(value)}</span>
                           ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {insight.persistedOcrExcerpt ? (
+                      <div style={{ marginTop: '0.75rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Trecho OCR persistido</strong>
+                        <div style={{ fontSize: '0.8rem', color: '#475569', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.55rem 0.65rem' }}>
+                          {insight.persistedOcrExcerpt}
                         </div>
                       </div>
                     ) : null}
@@ -752,6 +764,14 @@ export function DocumentDetailsPage() {
                       Status: <strong>{ragContext.status}</strong> · {ragContext.message}
                     </p>
                     {ragContext.qualityBand ? <p style={{ fontSize: '0.84rem', color: '#475569' }}>Faixa de qualidade: {ragContext.qualityBand}</p> : null}
+                    {(ragContext.featureFlagEnabled !== undefined || ragContext.tenantAllowed !== undefined || ragContext.categoryAllowed !== undefined) ? (
+                      <p style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                        Flags: global {ragContext.featureFlagEnabled ? 'ON' : 'OFF'} · tenant {ragContext.tenantAllowed ? 'OK' : 'BLOCK'} · categoria {ragContext.categoryAllowed ? 'OK' : 'BLOCK'}
+                      </p>
+                    ) : null}
+                    {ragContext.rolloutGuard && ragContext.rolloutGuard !== 'NONE' ? (
+                      <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Guardrail de rollout: {ragContext.rolloutGuard}</p>
+                    ) : null}
                     {ragContext.missingRequiredMetadata?.length ? (
                       <p style={{ fontSize: '0.84rem', color: '#92400e' }}>
                         Campos obrigatórios faltando: {ragContext.missingRequiredMetadata.join(', ')}
