@@ -57,6 +57,8 @@ const formatDate = (iso?: string, locale = 'pt-BR') => {
   });
 };
 
+const formatPercent = (value?: number) => `${Math.round((value ?? 0) * 100)}%`;
+
 export function DocumentDetailsPage() {
   const { documentId } = useParams();
   const [activeVersion, setActiveVersion] = useState<string | undefined>(undefined);
@@ -322,6 +324,46 @@ export function DocumentDetailsPage() {
   const metadataHistorySummary = metadataHistorySummaryQuery.data;
   const metadataHistoryCategorySummary = metadataHistoryCategorySummaryQuery.data;
 
+  const benchmarkSourceRows = useMemo(() => {
+    const documentBuckets = metadataHistorySummary?.bySource ?? [];
+    const categoryBuckets = metadataHistoryCategorySummary?.bySource ?? [];
+    const keys = Array.from(new Set([...documentBuckets.map((bucket) => bucket.key), ...categoryBuckets.map((bucket) => bucket.key)]));
+
+    return keys
+      .map((key) => {
+        const documentCount = documentBuckets.find((bucket) => bucket.key === key)?.count ?? 0;
+        const categoryCount = categoryBuckets.find((bucket) => bucket.key === key)?.count ?? 0;
+        return {
+          key,
+          documentCount,
+          categoryCount,
+          delta: documentCount - categoryCount
+        };
+      })
+      .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta))
+      .slice(0, 5);
+  }, [metadataHistorySummary?.bySource, metadataHistoryCategorySummary?.bySource]);
+
+  const benchmarkFieldRows = useMemo(() => {
+    const documentBuckets = metadataHistorySummary?.byField ?? [];
+    const categoryBuckets = metadataHistoryCategorySummary?.byField ?? [];
+    const keys = Array.from(new Set([...documentBuckets.map((bucket) => bucket.key), ...categoryBuckets.map((bucket) => bucket.key)]));
+
+    return keys
+      .map((key) => {
+        const documentCount = documentBuckets.find((bucket) => bucket.key === key)?.count ?? 0;
+        const categoryCount = categoryBuckets.find((bucket) => bucket.key === key)?.count ?? 0;
+        return {
+          key,
+          documentCount,
+          categoryCount,
+          delta: documentCount - categoryCount
+        };
+      })
+      .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta))
+      .slice(0, 5);
+  }, [metadataHistorySummary?.byField, metadataHistoryCategorySummary?.byField]);
+
   return (
     <div className="page-document-details">
       <div style={{ marginBottom: '1rem' }}>
@@ -582,14 +624,41 @@ export function DocumentDetailsPage() {
                       Documento: {metadataHistorySummary?.filteredEntries ?? 0} mudanças filtradas de {metadataHistorySummary?.totalEntries ?? 0} totais.
                     </span>
                     <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                      Funil doc: aplicado {metadataHistorySummary?.ocrHintAppliedEntries ?? 0} · cancelado {metadataHistorySummary?.ocrHintCancelledEntries ?? 0} · erro {metadataHistorySummary?.ocrHintErrorEntries ?? 0} · taxa aplicada {Math.round((metadataHistorySummary?.ocrHintAppliedRate ?? 0) * 100)}%
+                      Funil doc: aplicado {metadataHistorySummary?.ocrHintAppliedEntries ?? 0} · cancelado {metadataHistorySummary?.ocrHintCancelledEntries ?? 0} · erro {metadataHistorySummary?.ocrHintErrorEntries ?? 0} · taxa aplicada {formatPercent(metadataHistorySummary?.ocrHintAppliedRate)}
                     </span>
                     <span>
                       Categoria ({metadataHistoryCategorySummary?.category || '-' }): {metadataHistoryCategorySummary?.filteredEntries ?? 0} mudanças filtradas de {metadataHistoryCategorySummary?.totalEntries ?? 0} totais em {metadataHistoryCategorySummary?.totalDocumentsWithUpdates ?? 0}/{metadataHistoryCategorySummary?.totalDocumentsInCategory ?? 0} docs.
                     </span>
                     <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                      Funil categoria: aplicado {metadataHistoryCategorySummary?.ocrHintAppliedEntries ?? 0} · cancelado {metadataHistoryCategorySummary?.ocrHintCancelledEntries ?? 0} · erro {metadataHistoryCategorySummary?.ocrHintErrorEntries ?? 0} · taxa aplicada {Math.round((metadataHistoryCategorySummary?.ocrHintAppliedRate ?? 0) * 100)}%
+                      Funil categoria: aplicado {metadataHistoryCategorySummary?.ocrHintAppliedEntries ?? 0} · cancelado {metadataHistoryCategorySummary?.ocrHintCancelledEntries ?? 0} · erro {metadataHistoryCategorySummary?.ocrHintErrorEntries ?? 0} · taxa aplicada {formatPercent(metadataHistoryCategorySummary?.ocrHintAppliedRate)}
                     </span>
+
+                    {benchmarkSourceRows.length ? (
+                      <div style={{ marginTop: '0.35rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Top fontes com maior desvio (doc - categoria)</strong>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                          {benchmarkSourceRows.map((row) => (
+                            <span key={`source-${row.key}`} style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                              {row.key}: doc {row.documentCount} · cat {row.categoryCount} · Δ {row.delta > 0 ? '+' : ''}{row.delta}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {benchmarkFieldRows.length ? (
+                      <div style={{ marginTop: '0.35rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Top campos com maior desvio (doc - categoria)</strong>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                          {benchmarkFieldRows.map((row) => (
+                            <span key={`field-${row.key}`} style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                              {row.key}: doc {row.documentCount} · cat {row.categoryCount} · Δ {row.delta > 0 ? '+' : ''}{row.delta}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
                     <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
                       Filtro aplicado no comparativo: <strong>{ocrHintHistoryAction}</strong> (alinhado com o histórico curto).
                     </span>
