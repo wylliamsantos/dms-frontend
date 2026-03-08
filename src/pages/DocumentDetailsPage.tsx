@@ -411,6 +411,9 @@ export function DocumentDetailsPage() {
   const insight = insightQuery.data;
   const ragContext = ragContextQuery.data;
   const metadataHints = insight?.metadataActionHints ?? [];
+  const importantCoveragePercent = insight?.importantMetadataCoveragePercent;
+  const isCriticalImportantCoverage = typeof importantCoveragePercent === 'number' && importantCoveragePercent < 50;
+  const importantCoverageLabel = typeof importantCoveragePercent === 'number' ? `${importantCoveragePercent}%` : undefined;
   const importantPersistedMetadataEntries = Object.entries(insight?.importantPersistedMetadata ?? {}).slice(0, 6);
   const persistedMetadataPreviewEntries = Object.entries(insight?.persistedMetadataPreview ?? {}).slice(0, 8);
   const ocrStatsEntries = Object.entries(insight?.ocrStats ?? {}).filter(([, value]) => value !== null && value !== undefined && `${value}`.trim() !== '');
@@ -939,11 +942,25 @@ export function DocumentDetailsPage() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', fontSize: '0.76rem' }}>
                   {chatOperationalStatus.status ? <span className="status-pill">Status: {chatOperationalStatus.status}</span> : null}
                   {chatOperationalStatus.ocrQualityBand ? <span className="status-pill">OCR: {chatOperationalStatus.ocrQualityBand}{chatOperationalStatus.ocrQualityScore !== undefined ? ` (${chatOperationalStatus.ocrQualityScore}/100)` : ''}</span> : null}
+                  {importantCoverageLabel ? (
+                    <span
+                      className="status-pill"
+                      style={isCriticalImportantCoverage ? { background: '#fee2e2', color: '#991b1b' } : undefined}
+                    >
+                      Cobertura importante: {importantCoverageLabel}
+                      {isCriticalImportantCoverage ? ' · qualidade crítica' : ''}
+                    </span>
+                  ) : null}
                   {chatOperationalStatus.rolloutGuard && chatOperationalStatus.rolloutGuard !== 'NONE' ? <span className="status-pill">Guard: {chatOperationalStatus.rolloutGuard}</span> : null}
                 </div>
                 {chatOperationalStatus.status === 'QUALITY_GATED' ? (
                   <div style={{ marginTop: '0.45rem', fontSize: '0.78rem', color: '#92400e' }}>
                     Bloqueado por qualidade. {chatOperationalStatus.missingRequiredMetadata.length ? `Campos faltando: ${chatOperationalStatus.missingRequiredMetadata.join(', ')}.` : ''}
+                  </div>
+                ) : null}
+                {isCriticalImportantCoverage ? (
+                  <div style={{ marginTop: '0.35rem', fontSize: '0.76rem', color: '#991b1b' }}>
+                    Risco operacional elevado: cobertura de metadados importantes abaixo de 50%.
                   </div>
                 ) : null}
                 {(chatOperationalStatus.status === 'QUALITY_GATED' || chatOperationalStatus.status === 'OK') && chatOperationalStatus.suggestedHints.length ? (
