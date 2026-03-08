@@ -239,6 +239,8 @@ export interface DocumentChatResponse {
   ocrQualityScore?: number;
   ocrQualityBand?: 'HIGH' | 'MEDIUM' | 'LOW' | string;
   ocrQualitySummary?: string;
+  missingRequiredMetadata?: string[];
+  metadataActionHints?: DocumentInsightActionHint[];
   answer?: string;
   model?: string;
   latencyMs?: number;
