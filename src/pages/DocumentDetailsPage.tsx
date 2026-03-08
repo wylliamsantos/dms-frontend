@@ -324,45 +324,37 @@ export function DocumentDetailsPage() {
   const metadataHistorySummary = metadataHistorySummaryQuery.data;
   const metadataHistoryCategorySummary = metadataHistoryCategorySummaryQuery.data;
 
-  const benchmarkSourceRows = useMemo(() => {
-    const documentBuckets = metadataHistorySummary?.bySource ?? [];
-    const categoryBuckets = metadataHistoryCategorySummary?.bySource ?? [];
-    const keys = Array.from(new Set([...documentBuckets.map((bucket) => bucket.key), ...categoryBuckets.map((bucket) => bucket.key)]));
+  const documentSourceBuckets = metadataHistorySummary?.bySource ?? [];
+  const categorySourceBuckets = metadataHistoryCategorySummary?.bySource ?? [];
+  const benchmarkSourceRows = Array.from(new Set([...documentSourceBuckets.map((bucket) => bucket.key), ...categorySourceBuckets.map((bucket) => bucket.key)]))
+    .map((key) => {
+      const documentCount = documentSourceBuckets.find((bucket) => bucket.key === key)?.count ?? 0;
+      const categoryCount = categorySourceBuckets.find((bucket) => bucket.key === key)?.count ?? 0;
+      return {
+        key,
+        documentCount,
+        categoryCount,
+        delta: documentCount - categoryCount
+      };
+    })
+    .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta))
+    .slice(0, 5);
 
-    return keys
-      .map((key) => {
-        const documentCount = documentBuckets.find((bucket) => bucket.key === key)?.count ?? 0;
-        const categoryCount = categoryBuckets.find((bucket) => bucket.key === key)?.count ?? 0;
-        return {
-          key,
-          documentCount,
-          categoryCount,
-          delta: documentCount - categoryCount
-        };
-      })
-      .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta))
-      .slice(0, 5);
-  }, [metadataHistorySummary?.bySource, metadataHistoryCategorySummary?.bySource]);
-
-  const benchmarkFieldRows = useMemo(() => {
-    const documentBuckets = metadataHistorySummary?.byField ?? [];
-    const categoryBuckets = metadataHistoryCategorySummary?.byField ?? [];
-    const keys = Array.from(new Set([...documentBuckets.map((bucket) => bucket.key), ...categoryBuckets.map((bucket) => bucket.key)]));
-
-    return keys
-      .map((key) => {
-        const documentCount = documentBuckets.find((bucket) => bucket.key === key)?.count ?? 0;
-        const categoryCount = categoryBuckets.find((bucket) => bucket.key === key)?.count ?? 0;
-        return {
-          key,
-          documentCount,
-          categoryCount,
-          delta: documentCount - categoryCount
-        };
-      })
-      .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta))
-      .slice(0, 5);
-  }, [metadataHistorySummary?.byField, metadataHistoryCategorySummary?.byField]);
+  const documentFieldBuckets = metadataHistorySummary?.byField ?? [];
+  const categoryFieldBuckets = metadataHistoryCategorySummary?.byField ?? [];
+  const benchmarkFieldRows = Array.from(new Set([...documentFieldBuckets.map((bucket) => bucket.key), ...categoryFieldBuckets.map((bucket) => bucket.key)]))
+    .map((key) => {
+      const documentCount = documentFieldBuckets.find((bucket) => bucket.key === key)?.count ?? 0;
+      const categoryCount = categoryFieldBuckets.find((bucket) => bucket.key === key)?.count ?? 0;
+      return {
+        key,
+        documentCount,
+        categoryCount,
+        delta: documentCount - categoryCount
+      };
+    })
+    .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta))
+    .slice(0, 5);
 
   return (
     <div className="page-document-details">
