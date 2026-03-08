@@ -117,9 +117,9 @@ export function SearchPage() {
 
     if (suggestionOptions.length > 0 || (!suggestionsQuery.isFetching && !suggestionsQuery.isError)) {
       setDisplayedSuggestionOptions(suggestionOptions);
-      setLastSuggestionsUpdateAt(Date.now());
       if (!suggestionsQuery.isFetching && !suggestionsQuery.isError) {
         setLastResolvedSuggestionQuery(normalizedSuggestionQuery);
+        setLastSuggestionsUpdateAt(Date.now());
       }
     }
   }, [normalizedLiveSuggestionQuery.length, normalizedSuggestionQuery, suggestionOptions, suggestionsQuery.isFetching, suggestionsQuery.isError, displayedSuggestionOptions.length]);
