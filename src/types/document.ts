@@ -71,6 +71,7 @@ export interface MetadataUpdateHistoryEntry {
   previousValue?: string;
   newValue?: string;
   source?: string;
+  context?: string;
   updatedAt?: string;
   updatedBy?: string;
 }

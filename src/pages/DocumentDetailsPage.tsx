@@ -149,7 +149,8 @@ export function DocumentDetailsPage() {
           properties: mergedProperties
         },
         {
-          source: 'OCR_HINT'
+          source: 'OCR_HINT',
+          context: 'DOCUMENT_DETAILS_INSIGHT_HINT'
         }
       );
       return { field, suggestedValue };
@@ -758,7 +759,7 @@ export function DocumentDetailsPage() {
                                 <strong>{item.field}</strong>: <code>{item.previousValue || '-'}</code> → <code>{item.newValue || '-'}</code>
                               </div>
                               <div style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                                {formatDate(item.updatedAt, locale) || item.updatedAt || '-'} · {item.updatedBy || 'system'}
+                                {formatDate(item.updatedAt, locale) || item.updatedAt || '-'} · {item.updatedBy || 'system'} · {item.context || 'UNSPECIFIED'}
                               </div>
                             </div>
                           ))}

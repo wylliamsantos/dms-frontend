@@ -177,7 +177,7 @@ export interface UpdateDocumentMetadataPayload {
 export async function updateDocumentMetadata(
   documentId: string,
   payload: UpdateDocumentMetadataPayload,
-  options?: { source?: string }
+  options?: { source?: string; context?: string }
 ) {
   const response = await documentApi.put(
     `/v1/documents/${documentId}/metadata`,
@@ -186,7 +186,13 @@ export async function updateDocumentMetadata(
       properties: JSON.stringify(payload.properties)
     },
     {
-      headers: options?.source ? { 'X-Metadata-Update-Source': options.source } : undefined
+      headers:
+        options?.source || options?.context
+          ? {
+              ...(options?.source ? { 'X-Metadata-Update-Source': options.source } : {}),
+              ...(options?.context ? { 'X-Metadata-Update-Context': options.context } : {})
+            }
+          : undefined
     }
   );
   return response.data;
