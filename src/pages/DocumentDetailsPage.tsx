@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -21,6 +21,7 @@ import {
   chatByDocument,
   fetchDocumentMetadataHistoryCategorySummary,
   fetchDocumentMetadataHistorySummary,
+  fetchDocumentMetadataHistoryTenantCategorySummary,
   updateDocumentMetadata
 } from '@/api/document';
 import { listWorkflowHistory } from '@/api/workflow';
@@ -71,6 +72,7 @@ export function DocumentDetailsPage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [ocrHintLookbackDays, setOcrHintLookbackDays] = useState(30);
   const [ocrHintHistoryAction, setOcrHintHistoryAction] = useState<'ALL' | 'APPLIED' | 'CANCELLED' | 'ERROR'>('ALL');
+  const benchmarkCardRef = useRef<HTMLDivElement | null>(null);
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -97,6 +99,15 @@ export function DocumentDetailsPage() {
       if (!documentId) throw new Error('documentId is required');
       return fetchDocumentMetadataHistoryCategorySummary(documentId, activeVersion, { ocrHintAction: ocrHintHistoryAction });
     },
+    enabled: Boolean(documentId)
+  });
+  const metadataHistoryTenantCategorySummaryQuery = useQuery({
+    queryKey: ['document-metadata-history-tenant-category-summary', ocrHintHistoryAction],
+    queryFn: () =>
+      fetchDocumentMetadataHistoryTenantCategorySummary({
+        ocrHintAction: ocrHintHistoryAction,
+        limit: 8
+      }),
     enabled: Boolean(documentId)
   });
 
@@ -126,6 +137,7 @@ export function DocumentDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ['document-rag-context', documentId] });
       queryClient.invalidateQueries({ queryKey: ['document-metadata-history-summary', documentId] });
       queryClient.invalidateQueries({ queryKey: ['document-metadata-history-category-summary', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['document-metadata-history-tenant-category-summary'] });
       queryClient.invalidateQueries({ queryKey: ['document-versions', documentId] });
     }
   });
@@ -323,6 +335,7 @@ export function DocumentDetailsPage() {
     .slice(0, 5);
   const metadataHistorySummary = metadataHistorySummaryQuery.data;
   const metadataHistoryCategorySummary = metadataHistoryCategorySummaryQuery.data;
+  const metadataHistoryTenantCategorySummary = metadataHistoryTenantCategorySummaryQuery.data;
 
   const documentSourceBuckets = metadataHistorySummary?.bySource ?? [];
   const categorySourceBuckets = metadataHistoryCategorySummary?.bySource ?? [];
@@ -355,6 +368,27 @@ export function DocumentDetailsPage() {
     })
     .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta))
     .slice(0, 5);
+
+  const tenantCategoryRows = (metadataHistoryTenantCategorySummary?.categories ?? [])
+    .map((bucket) => {
+      const applied = bucket.ocrHintAppliedEntries ?? 0;
+      const error = bucket.ocrHintErrorEntries ?? 0;
+      return {
+        category: bucket.category,
+        applied,
+        error,
+        deltaError: error - applied,
+        filteredEntries: bucket.filteredEntries,
+        totalEntries: bucket.totalEntries
+      };
+    })
+    .sort((left, right) => right.deltaError - left.deltaError)
+    .slice(0, 5);
+
+  const handleTenantCategoryDrillDown = () => {
+    setOcrHintHistoryAction('ERROR');
+    benchmarkCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
     <div className="page-document-details">
@@ -605,6 +639,37 @@ export function DocumentDetailsPage() {
               </div>
 
               <div className="card" style={{ marginTop: '1rem' }}>
+                <h3 style={{ marginTop: 0 }}>Radar OCR_HINT por tenant/categoria</h3>
+                {metadataHistoryTenantCategorySummaryQuery.isLoading ? (
+                  <p style={{ color: '#64748b' }}>Atualizando radar operacional por categoria...</p>
+                ) : metadataHistoryTenantCategorySummaryQuery.isError ? (
+                  <p style={{ color: '#b91c1c' }}>Não foi possível carregar o radar tenant/categoria.</p>
+                ) : tenantCategoryRows.length ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.82rem', color: '#334155' }}>
+                    {tenantCategoryRows.map((row) => (
+                      <div key={`tenant-category-${row.category}`} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.45rem 0.6rem' }}>
+                        <div>
+                          <strong>{row.category}</strong>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                            erro {row.error} · aplicado {row.applied} · Δ erro-aplicado {row.deltaError > 0 ? '+' : ''}{row.deltaError}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                            {row.filteredEntries}/{row.totalEntries} mudanças no filtro atual
+                          </div>
+                        </div>
+                        <button type="button" className="button button--ghost" onClick={handleTenantCategoryDrillDown}>
+                          Drill-down
+                        </button>
+                      </div>
+                    ))}
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Ordenado por maior delta de erro OCR_HINT (erro - aplicado).</span>
+                  </div>
+                ) : (
+                  <p style={{ color: '#64748b' }}>Sem categorias com histórico para o filtro atual.</p>
+                )}
+              </div>
+
+              <div ref={benchmarkCardRef} className="card" style={{ marginTop: '1rem' }}>
                 <h3 style={{ marginTop: 0 }}>Benchmark OCR_HINT (documento x categoria)</h3>
                 {metadataHistorySummaryQuery.isLoading || metadataHistoryCategorySummaryQuery.isLoading ? (
                   <p style={{ color: '#64748b' }}>Atualizando benchmark para o filtro selecionado...</p>
