@@ -235,6 +235,10 @@ export interface DocumentChatResponse {
   enabled: boolean;
   status: string;
   message: string;
+  rolloutGuard?: string;
+  ocrQualityScore?: number;
+  ocrQualityBand?: 'HIGH' | 'MEDIUM' | 'LOW' | string;
+  ocrQualitySummary?: string;
   answer?: string;
   model?: string;
   latencyMs?: number;
