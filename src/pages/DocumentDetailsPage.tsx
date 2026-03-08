@@ -43,7 +43,7 @@ interface ChatOperationalStatus {
   ocrQualityBand?: string;
   ocrQualitySummary?: string;
   missingRequiredMetadata: string[];
-  suggestedHints: Array<{ field: string; suggestedValue?: string }>;
+  suggestedHints: Array<{ field: string; suggestedValue?: string; reason?: string; evidenceExcerpt?: string }>;
 }
 
 const normalizeIso = (iso?: string) => {
@@ -191,7 +191,9 @@ export function DocumentDetailsPage() {
         missingRequiredMetadata: response.missingRequiredMetadata ?? [],
         suggestedHints: (response.metadataActionHints ?? []).slice(0, 3).map((hint) => ({
           field: hint.field,
-          suggestedValue: hint.suggestedValue
+          suggestedValue: hint.suggestedValue,
+          reason: hint.reason,
+          evidenceExcerpt: hint.evidenceExcerpt
         }))
       });
       setChatMessages((current) => [
@@ -874,6 +876,30 @@ export function DocumentDetailsPage() {
                 {chatOperationalStatus.status === 'QUALITY_GATED' ? (
                   <div style={{ marginTop: '0.45rem', fontSize: '0.78rem', color: '#92400e' }}>
                     Bloqueado por qualidade. {chatOperationalStatus.missingRequiredMetadata.length ? `Campos faltando: ${chatOperationalStatus.missingRequiredMetadata.join(', ')}.` : ''}
+                    {chatOperationalStatus.suggestedHints.length ? (
+                      <div style={{ marginTop: '0.45rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        {chatOperationalStatus.suggestedHints.map((hint) => (
+                          <div key={`chat-hint-${hint.field}`} style={{ border: '1px solid #f5d0a6', borderRadius: '0.45rem', padding: '0.45rem 0.55rem', background: '#fff7ed' }}>
+                            <div style={{ fontSize: '0.76rem', color: '#7c2d12' }}>
+                              <strong>{hint.field}</strong>
+                              {hint.suggestedValue ? <> · <code>{hint.suggestedValue}</code></> : null}
+                            </div>
+                            {hint.reason ? <div style={{ marginTop: '0.2rem', color: '#9a3412' }}>{hint.reason}</div> : null}
+                            {hint.evidenceExcerpt ? <div style={{ marginTop: '0.2rem', color: '#9a3412' }}>Evidência: {hint.evidenceExcerpt}</div> : null}
+                            <div style={{ marginTop: '0.35rem' }}>
+                              <button
+                                type="button"
+                                className="button button--ghost"
+                                onClick={() => handleApplyHint(hint.field, hint.suggestedValue)}
+                                disabled={applyMetadataHintMutation.isPending || !hint.suggestedValue}
+                              >
+                                Aplicar no documento
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                     <div style={{ marginTop: '0.35rem' }}>
                       <button type="button" className="button button--ghost" onClick={handleChatQualityFixCta}>Abrir sugestões de correção</button>
                     </div>
