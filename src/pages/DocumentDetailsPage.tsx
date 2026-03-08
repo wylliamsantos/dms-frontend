@@ -51,6 +51,30 @@ interface AppliedHintFeedback {
   appliedBy: string;
 }
 
+const IMPORTANT_HINT_IMPACT_WEIGHT: Record<string, number> = {
+  valor: 80,
+  cpf: 70,
+  cnpj: 70,
+  numero: 60,
+  vencimento: 55,
+  data_emissao: 50,
+  nome: 45
+};
+
+const resolveHintImpactScore = (field?: string, suggestedValue?: string) => {
+  const normalizedField = String(field ?? '').trim().toLowerCase();
+  const importantWeight = IMPORTANT_HINT_IMPACT_WEIGHT[normalizedField] ?? 0;
+  const suggestionBonus = suggestedValue?.trim() ? 10 : 0;
+  return (importantWeight > 0 ? 100 + importantWeight : 0) + suggestionBonus;
+};
+
+const sortHintsByImpact = <THint extends { field: string; suggestedValue?: string }>(hints: THint[]) =>
+  [...hints].sort((left, right) => {
+    const scoreDiff = resolveHintImpactScore(right.field, right.suggestedValue) - resolveHintImpactScore(left.field, left.suggestedValue);
+    if (scoreDiff !== 0) return scoreDiff;
+    return left.field.localeCompare(right.field, 'pt-BR', { sensitivity: 'base' });
+  });
+
 const normalizeIso = (iso?: string) => {
   if (!iso) return undefined;
   const value = iso.trim();
@@ -210,7 +234,7 @@ export function DocumentDetailsPage() {
         ocrQualityBand: response.ocrQualityBand,
         ocrQualitySummary: response.ocrQualitySummary,
         missingRequiredMetadata: response.missingRequiredMetadata ?? [],
-        suggestedHints: (response.metadataActionHints ?? []).slice(0, 3).map((hint) => ({
+        suggestedHints: sortHintsByImpact(response.metadataActionHints ?? []).slice(0, 3).map((hint) => ({
           field: hint.field,
           suggestedValue: hint.suggestedValue,
           reason: hint.reason,
@@ -410,7 +434,7 @@ export function DocumentDetailsPage() {
 
   const insight = insightQuery.data;
   const ragContext = ragContextQuery.data;
-  const metadataHints = insight?.metadataActionHints ?? [];
+  const metadataHints = sortHintsByImpact(insight?.metadataActionHints ?? []);
   const importantCoveragePercent = insight?.importantMetadataCoveragePercent;
   const isCriticalImportantCoverage = typeof importantCoveragePercent === 'number' && importantCoveragePercent < 50;
   const importantCoverageLabel = typeof importantCoveragePercent === 'number' ? `${importantCoveragePercent}%` : undefined;
