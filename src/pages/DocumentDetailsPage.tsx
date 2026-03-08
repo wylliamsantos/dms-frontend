@@ -36,6 +36,16 @@ interface ChatMessage {
   text: string;
 }
 
+interface ChatOperationalStatus {
+  status?: string;
+  rolloutGuard?: string;
+  ocrQualityScore?: number;
+  ocrQualityBand?: string;
+  ocrQualitySummary?: string;
+  missingRequiredMetadata: string[];
+  suggestedHints: Array<{ field: string; suggestedValue?: string }>;
+}
+
 const normalizeIso = (iso?: string) => {
   if (!iso) return undefined;
   const value = iso.trim();
@@ -73,7 +83,9 @@ export function DocumentDetailsPage() {
   const [ocrHintLookbackDays, setOcrHintLookbackDays] = useState(30);
   const [ocrHintHistoryAction, setOcrHintHistoryAction] = useState<'ALL' | 'APPLIED' | 'CANCELLED' | 'ERROR'>('ALL');
   const [benchmarkCategoryFilter, setBenchmarkCategoryFilter] = useState<string>('');
+  const [chatOperationalStatus, setChatOperationalStatus] = useState<ChatOperationalStatus | null>(null);
   const benchmarkCardRef = useRef<HTMLDivElement | null>(null);
+  const insightCardRef = useRef<HTMLDivElement | null>(null);
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -149,6 +161,15 @@ export function DocumentDetailsPage() {
   const chatMutation = useMutation({
     mutationFn: (message: string) => chatByDocument(documentId as string, message, activeVersion),
     onError: () => {
+      setChatOperationalStatus((current) => ({
+        status: 'PROVIDER_UNAVAILABLE',
+        rolloutGuard: current?.rolloutGuard,
+        ocrQualityScore: current?.ocrQualityScore,
+        ocrQualityBand: current?.ocrQualityBand,
+        ocrQualitySummary: current?.ocrQualitySummary,
+        missingRequiredMetadata: current?.missingRequiredMetadata ?? [],
+        suggestedHints: current?.suggestedHints ?? []
+      }));
       setChatMessages((current) => [
         ...current,
         {
@@ -161,18 +182,24 @@ export function DocumentDetailsPage() {
     },
     onSuccess: (response) => {
       const answer = response.answer?.trim() || response.message || 'Sem resposta no momento.';
-      const qualityHint = response.ocrQualityScore !== undefined
-        ? `\n\nQualidade OCR: ${response.ocrQualityScore}/100 (${response.ocrQualityBand || 'N/A'}).`
-        : '';
-      const guardHint = response.rolloutGuard && response.rolloutGuard !== 'NONE'
-        ? `\nGuardrail: ${response.rolloutGuard}.`
-        : '';
+      setChatOperationalStatus({
+        status: response.status,
+        rolloutGuard: response.rolloutGuard,
+        ocrQualityScore: response.ocrQualityScore,
+        ocrQualityBand: response.ocrQualityBand,
+        ocrQualitySummary: response.ocrQualitySummary,
+        missingRequiredMetadata: response.missingRequiredMetadata ?? [],
+        suggestedHints: (response.metadataActionHints ?? []).slice(0, 3).map((hint) => ({
+          field: hint.field,
+          suggestedValue: hint.suggestedValue
+        }))
+      });
       setChatMessages((current) => [
         ...current,
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          text: `${answer}${guardHint}${qualityHint}`.trim()
+          text: answer
         }
       ]);
       if (!isChatOpen) setChatUnreadCount((current) => current + 1);
@@ -406,6 +433,11 @@ export function DocumentDetailsPage() {
     benchmarkCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const handleChatQualityFixCta = () => {
+    setIsChatOpen(false);
+    insightCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <div className="page-document-details">
       <div style={{ marginBottom: '1rem' }}>
@@ -487,7 +519,7 @@ export function DocumentDetailsPage() {
                 )}
               </div>
 
-              <div className="card" style={{ marginTop: '1rem' }}>
+              <div ref={insightCardRef} className="card" style={{ marginTop: '1rem' }}>
                 <h3 style={{ marginTop: 0 }}>Insights de OCR/IA</h3>
                 {insightQuery.isLoading ? (
                   <p style={{ color: '#64748b' }}>Carregando insights...</p>
@@ -831,6 +863,27 @@ export function DocumentDetailsPage() {
               <h2 style={{ margin: 0, fontSize: '1rem' }}>Chat do documento</h2>
               <button type="button" className="button button--ghost" onClick={() => setIsChatOpen(false)} aria-label="Fechar chat">✕</button>
             </header>
+
+            {chatOperationalStatus ? (
+              <div style={{ borderBottom: '1px solid #e2e8f0', padding: '0.65rem 1rem', background: '#f8fafc' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', fontSize: '0.76rem' }}>
+                  {chatOperationalStatus.status ? <span className="status-pill">Status: {chatOperationalStatus.status}</span> : null}
+                  {chatOperationalStatus.ocrQualityBand ? <span className="status-pill">OCR: {chatOperationalStatus.ocrQualityBand}{chatOperationalStatus.ocrQualityScore !== undefined ? ` (${chatOperationalStatus.ocrQualityScore}/100)` : ''}</span> : null}
+                  {chatOperationalStatus.rolloutGuard && chatOperationalStatus.rolloutGuard !== 'NONE' ? <span className="status-pill">Guard: {chatOperationalStatus.rolloutGuard}</span> : null}
+                </div>
+                {chatOperationalStatus.status === 'QUALITY_GATED' ? (
+                  <div style={{ marginTop: '0.45rem', fontSize: '0.78rem', color: '#92400e' }}>
+                    Bloqueado por qualidade. {chatOperationalStatus.missingRequiredMetadata.length ? `Campos faltando: ${chatOperationalStatus.missingRequiredMetadata.join(', ')}.` : ''}
+                    <div style={{ marginTop: '0.35rem' }}>
+                      <button type="button" className="button button--ghost" onClick={handleChatQualityFixCta}>Abrir sugestões de correção</button>
+                    </div>
+                  </div>
+                ) : null}
+                {!chatOperationalStatus.status || chatOperationalStatus.status === 'OK' ? null : chatOperationalStatus.ocrQualitySummary ? (
+                  <div style={{ marginTop: '0.35rem', fontSize: '0.76rem', color: '#64748b' }}>{chatOperationalStatus.ocrQualitySummary}</div>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="details-chat-drawer__messages" aria-live="polite">
               {isChatDisabled ? (
