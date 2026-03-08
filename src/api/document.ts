@@ -57,7 +57,15 @@ export interface MetadataHistoryFilters {
   field?: string;
   updatedFrom?: string;
   updatedTo?: string;
-  ocrHintAction?: 'APPLIED' | 'CANCELLED' | 'ERROR' | 'ALL' | string;
+  ocrHintAction?: 'APPLIED' | 'CANCEL' | 'CANCELLED' | 'ERROR' | 'ALL' | string;
+}
+
+function normalizeOcrHintAction(action?: string) {
+  const normalized = action?.trim().toUpperCase();
+  if (!normalized || normalized === 'ALL') {
+    return undefined;
+  }
+  return normalized;
 }
 
 export async function fetchDocumentMetadataHistory(
@@ -78,7 +86,7 @@ export async function fetchDocumentMetadataHistory(
       field: filters?.field,
       updatedFrom: filters?.updatedFrom,
       updatedTo: filters?.updatedTo,
-      ocrHintAction: filters?.ocrHintAction
+      ocrHintAction: normalizeOcrHintAction(filters?.ocrHintAction)
     }
   });
   return response.data;
@@ -98,7 +106,7 @@ export async function fetchDocumentMetadataHistorySummary(
       field: filters?.field,
       updatedFrom: filters?.updatedFrom,
       updatedTo: filters?.updatedTo,
-      ocrHintAction: filters?.ocrHintAction
+      ocrHintAction: normalizeOcrHintAction(filters?.ocrHintAction)
     }
   });
   return response.data;
@@ -119,7 +127,7 @@ export async function fetchDocumentMetadataHistoryCategorySummary(
       field: filters?.field,
       updatedFrom: filters?.updatedFrom,
       updatedTo: filters?.updatedTo,
-      ocrHintAction: filters?.ocrHintAction
+      ocrHintAction: normalizeOcrHintAction(filters?.ocrHintAction)
     }
   });
   return response.data;
@@ -137,7 +145,7 @@ export async function fetchDocumentMetadataHistoryTenantCategorySummary(
         field: filters?.field,
         updatedFrom: filters?.updatedFrom,
         updatedTo: filters?.updatedTo,
-        ocrHintAction: filters?.ocrHintAction,
+        ocrHintAction: normalizeOcrHintAction(filters?.ocrHintAction),
         limit: filters?.limit
       }
     }
