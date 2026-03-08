@@ -72,6 +72,7 @@ export function DocumentDetailsPage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [ocrHintLookbackDays, setOcrHintLookbackDays] = useState(30);
   const [ocrHintHistoryAction, setOcrHintHistoryAction] = useState<'ALL' | 'APPLIED' | 'CANCELLED' | 'ERROR'>('ALL');
+  const [benchmarkCategoryFilter, setBenchmarkCategoryFilter] = useState<string>('');
   const benchmarkCardRef = useRef<HTMLDivElement | null>(null);
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
@@ -94,10 +95,13 @@ export function DocumentDetailsPage() {
     enabled: Boolean(documentId)
   });
   const metadataHistoryCategorySummaryQuery = useQuery({
-    queryKey: ['document-metadata-history-category-summary', documentId, activeVersion, ocrHintHistoryAction],
+    queryKey: ['document-metadata-history-category-summary', documentId, activeVersion, ocrHintHistoryAction, benchmarkCategoryFilter],
     queryFn: () => {
       if (!documentId) throw new Error('documentId is required');
-      return fetchDocumentMetadataHistoryCategorySummary(documentId, activeVersion, { ocrHintAction: ocrHintHistoryAction });
+      return fetchDocumentMetadataHistoryCategorySummary(documentId, activeVersion, {
+        category: benchmarkCategoryFilter || undefined,
+        ocrHintAction: ocrHintHistoryAction
+      });
     },
     enabled: Boolean(documentId)
   });
@@ -385,8 +389,9 @@ export function DocumentDetailsPage() {
     .sort((left, right) => right.deltaError - left.deltaError)
     .slice(0, 5);
 
-  const handleTenantCategoryDrillDown = () => {
+  const handleTenantCategoryDrillDown = (category: string) => {
     setOcrHintHistoryAction('ERROR');
+    setBenchmarkCategoryFilter(category);
     benchmarkCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
@@ -657,7 +662,7 @@ export function DocumentDetailsPage() {
                             {row.filteredEntries}/{row.totalEntries} mudanças no filtro atual
                           </div>
                         </div>
-                        <button type="button" className="button button--ghost" onClick={handleTenantCategoryDrillDown}>
+                        <button type="button" className="button button--ghost" onClick={() => handleTenantCategoryDrillDown(row.category)}>
                           Drill-down
                         </button>
                       </div>
@@ -716,7 +721,8 @@ export function DocumentDetailsPage() {
                       </div>
                     ) : null}
                     <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                      Filtro aplicado no comparativo: <strong>{ocrHintHistoryAction}</strong> (alinhado com o histórico curto).
+                      Filtro aplicado no comparativo: <strong>{ocrHintHistoryAction}</strong> · categoria-alvo{' '}
+                      <strong>{metadataHistoryCategorySummary?.category || benchmarkCategoryFilter || entry?.category || '-'}</strong>.
                     </span>
                   </div>
                 )}
