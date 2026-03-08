@@ -395,6 +395,11 @@ export function DocumentDetailsPage() {
     benchmarkCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const handleBenchmarkCategoryReset = () => {
+    setBenchmarkCategoryFilter('');
+    benchmarkCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <div className="page-document-details">
       <div style={{ marginBottom: '1rem' }}>
@@ -724,6 +729,13 @@ export function DocumentDetailsPage() {
                       Filtro aplicado no comparativo: <strong>{ocrHintHistoryAction}</strong> · categoria-alvo{' '}
                       <strong>{metadataHistoryCategorySummary?.category || benchmarkCategoryFilter || entry?.category || '-'}</strong>.
                     </span>
+                    {benchmarkCategoryFilter ? (
+                      <div style={{ marginTop: '0.35rem' }}>
+                        <button type="button" className="button button--ghost" onClick={handleBenchmarkCategoryReset}>
+                          Voltar para categoria original do documento
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 )}
               </div>
