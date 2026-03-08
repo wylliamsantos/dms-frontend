@@ -114,6 +114,30 @@ export interface MetadataUpdateHistoryCategorySummaryResponse {
   ocrHintAppliedRate?: number;
 }
 
+export interface MetadataUpdateHistoryTenantCategoryBucketResponse {
+  category: string;
+  totalDocumentsInCategory: number;
+  totalDocumentsWithUpdates: number;
+  totalEntries: number;
+  filteredEntries: number;
+  latestUpdatedAt?: string;
+  bySource: MetadataUpdateHistoryBucket[];
+  byField: MetadataUpdateHistoryBucket[];
+  ocrHintAppliedEntries?: number;
+  ocrHintCancelledEntries?: number;
+  ocrHintErrorEntries?: number;
+  ocrHintAppliedRate?: number;
+}
+
+export interface MetadataUpdateHistoryTenantCategorySummaryResponse {
+  totalCategories: number;
+  totalDocuments: number;
+  totalEntries: number;
+  filteredEntries: number;
+  latestUpdatedAt?: string;
+  categories: MetadataUpdateHistoryTenantCategoryBucketResponse[];
+}
+
 export interface MetadataUpdateAdoptionTrendPoint {
   label: string;
   totalUpdates: number;

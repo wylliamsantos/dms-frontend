@@ -11,7 +11,8 @@ import {
   DocumentChatResponse,
   MetadataUpdateHistoryPageResponse,
   MetadataUpdateHistorySummaryResponse,
-  MetadataUpdateHistoryCategorySummaryResponse
+  MetadataUpdateHistoryCategorySummaryResponse,
+  MetadataUpdateHistoryTenantCategorySummaryResponse
 } from '@/types/document';
 
 export async function listCategories(): Promise<DocumentCategory[]> {
@@ -119,6 +120,26 @@ export async function fetchDocumentMetadataHistoryCategorySummary(
       ocrHintAction: filters?.ocrHintAction
     }
   });
+  return response.data;
+}
+
+export async function fetchDocumentMetadataHistoryTenantCategorySummary(
+  filters?: MetadataHistoryFilters & { category?: string; limit?: number }
+) {
+  const response = await documentApi.get<MetadataUpdateHistoryTenantCategorySummaryResponse>(
+    '/v1/documents/metadata/history/summary/tenant/categories',
+    {
+      params: {
+        category: filters?.category,
+        source: filters?.source,
+        field: filters?.field,
+        updatedFrom: filters?.updatedFrom,
+        updatedTo: filters?.updatedTo,
+        ocrHintAction: filters?.ocrHintAction,
+        limit: filters?.limit
+      }
+    }
+  );
   return response.data;
 }
 
