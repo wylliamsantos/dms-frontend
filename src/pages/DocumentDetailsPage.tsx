@@ -519,6 +519,19 @@ export function DocumentDetailsPage() {
                       </div>
                     ) : null}
 
+                    {(insight.ocrQualityScore !== undefined || insight.ocrQualityBand || insight.ocrQualitySummary) ? (
+                      <div style={{ marginTop: '0.75rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Qualidade OCR (MVP)</strong>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                          {insight.ocrQualityScore !== undefined ? <span className="status-pill">Score: {insight.ocrQualityScore}/100</span> : null}
+                          {insight.ocrQualityBand ? <span className="status-pill">Faixa: {insight.ocrQualityBand}</span> : null}
+                        </div>
+                        {insight.ocrQualitySummary ? (
+                          <p style={{ margin: '0.35rem 0 0', fontSize: '0.78rem', color: '#64748b' }}>{insight.ocrQualitySummary}</p>
+                        ) : null}
+                      </div>
+                    ) : null}
+
                     {ocrStatsEntries.length ? (
                       <div style={{ marginTop: '0.75rem' }}>
                         <strong style={{ display: 'block', marginBottom: '0.35rem' }}>Resumo OCR persistido</strong>

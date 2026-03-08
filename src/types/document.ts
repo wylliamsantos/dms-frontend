@@ -198,6 +198,9 @@ export interface DocumentInsightResponse {
   metadataUpdateHistory?: MetadataUpdateHistoryEntry[];
   metadataRegressionAlerts?: MetadataRegressionAlert[];
   ocrHintAdoption?: MetadataUpdateOcrHintAdoption;
+  ocrQualityScore?: number;
+  ocrQualityBand?: 'HIGH' | 'MEDIUM' | 'LOW' | string;
+  ocrQualitySummary?: string;
   ocrStats?: Record<string, unknown>;
 }
 
