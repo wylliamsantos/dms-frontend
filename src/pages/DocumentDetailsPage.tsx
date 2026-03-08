@@ -658,7 +658,6 @@ export function DocumentDetailsPage() {
                         </div>
                       </div>
                     ) : null}
-
                     <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
                       Filtro aplicado no comparativo: <strong>{ocrHintHistoryAction}</strong> (alinhado com o histórico curto).
                     </span>
