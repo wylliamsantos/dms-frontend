@@ -17,7 +17,12 @@ import {
   useDocumentRagContext,
   useDocumentVersions
 } from '@/hooks/useDocumentDetails';
-import { chatByDocument, updateDocumentMetadata } from '@/api/document';
+import {
+  chatByDocument,
+  fetchDocumentMetadataHistoryCategorySummary,
+  fetchDocumentMetadataHistorySummary,
+  updateDocumentMetadata
+} from '@/api/document';
 import { listWorkflowHistory } from '@/api/workflow';
 import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
 import { formatDateTime } from '@/utils/format';
@@ -76,6 +81,22 @@ export function DocumentDetailsPage() {
   });
   const insightQuery = useDocumentInsight(documentId, activeVersion, ocrHintLookbackDays);
   const ragContextQuery = useDocumentRagContext(documentId, activeVersion);
+  const metadataHistorySummaryQuery = useQuery({
+    queryKey: ['document-metadata-history-summary', documentId, activeVersion, ocrHintHistoryAction],
+    queryFn: () => {
+      if (!documentId) throw new Error('documentId is required');
+      return fetchDocumentMetadataHistorySummary(documentId, activeVersion, { ocrHintAction: ocrHintHistoryAction });
+    },
+    enabled: Boolean(documentId)
+  });
+  const metadataHistoryCategorySummaryQuery = useQuery({
+    queryKey: ['document-metadata-history-category-summary', documentId, activeVersion, ocrHintHistoryAction],
+    queryFn: () => {
+      if (!documentId) throw new Error('documentId is required');
+      return fetchDocumentMetadataHistoryCategorySummary(documentId, activeVersion, { ocrHintAction: ocrHintHistoryAction });
+    },
+    enabled: Boolean(documentId)
+  });
 
   const applyMetadataHintMutation = useMutation({
     mutationFn: async ({ field, suggestedValue }: { field: string; suggestedValue: string }) => {
@@ -101,6 +122,8 @@ export function DocumentDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ['document-information', documentId] });
       queryClient.invalidateQueries({ queryKey: ['document-insight', documentId] });
       queryClient.invalidateQueries({ queryKey: ['document-rag-context', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['document-metadata-history-summary', documentId] });
+      queryClient.invalidateQueries({ queryKey: ['document-metadata-history-category-summary', documentId] });
       queryClient.invalidateQueries({ queryKey: ['document-versions', documentId] });
     }
   });
@@ -296,6 +319,8 @@ export function DocumentDetailsPage() {
       return source.startsWith('OCR_HINT');
     })
     .slice(0, 5);
+  const metadataHistorySummary = metadataHistorySummaryQuery.data;
+  const metadataHistoryCategorySummary = metadataHistoryCategorySummaryQuery.data;
 
   return (
     <div className="page-document-details">
@@ -542,6 +567,27 @@ export function DocumentDetailsPage() {
                       )}
                     </div>
                   </>
+                )}
+              </div>
+
+              <div className="card" style={{ marginTop: '1rem' }}>
+                <h3 style={{ marginTop: 0 }}>Benchmark OCR_HINT (documento x categoria)</h3>
+                {metadataHistorySummaryQuery.isLoading || metadataHistoryCategorySummaryQuery.isLoading ? (
+                  <p style={{ color: '#64748b' }}>Atualizando benchmark para o filtro selecionado...</p>
+                ) : metadataHistorySummaryQuery.isError || metadataHistoryCategorySummaryQuery.isError ? (
+                  <p style={{ color: '#b91c1c' }}>Não foi possível carregar o benchmark OCR_HINT.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.84rem', color: '#334155' }}>
+                    <span>
+                      Documento: {metadataHistorySummary?.filteredEntries ?? 0} mudanças filtradas de {metadataHistorySummary?.totalEntries ?? 0} totais.
+                    </span>
+                    <span>
+                      Categoria ({metadataHistoryCategorySummary?.category || '-' }): {metadataHistoryCategorySummary?.filteredEntries ?? 0} mudanças filtradas de {metadataHistoryCategorySummary?.totalEntries ?? 0} totais em {metadataHistoryCategorySummary?.totalDocumentsWithUpdates ?? 0}/{metadataHistoryCategorySummary?.totalDocumentsInCategory ?? 0} docs.
+                    </span>
+                    <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                      Filtro aplicado no comparativo: <strong>{ocrHintHistoryAction}</strong> (alinhado com o histórico curto).
+                    </span>
+                  </div>
                 )}
               </div>
 
