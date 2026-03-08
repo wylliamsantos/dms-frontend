@@ -84,6 +84,7 @@ export function DocumentDetailsPage() {
   const [ocrHintHistoryAction, setOcrHintHistoryAction] = useState<'ALL' | 'APPLIED' | 'CANCELLED' | 'ERROR'>('ALL');
   const [benchmarkCategoryFilter, setBenchmarkCategoryFilter] = useState<string>('');
   const [chatOperationalStatus, setChatOperationalStatus] = useState<ChatOperationalStatus | null>(null);
+  const [appliedHintKeys, setAppliedHintKeys] = useState<Record<string, true>>({});
   const benchmarkCardRef = useRef<HTMLDivElement | null>(null);
   const insightCardRef = useRef<HTMLDivElement | null>(null);
   const { t, i18n } = useTranslation();
@@ -147,7 +148,11 @@ export function DocumentDetailsPage() {
       );
       return { field, suggestedValue };
     },
-    onSuccess: () => {
+    onSuccess: ({ field, suggestedValue }) => {
+      setAppliedHintKeys((current) => ({
+        ...current,
+        [`${field}::${suggestedValue}`]: true
+      }));
       queryClient.invalidateQueries({ queryKey: ['document-information', documentId] });
       queryClient.invalidateQueries({ queryKey: ['document-insight', documentId] });
       queryClient.invalidateQueries({ queryKey: ['document-rag-context', documentId] });
@@ -323,6 +328,14 @@ export function DocumentDetailsPage() {
     const confirmed = window.confirm(`Aplicar sugestão OCR para "${field}" com valor "${suggestedValue}"?`);
     if (!confirmed) return;
     await applyMetadataHintMutation.mutateAsync({ field, suggestedValue });
+  };
+
+  const isHintApplied = (field: string, suggestedValue?: string) => {
+    if (!field || !suggestedValue) return false;
+    const key = `${field}::${suggestedValue}`;
+    if (appliedHintKeys[key]) return true;
+    const persistedValue = entry?.properties?.[field];
+    return persistedValue !== undefined && String(persistedValue) === suggestedValue;
   };
 
   if (!documentId) {
@@ -610,10 +623,13 @@ export function DocumentDetailsPage() {
                       <div style={{ marginTop: '0.75rem' }}>
                         <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Sugestões acionáveis</strong>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                          {metadataHints.slice(0, 4).map((hint) => (
+                          {metadataHints.slice(0, 4).map((hint) => {
+                            const alreadyApplied = isHintApplied(hint.field, hint.suggestedValue);
+                            return (
                             <div key={`${hint.field}-${hint.action}`} style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.6rem 0.7rem' }}>
-                              <div style={{ fontSize: '0.85rem', color: '#0f172a' }}>
+                              <div style={{ fontSize: '0.85rem', color: '#0f172a', display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
                                 <strong>{hint.field}</strong> · {hint.reason}
+                                {alreadyApplied ? <span className="status-pill" style={{ background: '#dcfce7', color: '#166534' }}>Aplicado</span> : null}
                               </div>
                               {hint.suggestedValue ? (
                                 <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '0.25rem' }}>Sugestão: <code>{hint.suggestedValue}</code></div>
@@ -626,13 +642,14 @@ export function DocumentDetailsPage() {
                                   type="button"
                                   className="button button--ghost"
                                   onClick={() => handleApplyHint(hint.field, hint.suggestedValue)}
-                                  disabled={applyMetadataHintMutation.isPending || !hint.suggestedValue}
+                                  disabled={applyMetadataHintMutation.isPending || !hint.suggestedValue || alreadyApplied}
                                 >
-                                  Aplicar sugestão
+                                  {alreadyApplied ? 'Aplicado no documento' : 'Aplicar sugestão'}
                                 </button>
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     ) : null}
@@ -880,7 +897,9 @@ export function DocumentDetailsPage() {
                 ) : null}
                 {(chatOperationalStatus.status === 'QUALITY_GATED' || chatOperationalStatus.status === 'OK') && chatOperationalStatus.suggestedHints.length ? (
                   <div style={{ marginTop: '0.45rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    {chatOperationalStatus.suggestedHints.map((hint) => (
+                    {chatOperationalStatus.suggestedHints.map((hint) => {
+                      const alreadyApplied = isHintApplied(hint.field, hint.suggestedValue);
+                      return (
                       <div
                         key={`chat-hint-${hint.field}`}
                         style={{
@@ -890,9 +909,10 @@ export function DocumentDetailsPage() {
                           background: chatOperationalStatus.status === 'QUALITY_GATED' ? '#fff7ed' : '#f8fafc'
                         }}
                       >
-                        <div style={{ fontSize: '0.76rem', color: chatOperationalStatus.status === 'QUALITY_GATED' ? '#7c2d12' : '#334155' }}>
+                        <div style={{ fontSize: '0.76rem', color: chatOperationalStatus.status === 'QUALITY_GATED' ? '#7c2d12' : '#334155', display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
                           <strong>{hint.field}</strong>
                           {hint.suggestedValue ? <> · <code>{hint.suggestedValue}</code></> : null}
+                          {alreadyApplied ? <span className="status-pill" style={{ background: '#dcfce7', color: '#166534' }}>Aplicado</span> : null}
                         </div>
                         {hint.reason ? <div style={{ marginTop: '0.2rem', color: chatOperationalStatus.status === 'QUALITY_GATED' ? '#9a3412' : '#475569' }}>{hint.reason}</div> : null}
                         {hint.evidenceExcerpt ? <div style={{ marginTop: '0.2rem', color: chatOperationalStatus.status === 'QUALITY_GATED' ? '#9a3412' : '#64748b' }}>Evidência: {hint.evidenceExcerpt}</div> : null}
@@ -901,13 +921,14 @@ export function DocumentDetailsPage() {
                             type="button"
                             className="button button--ghost"
                             onClick={() => handleApplyHint(hint.field, hint.suggestedValue)}
-                            disabled={applyMetadataHintMutation.isPending || !hint.suggestedValue}
+                            disabled={applyMetadataHintMutation.isPending || !hint.suggestedValue || alreadyApplied}
                           >
-                            Aplicar no documento
+                            {alreadyApplied ? 'Aplicado no documento' : 'Aplicar no documento'}
                           </button>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : null}
                 {chatOperationalStatus.status === 'QUALITY_GATED' ? (
