@@ -581,8 +581,14 @@ export function DocumentDetailsPage() {
                     <span>
                       Documento: {metadataHistorySummary?.filteredEntries ?? 0} mudanças filtradas de {metadataHistorySummary?.totalEntries ?? 0} totais.
                     </span>
+                    <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                      Funil doc: aplicado {metadataHistorySummary?.ocrHintAppliedEntries ?? 0} · cancelado {metadataHistorySummary?.ocrHintCancelledEntries ?? 0} · erro {metadataHistorySummary?.ocrHintErrorEntries ?? 0} · taxa aplicada {Math.round((metadataHistorySummary?.ocrHintAppliedRate ?? 0) * 100)}%
+                    </span>
                     <span>
                       Categoria ({metadataHistoryCategorySummary?.category || '-' }): {metadataHistoryCategorySummary?.filteredEntries ?? 0} mudanças filtradas de {metadataHistoryCategorySummary?.totalEntries ?? 0} totais em {metadataHistoryCategorySummary?.totalDocumentsWithUpdates ?? 0}/{metadataHistoryCategorySummary?.totalDocumentsInCategory ?? 0} docs.
+                    </span>
+                    <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                      Funil categoria: aplicado {metadataHistoryCategorySummary?.ocrHintAppliedEntries ?? 0} · cancelado {metadataHistoryCategorySummary?.ocrHintCancelledEntries ?? 0} · erro {metadataHistoryCategorySummary?.ocrHintErrorEntries ?? 0} · taxa aplicada {Math.round((metadataHistoryCategorySummary?.ocrHintAppliedRate ?? 0) * 100)}%
                     </span>
                     <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
                       Filtro aplicado no comparativo: <strong>{ocrHintHistoryAction}</strong> (alinhado com o histórico curto).

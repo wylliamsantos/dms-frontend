@@ -93,6 +93,10 @@ export interface MetadataUpdateHistorySummaryResponse {
   latestUpdatedAt?: string;
   bySource: MetadataUpdateHistoryBucket[];
   byField: MetadataUpdateHistoryBucket[];
+  ocrHintAppliedEntries?: number;
+  ocrHintCancelledEntries?: number;
+  ocrHintErrorEntries?: number;
+  ocrHintAppliedRate?: number;
 }
 
 export interface MetadataUpdateHistoryCategorySummaryResponse {
@@ -104,6 +108,10 @@ export interface MetadataUpdateHistoryCategorySummaryResponse {
   latestUpdatedAt?: string;
   bySource: MetadataUpdateHistoryBucket[];
   byField: MetadataUpdateHistoryBucket[];
+  ocrHintAppliedEntries?: number;
+  ocrHintCancelledEntries?: number;
+  ocrHintErrorEntries?: number;
+  ocrHintAppliedRate?: number;
 }
 
 export interface MetadataUpdateAdoptionTrendPoint {
