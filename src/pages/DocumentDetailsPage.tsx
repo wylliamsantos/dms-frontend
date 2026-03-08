@@ -876,33 +876,43 @@ export function DocumentDetailsPage() {
                 {chatOperationalStatus.status === 'QUALITY_GATED' ? (
                   <div style={{ marginTop: '0.45rem', fontSize: '0.78rem', color: '#92400e' }}>
                     Bloqueado por qualidade. {chatOperationalStatus.missingRequiredMetadata.length ? `Campos faltando: ${chatOperationalStatus.missingRequiredMetadata.join(', ')}.` : ''}
-                    {chatOperationalStatus.suggestedHints.length ? (
-                      <div style={{ marginTop: '0.45rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        {chatOperationalStatus.suggestedHints.map((hint) => (
-                          <div key={`chat-hint-${hint.field}`} style={{ border: '1px solid #f5d0a6', borderRadius: '0.45rem', padding: '0.45rem 0.55rem', background: '#fff7ed' }}>
-                            <div style={{ fontSize: '0.76rem', color: '#7c2d12' }}>
-                              <strong>{hint.field}</strong>
-                              {hint.suggestedValue ? <> · <code>{hint.suggestedValue}</code></> : null}
-                            </div>
-                            {hint.reason ? <div style={{ marginTop: '0.2rem', color: '#9a3412' }}>{hint.reason}</div> : null}
-                            {hint.evidenceExcerpt ? <div style={{ marginTop: '0.2rem', color: '#9a3412' }}>Evidência: {hint.evidenceExcerpt}</div> : null}
-                            <div style={{ marginTop: '0.35rem' }}>
-                              <button
-                                type="button"
-                                className="button button--ghost"
-                                onClick={() => handleApplyHint(hint.field, hint.suggestedValue)}
-                                disabled={applyMetadataHintMutation.isPending || !hint.suggestedValue}
-                              >
-                                Aplicar no documento
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                  </div>
+                ) : null}
+                {(chatOperationalStatus.status === 'QUALITY_GATED' || chatOperationalStatus.status === 'OK') && chatOperationalStatus.suggestedHints.length ? (
+                  <div style={{ marginTop: '0.45rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    {chatOperationalStatus.suggestedHints.map((hint) => (
+                      <div
+                        key={`chat-hint-${hint.field}`}
+                        style={{
+                          border: chatOperationalStatus.status === 'QUALITY_GATED' ? '1px solid #f5d0a6' : '1px solid #cbd5e1',
+                          borderRadius: '0.45rem',
+                          padding: '0.45rem 0.55rem',
+                          background: chatOperationalStatus.status === 'QUALITY_GATED' ? '#fff7ed' : '#f8fafc'
+                        }}
+                      >
+                        <div style={{ fontSize: '0.76rem', color: chatOperationalStatus.status === 'QUALITY_GATED' ? '#7c2d12' : '#334155' }}>
+                          <strong>{hint.field}</strong>
+                          {hint.suggestedValue ? <> · <code>{hint.suggestedValue}</code></> : null}
+                        </div>
+                        {hint.reason ? <div style={{ marginTop: '0.2rem', color: chatOperationalStatus.status === 'QUALITY_GATED' ? '#9a3412' : '#475569' }}>{hint.reason}</div> : null}
+                        {hint.evidenceExcerpt ? <div style={{ marginTop: '0.2rem', color: chatOperationalStatus.status === 'QUALITY_GATED' ? '#9a3412' : '#64748b' }}>Evidência: {hint.evidenceExcerpt}</div> : null}
+                        <div style={{ marginTop: '0.35rem' }}>
+                          <button
+                            type="button"
+                            className="button button--ghost"
+                            onClick={() => handleApplyHint(hint.field, hint.suggestedValue)}
+                            disabled={applyMetadataHintMutation.isPending || !hint.suggestedValue}
+                          >
+                            Aplicar no documento
+                          </button>
+                        </div>
                       </div>
-                    ) : null}
-                    <div style={{ marginTop: '0.35rem' }}>
-                      <button type="button" className="button button--ghost" onClick={handleChatQualityFixCta}>Abrir sugestões de correção</button>
-                    </div>
+                    ))}
+                  </div>
+                ) : null}
+                {chatOperationalStatus.status === 'QUALITY_GATED' ? (
+                  <div style={{ marginTop: '0.35rem' }}>
+                    <button type="button" className="button button--ghost" onClick={handleChatQualityFixCta}>Abrir sugestões de correção</button>
                   </div>
                 ) : null}
                 {!chatOperationalStatus.status || chatOperationalStatus.status === 'OK' ? null : chatOperationalStatus.ocrQualitySummary ? (
