@@ -46,6 +46,11 @@ interface ChatOperationalStatus {
   suggestedHints: Array<{ field: string; suggestedValue?: string; reason?: string; evidenceExcerpt?: string }>;
 }
 
+interface AppliedHintFeedback {
+  appliedAtIso: string;
+  appliedBy: string;
+}
+
 const normalizeIso = (iso?: string) => {
   if (!iso) return undefined;
   const value = iso.trim();
@@ -85,6 +90,7 @@ export function DocumentDetailsPage() {
   const [benchmarkCategoryFilter, setBenchmarkCategoryFilter] = useState<string>('');
   const [chatOperationalStatus, setChatOperationalStatus] = useState<ChatOperationalStatus | null>(null);
   const [appliedHintKeys, setAppliedHintKeys] = useState<Record<string, true>>({});
+  const [appliedHintFeedback, setAppliedHintFeedback] = useState<Record<string, AppliedHintFeedback>>({});
   const benchmarkCardRef = useRef<HTMLDivElement | null>(null);
   const insightCardRef = useRef<HTMLDivElement | null>(null);
   const { t, i18n } = useTranslation();
@@ -149,9 +155,18 @@ export function DocumentDetailsPage() {
       return { field, suggestedValue };
     },
     onSuccess: ({ field, suggestedValue }) => {
+      const key = `${field}::${suggestedValue}`;
+      const appliedAtIso = new Date().toISOString();
       setAppliedHintKeys((current) => ({
         ...current,
-        [`${field}::${suggestedValue}`]: true
+        [key]: true
+      }));
+      setAppliedHintFeedback((current) => ({
+        ...current,
+        [key]: {
+          appliedAtIso,
+          appliedBy: 'você'
+        }
       }));
       queryClient.invalidateQueries({ queryKey: ['document-information', documentId] });
       queryClient.invalidateQueries({ queryKey: ['document-insight', documentId] });
@@ -330,12 +345,34 @@ export function DocumentDetailsPage() {
     await applyMetadataHintMutation.mutateAsync({ field, suggestedValue });
   };
 
-  const isHintApplied = (field: string, suggestedValue?: string) => {
-    if (!field || !suggestedValue) return false;
+  const getHintApplicationStatus = (field: string, suggestedValue?: string) => {
+    if (!field || !suggestedValue) return { applied: false, detail: undefined as string | undefined };
     const key = `${field}::${suggestedValue}`;
-    if (appliedHintKeys[key]) return true;
+    const localFeedback = appliedHintFeedback[key];
+    if (localFeedback) {
+      const atLabel = formatDate(localFeedback.appliedAtIso, locale) || localFeedback.appliedAtIso;
+      return {
+        applied: true,
+        detail: `Aplicado agora (${atLabel} · ${localFeedback.appliedBy})`
+      };
+    }
+
     const persistedValue = entry?.properties?.[field];
-    return persistedValue !== undefined && String(persistedValue) === suggestedValue;
+    const isPersistedMatch = persistedValue !== undefined && String(persistedValue) === suggestedValue;
+    if (!isPersistedMatch && !appliedHintKeys[key]) return { applied: false, detail: undefined as string | undefined };
+
+    const latestHistoryMatch = (insight?.metadataUpdateHistory ?? []).find((item) => {
+      const source = String(item.source ?? '').toUpperCase();
+      return source === 'OCR_HINT' && item.field === field && String(item.newValue ?? '') === suggestedValue;
+    });
+    const detail = latestHistoryMatch
+      ? `Já aplicado anteriormente (${formatDate(latestHistoryMatch.updatedAt, locale) || latestHistoryMatch.updatedAt || '-'} · ${latestHistoryMatch.updatedBy || 'system'})`
+      : 'Já aplicado anteriormente';
+
+    return {
+      applied: true,
+      detail
+    };
   };
 
   if (!documentId) {
@@ -624,7 +661,8 @@ export function DocumentDetailsPage() {
                         <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Sugestões acionáveis</strong>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                           {metadataHints.slice(0, 4).map((hint) => {
-                            const alreadyApplied = isHintApplied(hint.field, hint.suggestedValue);
+                            const hintStatus = getHintApplicationStatus(hint.field, hint.suggestedValue);
+                            const alreadyApplied = hintStatus.applied;
                             return (
                             <div key={`${hint.field}-${hint.action}`} style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.6rem 0.7rem' }}>
                               <div style={{ fontSize: '0.85rem', color: '#0f172a', display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
@@ -636,6 +674,9 @@ export function DocumentDetailsPage() {
                               ) : null}
                               {hint.evidenceExcerpt ? (
                                 <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.25rem' }}>Evidência: {hint.evidenceExcerpt}</div>
+                              ) : null}
+                              {hintStatus.detail ? (
+                                <div style={{ fontSize: '0.76rem', color: '#166534', marginTop: '0.25rem' }}>{hintStatus.detail}</div>
                               ) : null}
                               <div style={{ marginTop: '0.5rem' }}>
                                 <button
@@ -898,7 +939,8 @@ export function DocumentDetailsPage() {
                 {(chatOperationalStatus.status === 'QUALITY_GATED' || chatOperationalStatus.status === 'OK') && chatOperationalStatus.suggestedHints.length ? (
                   <div style={{ marginTop: '0.45rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     {chatOperationalStatus.suggestedHints.map((hint) => {
-                      const alreadyApplied = isHintApplied(hint.field, hint.suggestedValue);
+                      const hintStatus = getHintApplicationStatus(hint.field, hint.suggestedValue);
+                      const alreadyApplied = hintStatus.applied;
                       return (
                       <div
                         key={`chat-hint-${hint.field}`}
@@ -916,6 +958,7 @@ export function DocumentDetailsPage() {
                         </div>
                         {hint.reason ? <div style={{ marginTop: '0.2rem', color: chatOperationalStatus.status === 'QUALITY_GATED' ? '#9a3412' : '#475569' }}>{hint.reason}</div> : null}
                         {hint.evidenceExcerpt ? <div style={{ marginTop: '0.2rem', color: chatOperationalStatus.status === 'QUALITY_GATED' ? '#9a3412' : '#64748b' }}>Evidência: {hint.evidenceExcerpt}</div> : null}
+                        {hintStatus.detail ? <div style={{ marginTop: '0.2rem', color: '#166534' }}>{hintStatus.detail}</div> : null}
                         <div style={{ marginTop: '0.35rem' }}>
                           <button
                             type="button"
