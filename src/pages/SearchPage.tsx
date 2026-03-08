@@ -134,7 +134,7 @@ export function SearchPage() {
       }
       const shownAt = suggestionsLoadingShownAtRef.current;
       const elapsed = shownAt ? Date.now() - shownAt : 0;
-      const remaining = Math.max(0, 220 - elapsed);
+      const remaining = Math.max(0, 350 - elapsed);
       const hideTimer = window.setTimeout(() => {
         setShowSuggestionsLoading(false);
         suggestionsLoadingShownAtRef.current = null;
@@ -145,7 +145,7 @@ export function SearchPage() {
     const timeout = window.setTimeout(() => {
       suggestionsLoadingShownAtRef.current = Date.now();
       setShowSuggestionsLoading(true);
-    }, 280);
+    }, 360);
 
     return () => window.clearTimeout(timeout);
   }, [debouncedTextQuery, suggestionsQuery.isFetching, displayedSuggestionOptions.length, showSuggestionsLoading]);

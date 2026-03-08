@@ -161,12 +161,18 @@ export function DocumentDetailsPage() {
     },
     onSuccess: (response) => {
       const answer = response.answer?.trim() || response.message || 'Sem resposta no momento.';
+      const qualityHint = response.ocrQualityScore !== undefined
+        ? `\n\nQualidade OCR: ${response.ocrQualityScore}/100 (${response.ocrQualityBand || 'N/A'}).`
+        : '';
+      const guardHint = response.rolloutGuard && response.rolloutGuard !== 'NONE'
+        ? `\nGuardrail: ${response.rolloutGuard}.`
+        : '';
       setChatMessages((current) => [
         ...current,
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          text: answer
+          text: `${answer}${guardHint}${qualityHint}`.trim()
         }
       ]);
       if (!isChatOpen) setChatUnreadCount((current) => current + 1);
