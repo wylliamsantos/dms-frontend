@@ -93,7 +93,7 @@ export function SearchPage() {
   const suggestionsFreshnessLabel = useMemo(() => {
     if (!lastSuggestionsUpdateAt) return null;
     const seconds = Math.max(0, Math.round((Date.now() - lastSuggestionsUpdateAt) / 1000));
-    if (seconds <= 4) return 'Sugestões atualizadas agora.';
+    if (seconds <= 4) return 'Sugestões atualizadas agora mesmo.';
     if (seconds < 60) return `Sugestões atualizadas há ${seconds}s.`;
     const minutes = Math.round(seconds / 60);
     return `Sugestões atualizadas há ${minutes}min.`;
