@@ -12,3 +12,26 @@ export const resolveRagRolloutGuardMessage = (guard?: string) => {
       return undefined;
   }
 };
+
+export const resolveDocumentChatAssistantMessage = (payload: {
+  answer?: string;
+  ragRolloutGuardMessage?: string;
+  rolloutGuard?: string;
+  message?: string;
+}) => {
+  const trimmedAnswer = payload.answer?.trim();
+  if (trimmedAnswer) {
+    return trimmedAnswer;
+  }
+
+  const explicitGuardMessage = payload.ragRolloutGuardMessage?.trim();
+  if (explicitGuardMessage) {
+    return explicitGuardMessage;
+  }
+
+  return (
+    resolveRagRolloutGuardMessage(payload.rolloutGuard) ||
+    payload.message ||
+    'Sem resposta no momento.'
+  );
+};
