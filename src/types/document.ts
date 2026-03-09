@@ -247,6 +247,7 @@ export interface DocumentChatResponse {
   status: string;
   message: string;
   rolloutGuard?: string;
+  ragRolloutGuardMessage?: string;
   ocrQualityScore?: number;
   ocrQualityBand?: 'HIGH' | 'MEDIUM' | 'LOW' | string;
   ocrQualitySummary?: string;
