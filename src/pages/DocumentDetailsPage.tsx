@@ -611,6 +611,17 @@ export function DocumentDetailsPage() {
                 ) : (
                   <>
                     <p style={{ marginTop: 0 }}>{insight.summary || 'Sem resumo disponível.'}</p>
+                    {insight.aiExecutiveSummary ? (
+                      <div style={{ marginTop: '0.5rem', border: '1px solid #dbeafe', borderRadius: '0.5rem', background: '#eff6ff', padding: '0.55rem 0.65rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.82rem' }}>Insight executivo (MVP)</strong>
+                        <div style={{ fontSize: '0.8rem', color: '#1e3a8a' }}>{insight.aiExecutiveSummary}</div>
+                        {insight.aiExecutiveHighlights?.length ? (
+                          <ul style={{ margin: '0.35rem 0 0 1rem', padding: 0, fontSize: '0.76rem', color: '#334155' }}>
+                            {insight.aiExecutiveHighlights.slice(0, 4).map((item) => (<li key={item}>{item}</li>))}
+                          </ul>
+                        ) : null}
+                      </div>
+                    ) : null}
                     {insight.generatedAt ? (
                       <p style={{ fontSize: '0.82rem', color: '#64748b' }}>
                         Atualizado em: {formatDate(insight.generatedAt, locale) || insight.generatedAt}
