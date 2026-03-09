@@ -98,6 +98,21 @@ const resolveExecutiveRolloutGuardMessage = (guard?: string) => {
   }
 };
 
+const resolveInsightRagRolloutGuardMessage = (guard?: string) => {
+  switch (guard) {
+    case 'FEATURE_FLAG_DISABLED':
+      return 'RAG documental indisponível: feature flag global desativada.';
+    case 'TENANT_NOT_ALLOWED':
+      return 'RAG documental indisponível para este tenant no rollout atual.';
+    case 'CATEGORY_NOT_ALLOWED':
+      return 'RAG documental indisponível para esta categoria no rollout atual.';
+    case 'REQUIRED_METADATA_MISSING':
+      return 'RAG documental aguardando qualidade mínima: há metadados obrigatórios faltantes.';
+    default:
+      return undefined;
+  }
+};
+
 const formatDate = (iso?: string, locale = 'pt-BR') => {
   const normalized = normalizeIso(iso);
   if (!normalized) return undefined;
@@ -638,6 +653,12 @@ export function DocumentDetailsPage() {
                       <div style={{ marginTop: '0.5rem', border: '1px dashed #cbd5e1', borderRadius: '0.5rem', background: '#f8fafc', padding: '0.55rem 0.65rem' }}>
                         <strong style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.82rem', color: '#334155' }}>Insight executivo (MVP)</strong>
                         <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{resolveExecutiveRolloutGuardMessage(insight.aiExecutiveRolloutGuard)}</div>
+                      </div>
+                    ) : null}
+                    {resolveInsightRagRolloutGuardMessage(insight.ragRolloutGuard) ? (
+                      <div style={{ marginTop: '0.5rem', border: '1px dashed #cbd5e1', borderRadius: '0.5rem', background: '#f8fafc', padding: '0.5rem 0.65rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.2rem', fontSize: '0.8rem', color: '#334155' }}>Guardrail RAG (MVP)</strong>
+                        <div style={{ fontSize: '0.76rem', color: '#64748b' }}>{resolveInsightRagRolloutGuardMessage(insight.ragRolloutGuard)}</div>
                       </div>
                     ) : null}
                     {insight.generatedAt ? (
