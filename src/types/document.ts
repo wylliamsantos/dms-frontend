@@ -64,6 +64,7 @@ export interface DocumentInsightActionHint {
   priority: 'HIGH' | 'MEDIUM' | 'LOW' | string;
   suggestedValue?: string;
   evidenceExcerpt?: string;
+  impactScore?: number;
 }
 
 export interface MetadataUpdateHistoryEntry {
