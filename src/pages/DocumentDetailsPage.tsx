@@ -43,7 +43,7 @@ interface ChatOperationalStatus {
   ocrQualityBand?: string;
   ocrQualitySummary?: string;
   missingRequiredMetadata: string[];
-  suggestedHints: Array<{ field: string; suggestedValue?: string; reason?: string; evidenceExcerpt?: string }>;
+  suggestedHints: Array<{ field: string; suggestedValue?: string; reason?: string; evidenceExcerpt?: string; impactScore?: number }>;
 }
 
 interface AppliedHintFeedback {
@@ -68,9 +68,11 @@ const resolveHintImpactScore = (field?: string, suggestedValue?: string) => {
   return (importantWeight > 0 ? 100 + importantWeight : 0) + suggestionBonus;
 };
 
-const sortHintsByImpact = <THint extends { field: string; suggestedValue?: string }>(hints: THint[]) =>
+const sortHintsByImpact = <THint extends { field: string; suggestedValue?: string; impactScore?: number }>(hints: THint[]) =>
   [...hints].sort((left, right) => {
-    const scoreDiff = resolveHintImpactScore(right.field, right.suggestedValue) - resolveHintImpactScore(left.field, left.suggestedValue);
+    const rightScore = right.impactScore ?? resolveHintImpactScore(right.field, right.suggestedValue);
+    const leftScore = left.impactScore ?? resolveHintImpactScore(left.field, left.suggestedValue);
+    const scoreDiff = rightScore - leftScore;
     if (scoreDiff !== 0) return scoreDiff;
     return left.field.localeCompare(right.field, 'pt-BR', { sensitivity: 'base' });
   });
@@ -238,7 +240,8 @@ export function DocumentDetailsPage() {
           field: hint.field,
           suggestedValue: hint.suggestedValue,
           reason: hint.reason,
-          evidenceExcerpt: hint.evidenceExcerpt
+          evidenceExcerpt: hint.evidenceExcerpt,
+          impactScore: hint.impactScore
         }))
       });
       setChatMessages((current) => [
