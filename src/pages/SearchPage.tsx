@@ -99,6 +99,48 @@ export function SearchPage() {
     return `Sugestões atualizadas há ${minutes}min.`;
   }, [lastSuggestionsUpdateAt, suggestionsQuery.data]);
 
+  const suggestionStatus = useMemo(() => {
+    if (showSuggestionsLoading) {
+      return { text: 'Carregando sugestões...', color: '#64748b' };
+    }
+
+    if (isDebouncingSuggestions) {
+      return { text: 'Aguardando pausa na digitação…', color: '#94a3b8' };
+    }
+
+    if (isSuggestionsRefreshing) {
+      return { text: 'Atualizando sugestões…', color: '#94a3b8' };
+    }
+
+    if (textQuery.trim().length > 0 && textQuery.trim().length < 2) {
+      return { text: 'Digite ao menos 2 caracteres para sugerir termos.', color: '#94a3b8' };
+    }
+
+    if (suggestionsQuery.isError && displayedSuggestionOptions.length > 0) {
+      return { text: 'Não foi possível atualizar sugestões agora. Mantendo últimas opções.', color: '#b45309' };
+    }
+
+    if (normalizedLiveSuggestionQuery.length >= 2 && isSuggestionResultSettled && displayedSuggestionOptions.length === 0) {
+      return { text: 'Sem sugestões para o termo atual.', color: '#94a3b8' };
+    }
+
+    if (normalizedLiveSuggestionQuery.length >= 2 && suggestionsFreshnessLabel) {
+      return { text: suggestionsFreshnessLabel, color: '#94a3b8' };
+    }
+
+    return { text: '', color: '#94a3b8' };
+  }, [
+    showSuggestionsLoading,
+    isDebouncingSuggestions,
+    isSuggestionsRefreshing,
+    textQuery,
+    suggestionsQuery.isError,
+    displayedSuggestionOptions.length,
+    normalizedLiveSuggestionQuery.length,
+    isSuggestionResultSettled,
+    suggestionsFreshnessLabel
+  ]);
+
   useEffect(() => {
     if (categories.length && !selectedCategories?.length) {
       setValue('categories', categories.map((category) => category.name));
@@ -299,27 +341,11 @@ export function SearchPage() {
                   <option key={suggestion} value={suggestion} />
                 ))}
               </datalist>
-              {showSuggestionsLoading ? (
-                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Carregando sugestões...</span>
-              ) : null}
-              {!showSuggestionsLoading && isDebouncingSuggestions ? (
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Aguardando pausa na digitação…</span>
-              ) : null}
-              {!showSuggestionsLoading && !isDebouncingSuggestions && isSuggestionsRefreshing ? (
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Atualizando sugestões…</span>
-              ) : null}
-              {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && textQuery.trim().length > 0 && textQuery.trim().length < 2 ? (
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Digite ao menos 2 caracteres para sugerir termos.</span>
-              ) : null}
-              {!showSuggestionsLoading && suggestionsQuery.isError && displayedSuggestionOptions.length > 0 ? (
-                <span style={{ fontSize: '0.8rem', color: '#b45309' }}>Não foi possível atualizar sugestões agora. Mantendo últimas opções.</span>
-              ) : null}
-              {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && normalizedLiveSuggestionQuery.length >= 2 && isSuggestionResultSettled && displayedSuggestionOptions.length === 0 ? (
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Sem sugestões para o termo atual.</span>
-              ) : null}
-              {!showSuggestionsLoading && !isDebouncingSuggestions && !isSuggestionsRefreshing && normalizedLiveSuggestionQuery.length >= 2 && suggestionsFreshnessLabel ? (
-                <span style={{ fontSize: '0.76rem', color: '#94a3b8' }}>{suggestionsFreshnessLabel}</span>
-              ) : null}
+              <div style={{ minHeight: '1.2rem' }}>
+                <span style={{ fontSize: '0.8rem', color: suggestionStatus.color }}>
+                  {suggestionStatus.text || '\u00a0'}
+                </span>
+              </div>
             </div>
 
             <div className="input-group">
