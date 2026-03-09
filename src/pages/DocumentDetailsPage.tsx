@@ -85,6 +85,19 @@ const normalizeIso = (iso?: string) => {
   return hasTimezone ? value : `${value}Z`;
 };
 
+const resolveExecutiveRolloutGuardMessage = (guard?: string) => {
+  switch (guard) {
+    case 'GLOBAL_DISABLED':
+      return 'Resumo executivo indisponível: feature flag global desativada neste ambiente.';
+    case 'TENANT_NOT_ALLOWED':
+      return 'Resumo executivo indisponível para este tenant no rollout atual.';
+    case 'CATEGORY_NOT_ALLOWED':
+      return 'Resumo executivo indisponível para esta categoria no rollout atual.';
+    default:
+      return undefined;
+  }
+};
+
 const formatDate = (iso?: string, locale = 'pt-BR') => {
   const normalized = normalizeIso(iso);
   if (!normalized) return undefined;
@@ -620,6 +633,11 @@ export function DocumentDetailsPage() {
                             {insight.aiExecutiveHighlights.slice(0, 4).map((item) => (<li key={item}>{item}</li>))}
                           </ul>
                         ) : null}
+                      </div>
+                    ) : resolveExecutiveRolloutGuardMessage(insight.aiExecutiveRolloutGuard) ? (
+                      <div style={{ marginTop: '0.5rem', border: '1px dashed #cbd5e1', borderRadius: '0.5rem', background: '#f8fafc', padding: '0.55rem 0.65rem' }}>
+                        <strong style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.82rem', color: '#334155' }}>Insight executivo (MVP)</strong>
+                        <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{resolveExecutiveRolloutGuardMessage(insight.aiExecutiveRolloutGuard)}</div>
                       </div>
                     ) : null}
                     {insight.generatedAt ? (

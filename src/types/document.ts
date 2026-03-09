@@ -209,6 +209,7 @@ export interface DocumentInsightResponse {
   ocrQualitySummary?: string;
   aiExecutiveSummary?: string;
   aiExecutiveHighlights?: string[];
+  aiExecutiveRolloutGuard?: 'NONE' | 'GLOBAL_DISABLED' | 'TENANT_NOT_ALLOWED' | 'CATEGORY_NOT_ALLOWED' | string;
   ocrStats?: Record<string, unknown>;
 }
 
