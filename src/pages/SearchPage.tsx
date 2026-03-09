@@ -13,6 +13,7 @@ import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
 import { SuggestionStatusLine } from '@/components/SuggestionStatusLine';
 import { env } from '@/utils/env';
+import { resolveSuggestionsFreshnessLabel } from '@/utils/suggestionStatus';
 import { PageResponse, SearchEntry } from '@/types/document';
 
 const PAGE_SIZE = 10;
@@ -59,6 +60,7 @@ export function SearchPage() {
   const [displayedSuggestionOptions, setDisplayedSuggestionOptions] = useState<string[]>([]);
   const [lastSuggestionsUpdateAt, setLastSuggestionsUpdateAt] = useState<number | null>(null);
   const [lastResolvedSuggestionQuery, setLastResolvedSuggestionQuery] = useState('');
+  const [freshnessNow, setFreshnessNow] = useState(() => Date.now());
   const suggestionsLoadingShownAtRef = useRef<number | null>(null);
 
   const suggestionsQuery = useSearchSuggestions({
@@ -91,14 +93,10 @@ export function SearchPage() {
     && !suggestionsQuery.isFetching
     && !suggestionsQuery.isError
     && lastResolvedSuggestionQuery === normalizedSuggestionQuery;
-  const suggestionsFreshnessLabel = useMemo(() => {
-    if (!lastSuggestionsUpdateAt) return null;
-    const seconds = Math.max(0, Math.round((Date.now() - lastSuggestionsUpdateAt) / 1000));
-    if (seconds <= 4) return 'Sugestões atualizadas agora mesmo.';
-    if (seconds < 60) return `Sugestões atualizadas há ${seconds}s.`;
-    const minutes = Math.round(seconds / 60);
-    return `Sugestões atualizadas há ${minutes}min.`;
-  }, [lastSuggestionsUpdateAt, suggestionsQuery.data]);
+  const suggestionsFreshnessLabel = useMemo(
+    () => resolveSuggestionsFreshnessLabel(lastSuggestionsUpdateAt, freshnessNow),
+    [lastSuggestionsUpdateAt, freshnessNow]
+  );
 
   const suggestionStatus = useMemo(() => {
     if (showSuggestionsLoading) {
@@ -149,6 +147,18 @@ export function SearchPage() {
   }, [categories, selectedCategories?.length, setValue]);
 
   useEffect(() => {
+    if (!lastSuggestionsUpdateAt || normalizedLiveSuggestionQuery.length < 2) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setFreshnessNow(Date.now());
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [lastSuggestionsUpdateAt, normalizedLiveSuggestionQuery.length]);
+
+  useEffect(() => {
     if (normalizedLiveSuggestionQuery.length < 2) {
       setDisplayedSuggestionOptions([]);
       return;
@@ -162,7 +172,9 @@ export function SearchPage() {
       setDisplayedSuggestionOptions(suggestionOptions);
       if (!suggestionsQuery.isFetching && !suggestionsQuery.isError) {
         setLastResolvedSuggestionQuery(normalizedSuggestionQuery);
-        setLastSuggestionsUpdateAt(Date.now());
+        const now = Date.now();
+        setLastSuggestionsUpdateAt(now);
+        setFreshnessNow(now);
       }
     }
   }, [normalizedLiveSuggestionQuery.length, normalizedSuggestionQuery, suggestionOptions, suggestionsQuery.isFetching, suggestionsQuery.isError, displayedSuggestionOptions.length]);
