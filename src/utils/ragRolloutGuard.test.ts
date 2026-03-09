@@ -32,4 +32,21 @@ describe('resolveDocumentChatAssistantMessage', () => {
 
     expect(message).toBe('RAG documental indisponível: feature flag global desativada.');
   });
+
+  it('cai para message quando não há guard message resolvida', () => {
+    const message = resolveDocumentChatAssistantMessage({
+      answer: ' ',
+      ragRolloutGuardMessage: ' ',
+      rolloutGuard: 'NONE',
+      message: 'fallback backend'
+    });
+
+    expect(message).toBe('fallback backend');
+  });
+
+  it('retorna fallback padrão quando payload vem vazio', () => {
+    const message = resolveDocumentChatAssistantMessage({});
+
+    expect(message).toBe('Sem resposta no momento.');
+  });
 });
