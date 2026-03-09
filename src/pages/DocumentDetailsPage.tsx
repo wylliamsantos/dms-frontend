@@ -21,7 +21,7 @@ import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
 import { formatDateTime } from '@/utils/format';
 import { env } from '@/utils/env';
 import { workflowStatusClassName, workflowStatusLabel } from '@/utils/labels';
-import { resolveDocumentChatAssistantMessage, resolveRagRolloutGuardMessage } from '@/utils/ragRolloutGuard';
+import { resolveDocumentChatAssistantMessage } from '@/utils/ragRolloutGuard';
 
 interface ChatMessage {
   id: string;
