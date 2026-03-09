@@ -21,7 +21,7 @@ import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
 import { formatDateTime } from '@/utils/format';
 import { env } from '@/utils/env';
 import { workflowStatusClassName, workflowStatusLabel } from '@/utils/labels';
-import { resolveRagRolloutGuardMessage } from '@/utils/ragRolloutGuard';
+import { resolveDocumentChatAssistantMessage, resolveRagRolloutGuardMessage } from '@/utils/ragRolloutGuard';
 
 interface ChatMessage {
   id: string;
@@ -85,8 +85,7 @@ export function DocumentDetailsPage() {
       if (!isChatOpen) setChatUnreadCount((current) => current + 1);
     },
     onSuccess: (response) => {
-      const ragGuardMessage = response.ragRolloutGuardMessage?.trim() || resolveRagRolloutGuardMessage(response.rolloutGuard);
-      const answer = response.answer?.trim() || ragGuardMessage || response.message || 'Sem resposta no momento.';
+      const answer = resolveDocumentChatAssistantMessage(response);
       setChatMessages((current) => [
         ...current,
         {
