@@ -11,6 +11,7 @@ import { useSearchSuggestions } from '@/hooks/useSearchSuggestions';
 import { DocumentTable } from '@/components/DocumentTable';
 import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
+import { SuggestionStatusLine } from '@/components/SuggestionStatusLine';
 import { env } from '@/utils/env';
 import { PageResponse, SearchEntry } from '@/types/document';
 
@@ -341,11 +342,7 @@ export function SearchPage() {
                   <option key={suggestion} value={suggestion} />
                 ))}
               </datalist>
-              <div style={{ minHeight: '1.2rem' }}>
-                <span style={{ fontSize: '0.8rem', color: suggestionStatus.color }}>
-                  {suggestionStatus.text || '\u00a0'}
-                </span>
-              </div>
+              <SuggestionStatusLine text={suggestionStatus.text} color={suggestionStatus.color} />
             </div>
 
             <div className="input-group">

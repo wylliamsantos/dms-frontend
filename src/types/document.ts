@@ -210,6 +210,7 @@ export interface DocumentInsightResponse {
   aiExecutiveSummary?: string;
   aiExecutiveHighlights?: string[];
   aiExecutiveRolloutGuard?: 'NONE' | 'GLOBAL_DISABLED' | 'TENANT_NOT_ALLOWED' | 'CATEGORY_NOT_ALLOWED' | string;
+  ragRolloutGuard?: 'NONE' | 'FEATURE_FLAG_DISABLED' | 'TENANT_NOT_ALLOWED' | 'CATEGORY_NOT_ALLOWED' | 'REQUIRED_METADATA_MISSING' | string;
   ocrStats?: Record<string, unknown>;
 }
 
