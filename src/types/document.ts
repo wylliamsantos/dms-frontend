@@ -207,6 +207,8 @@ export interface DocumentInsightResponse {
   ocrQualityScore?: number;
   ocrQualityBand?: 'HIGH' | 'MEDIUM' | 'LOW' | string;
   ocrQualitySummary?: string;
+  aiExecutiveSummary?: string;
+  aiExecutiveHighlights?: string[];
   ocrStats?: Record<string, unknown>;
 }
 
