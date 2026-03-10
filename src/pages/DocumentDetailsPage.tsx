@@ -23,7 +23,7 @@ import { DmsDocumentSearchResponse, DmsEntry } from '@/types/document';
 import { formatDateTime } from '@/utils/format';
 import { env } from '@/utils/env';
 import { workflowStatusClassName, workflowStatusLabel } from '@/utils/labels';
-import { resolveDocumentChatAssistantMessage } from '@/utils/ragRolloutGuard';
+import { resolveDocumentChatAssistantMessage, resolveRagRolloutGuardMessage } from '@/utils/ragRolloutGuard';
 import { resolveAiExecutiveHighlights, resolveOcrSummaryText } from '@/utils/documentInsight';
 
 interface ChatMessage {
@@ -253,6 +253,7 @@ export function DocumentDetailsPage() {
   });
   const persistedOcrSummary = resolveOcrSummaryText(entry) ?? insight?.persistedOcrExcerpt ?? null;
   const aiExecutiveHighlights = resolveAiExecutiveHighlights(insight);
+  const insightRagGuardMessage = resolveRagRolloutGuardMessage(insight?.ragRolloutGuard) ?? insight?.ragRolloutGuardMessage;
   const ragContext = ragContextQuery.data;
 
   return (
@@ -354,7 +355,9 @@ export function DocumentDetailsPage() {
                       {typeof insight.requiredMetadataCoveragePercent === 'number' ? <span className="badge badge--info">Cobertura obrigatória: {insight.requiredMetadataCoveragePercent}%</span> : null}
                       {typeof insight.importantMetadataCoveragePercent === 'number' ? <span className="badge badge--info">Campos importantes: {insight.importantMetadataCoveragePercent}%</span> : null}
                       {insight.ocrQualityBand ? <span className="badge badge--neutral">OCR: {insight.ocrQualityBand}</span> : null}
+                      {insight.ragRolloutGuard && insight.ragRolloutGuard !== 'NONE' ? <span className="badge badge--warning">RAG guard: {insight.ragRolloutGuard}</span> : null}
                     </div>
+                    {insightRagGuardMessage ? <p style={{ margin: 0, color: '#475569' }}>{insightRagGuardMessage}</p> : null}
                   </div>
                 ) : null}
               </div>

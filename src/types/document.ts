@@ -176,6 +176,8 @@ export interface MetadataRegressionAlert {
   message: string;
 }
 
+import { RagRolloutGuard } from '@/constants/ragRolloutGuard';
+
 export interface DocumentInsightResponse {
   documentId: string;
   version?: string;
@@ -210,7 +212,7 @@ export interface DocumentInsightResponse {
   aiExecutiveSummary?: string;
   aiExecutiveHighlights?: string[];
   aiExecutiveRolloutGuard?: 'NONE' | 'GLOBAL_DISABLED' | 'TENANT_NOT_ALLOWED' | 'CATEGORY_NOT_ALLOWED' | string;
-  ragRolloutGuard?: 'NONE' | 'FEATURE_FLAG_DISABLED' | 'TENANT_NOT_ALLOWED' | 'CATEGORY_NOT_ALLOWED' | 'REQUIRED_METADATA_MISSING' | string;
+  ragRolloutGuard?: RagRolloutGuard | string;
   ragRolloutGuardMessage?: string;
   ocrStats?: Record<string, unknown>;
 }
@@ -232,7 +234,7 @@ export interface DocumentRagContextResponse {
   averageScore?: number;
   latencyMs?: number;
   qualityBand?: 'HIGH' | 'MEDIUM' | 'LOW' | 'BLOCKED' | string;
-  rolloutGuard?: string;
+  rolloutGuard?: RagRolloutGuard | string;
   featureFlagEnabled?: boolean;
   tenantAllowed?: boolean;
   categoryAllowed?: boolean;
@@ -247,7 +249,7 @@ export interface DocumentChatResponse {
   enabled: boolean;
   status: string;
   message: string;
-  rolloutGuard?: string;
+  rolloutGuard?: RagRolloutGuard | string;
   ragRolloutGuardMessage?: string;
   ocrQualityScore?: number;
   ocrQualityBand?: 'HIGH' | 'MEDIUM' | 'LOW' | string;
