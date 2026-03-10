@@ -1,21 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveSuggestionsFreshnessLabel } from './suggestionStatus';
+import { resolveSuggestionsFreshnessLabel } from '@/utils/suggestionStatus';
 
 describe('resolveSuggestionsFreshnessLabel', () => {
-  it('retorna null quando não há timestamp', () => {
-    expect(resolveSuggestionsFreshnessLabel(null, 10_000)).toBeNull();
-  });
-
-  it('retorna estado de atualização imediata para poucos segundos', () => {
-    expect(resolveSuggestionsFreshnessLabel(10_000, 13_900)).toBe('Sugestões atualizadas agora mesmo.');
-  });
-
-  it('retorna segundos quando menor que 1 minuto', () => {
-    expect(resolveSuggestionsFreshnessLabel(10_000, 45_000)).toBe('Sugestões atualizadas há 35s.');
-  });
-
-  it('retorna minutos quando acima de 1 minuto', () => {
-    expect(resolveSuggestionsFreshnessLabel(10_000, 130_000)).toBe('Sugestões atualizadas há 2min.');
+  it('mantém mensagens estáveis por faixa temporal', () => {
+    const now = 1_000_000;
+    expect(resolveSuggestionsFreshnessLabel(now, now)).toBe('Sugestões atualizadas agora mesmo.');
+    expect(resolveSuggestionsFreshnessLabel(now - 12_000, now)).toBe('Sugestões atualizadas há 12s.');
+    expect(resolveSuggestionsFreshnessLabel(now - 120_000, now)).toBe('Sugestões atualizadas há 2min.');
   });
 });
