@@ -24,6 +24,7 @@ import { formatDateTime } from '@/utils/format';
 import { env } from '@/utils/env';
 import { workflowStatusClassName, workflowStatusLabel } from '@/utils/labels';
 import { resolveDocumentChatAssistantMessage } from '@/utils/ragRolloutGuard';
+import { resolveAiExecutiveHighlights, resolveOcrSummaryText } from '@/utils/documentInsight';
 
 interface ChatMessage {
   id: string;
@@ -248,7 +249,9 @@ export function DocumentDetailsPage() {
     if (value === null || value === undefined) return false;
     return String(value).trim().length > 0;
   });
+  const persistedOcrSummary = resolveOcrSummaryText(entry);
   const insight = insightQuery.data;
+  const aiExecutiveHighlights = resolveAiExecutiveHighlights(insight);
   const ragContext = ragContextQuery.data;
 
   return (
@@ -319,7 +322,7 @@ export function DocumentDetailsPage() {
                   <h3 style={{ margin: 0 }}>OCR persistido e metadados extraídos</h3>
                   <span className="details-ocr-highlight__hint">MVP OCR</span>
                 </div>
-                {entry?.ocrSummary ? <p className="details-ocr-highlight__summary">{entry.ocrSummary}</p> : <p style={{ color: '#64748b' }}>Resumo OCR indisponível para esta versão.</p>}
+                {persistedOcrSummary ? <p className="details-ocr-highlight__summary">{persistedOcrSummary}</p> : <p style={{ color: '#64748b' }}>Resumo OCR indisponível para esta versão.</p>}
                 {persistedMetadataEntries.length > 0 ? (
                   <ul style={{ margin: 0, paddingLeft: '1rem', color: '#0f172a' }}>
                     {persistedMetadataEntries.slice(0, 8).map(([key, value]) => (
@@ -338,6 +341,13 @@ export function DocumentDetailsPage() {
                 {insight ? (
                   <div style={{ display: 'grid', gap: '0.55rem' }}>
                     {insight.aiExecutiveSummary ? <p style={{ margin: 0 }}>{insight.aiExecutiveSummary}</p> : null}
+                    {aiExecutiveHighlights.length > 0 ? (
+                      <ul style={{ margin: 0, paddingLeft: '1rem', color: '#0f172a' }}>
+                        {aiExecutiveHighlights.map((highlight) => (
+                          <li key={highlight}>{highlight}</li>
+                        ))}
+                      </ul>
+                    ) : null}
                     {insight.importantPersistedMetadataSummary ? <p style={{ margin: 0, color: '#334155' }}>{insight.importantPersistedMetadataSummary}</p> : null}
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       {typeof insight.requiredMetadataCoveragePercent === 'number' ? <span className="badge badge--info">Cobertura obrigatória: {insight.requiredMetadataCoveragePercent}%</span> : null}
@@ -360,6 +370,9 @@ export function DocumentDetailsPage() {
                       {ragContext.qualityBand ? <span className="badge badge--info">Qualidade: {ragContext.qualityBand}</span> : null}
                     </div>
                     <p style={{ margin: 0, color: '#334155' }}>{ragContext.message}</p>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.82rem' }}>
+                      Flags: feature={String(ragContext.featureFlagEnabled ?? false)} · tenant={String(ragContext.tenantAllowed ?? false)} · categoria={String(ragContext.categoryAllowed ?? false)}
+                    </p>
                   </div>
                 ) : null}
               </div>
