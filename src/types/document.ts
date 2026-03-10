@@ -236,6 +236,7 @@ export interface DocumentRagContextResponse {
   featureFlagEnabled?: boolean;
   tenantAllowed?: boolean;
   categoryAllowed?: boolean;
+  qualityGatePassed?: boolean;
   missingRequiredMetadata?: string[];
   chunks: DocumentRagChunk[];
 }
