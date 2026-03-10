@@ -355,6 +355,7 @@ export function DocumentDetailsPage() {
                       {typeof insight.requiredMetadataCoveragePercent === 'number' ? <span className="badge badge--info">Cobertura obrigatória: {insight.requiredMetadataCoveragePercent}%</span> : null}
                       {typeof insight.importantMetadataCoveragePercent === 'number' ? <span className="badge badge--info">Campos importantes: {insight.importantMetadataCoveragePercent}%</span> : null}
                       {insight.ocrQualityBand ? <span className="badge badge--neutral">OCR: {insight.ocrQualityBand}</span> : null}
+                      {typeof insight.ragReadyForChat === 'boolean' ? <span className={`badge ${insight.ragReadyForChat ? 'badge--success' : 'badge--warning'}`}>RAG pronto no insight: {insight.ragReadyForChat ? 'sim' : 'não'}</span> : null}
                       {insight.ragRolloutGuard && insight.ragRolloutGuard !== 'NONE' ? <span className="badge badge--warning">RAG guard: {insight.ragRolloutGuard}</span> : null}
                     </div>
                     {insightRagGuardMessage ? <p style={{ margin: 0, color: '#475569' }}>{insightRagGuardMessage}</p> : null}
@@ -370,6 +371,7 @@ export function DocumentDetailsPage() {
                   <div style={{ display: 'grid', gap: '0.45rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <span className="badge badge--neutral">Status: {ragContext.status}</span>
+                      {typeof ragContext.ragReadyForChat === 'boolean' ? <span className={`badge ${ragContext.ragReadyForChat ? 'badge--success' : 'badge--warning'}`}>Pronto para chat: {ragContext.ragReadyForChat ? 'sim' : 'não'}</span> : null}
                       {ragContext.rolloutGuard ? <span className="badge badge--warning">Guard: {ragContext.rolloutGuard}</span> : null}
                       {ragContext.qualityBand ? <span className="badge badge--info">Qualidade: {ragContext.qualityBand}</span> : null}
                     </div>

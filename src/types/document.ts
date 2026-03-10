@@ -214,6 +214,7 @@ export interface DocumentInsightResponse {
   aiExecutiveRolloutGuard?: 'NONE' | 'GLOBAL_DISABLED' | 'TENANT_NOT_ALLOWED' | 'CATEGORY_NOT_ALLOWED' | string;
   ragRolloutGuard?: RagRolloutGuard | string;
   ragRolloutGuardMessage?: string;
+  ragReadyForChat?: boolean;
   ocrStats?: Record<string, unknown>;
 }
 
@@ -235,6 +236,7 @@ export interface DocumentRagContextResponse {
   latencyMs?: number;
   qualityBand?: 'HIGH' | 'MEDIUM' | 'LOW' | 'BLOCKED' | string;
   rolloutGuard?: RagRolloutGuard | string;
+  ragReadyForChat?: boolean;
   featureFlagEnabled?: boolean;
   tenantAllowed?: boolean;
   categoryAllowed?: boolean;

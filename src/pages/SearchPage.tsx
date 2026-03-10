@@ -168,6 +168,11 @@ export function SearchPage() {
       return;
     }
 
+    const shouldHoldPreviousSuggestions = isDebouncingSuggestions && displayedSuggestionOptions.length > 0;
+    if (shouldHoldPreviousSuggestions) {
+      return;
+    }
+
     if (suggestionOptions.length > 0 || (!suggestionsQuery.isFetching && !suggestionsQuery.isError)) {
       setDisplayedSuggestionOptions(suggestionOptions);
       if (!suggestionsQuery.isFetching && !suggestionsQuery.isError) {
@@ -177,7 +182,7 @@ export function SearchPage() {
         setFreshnessNow(now);
       }
     }
-  }, [normalizedLiveSuggestionQuery.length, normalizedSuggestionQuery, suggestionOptions, suggestionsQuery.isFetching, suggestionsQuery.isError, displayedSuggestionOptions.length]);
+  }, [normalizedLiveSuggestionQuery.length, normalizedSuggestionQuery, suggestionOptions, suggestionsQuery.isFetching, suggestionsQuery.isError, displayedSuggestionOptions.length, isDebouncingSuggestions]);
 
   useEffect(() => {
     const hasLiveQuery = textQuery.trim().length >= 2;
