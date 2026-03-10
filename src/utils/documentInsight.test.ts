@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveAiExecutiveHighlights, resolveOcrSummaryText } from './documentInsight';
+import { resolveAiExecutiveHighlights, resolveImportantPersistedMetadataEntries, resolveOcrSummaryText } from './documentInsight';
 
 describe('resolveOcrSummaryText', () => {
   it('returns ocrSummary when available', () => {
@@ -20,5 +20,19 @@ describe('resolveAiExecutiveHighlights', () => {
         aiExecutiveHighlights: [' A ', '', 'B', 'C', 'D', 'E']
       })
     ).toEqual(['A', 'B', 'C', 'D']);
+  });
+});
+
+describe('resolveImportantPersistedMetadataEntries', () => {
+  it('merges insight and entry metadata prioritizing entry values', () => {
+    expect(
+      resolveImportantPersistedMetadataEntries(
+        { importantExtractedMetadata: { cpf: '222', valor: '' } },
+        { documentId: 'doc-1', importantPersistedMetadata: { cpf: '111', numero: 'ABC' } }
+      )
+    ).toEqual([
+      ['cpf', '222'],
+      ['numero', 'ABC']
+    ]);
   });
 });
