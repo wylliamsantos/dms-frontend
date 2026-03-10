@@ -100,7 +100,10 @@ export function SearchPage() {
 
   const suggestionStatus = useMemo(() => {
     if (showSuggestionsLoading) {
-      return { text: 'Carregando sugestões...', color: '#64748b' };
+      return {
+        text: displayedSuggestionOptions.length > 0 ? 'Atualizando sugestões…' : 'Carregando sugestões...',
+        color: '#64748b'
+      };
     }
 
     if (isDebouncingSuggestions) {

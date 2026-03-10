@@ -24,7 +24,7 @@ import { formatDateTime } from '@/utils/format';
 import { env } from '@/utils/env';
 import { workflowStatusClassName, workflowStatusLabel } from '@/utils/labels';
 import { resolveDocumentChatAssistantMessage, resolveRagRolloutGuardMessage } from '@/utils/ragRolloutGuard';
-import { resolveAiExecutiveHighlights, resolveOcrSummaryText } from '@/utils/documentInsight';
+import { resolveAiExecutiveHighlights, resolveImportantPersistedMetadataEntries, resolveOcrSummaryText } from '@/utils/documentInsight';
 
 interface ChatMessage {
   id: string;
@@ -246,11 +246,7 @@ export function DocumentDetailsPage() {
     : undefined;
 
   const insight = insightQuery.data;
-  const persistedMetadataSource = entry?.importantExtractedMetadata ?? insight?.importantPersistedMetadata ?? {};
-  const persistedMetadataEntries = Object.entries(persistedMetadataSource).filter(([, value]) => {
-    if (value === null || value === undefined) return false;
-    return String(value).trim().length > 0;
-  });
+  const persistedMetadataEntries = resolveImportantPersistedMetadataEntries(entry, insight);
   const persistedOcrSummary = resolveOcrSummaryText(entry) ?? insight?.persistedOcrExcerpt ?? null;
   const aiExecutiveHighlights = resolveAiExecutiveHighlights(insight);
   const insightRagGuardMessage = resolveRagRolloutGuardMessage(insight?.ragRolloutGuard) ?? insight?.ragRolloutGuardMessage;

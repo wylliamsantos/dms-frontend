@@ -16,3 +16,18 @@ export const resolveAiExecutiveHighlights = (insight?: DocumentInsightResponse):
   const items = insight?.aiExecutiveHighlights ?? [];
   return items.map((item) => item.trim()).filter(Boolean).slice(0, 4);
 };
+
+export const resolveImportantPersistedMetadataEntries = (
+  entry?: DmsEntry,
+  insight?: DocumentInsightResponse
+): Array<[string, unknown]> => {
+  const merged = {
+    ...(insight?.importantPersistedMetadata ?? {}),
+    ...(entry?.importantExtractedMetadata ?? {})
+  };
+
+  return Object.entries(merged).filter(([, value]) => {
+    if (value === null || value === undefined) return false;
+    return String(value).trim().length > 0;
+  });
+};
