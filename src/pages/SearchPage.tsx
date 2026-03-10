@@ -180,16 +180,17 @@ export function SearchPage() {
   }, [normalizedLiveSuggestionQuery.length, normalizedSuggestionQuery, suggestionOptions, suggestionsQuery.isFetching, suggestionsQuery.isError, displayedSuggestionOptions.length]);
 
   useEffect(() => {
-    const hasQuery = debouncedTextQuery.trim().length >= 2;
+    const hasLiveQuery = textQuery.trim().length >= 2;
+    const hasDebouncedQuery = debouncedTextQuery.trim().length >= 2;
     const hasPreviousSuggestions = Boolean(displayedSuggestionOptions.length);
 
-    if (!hasQuery || !suggestionsQuery.isFetching || hasPreviousSuggestions) {
+    if (!hasLiveQuery || !hasDebouncedQuery || isDebouncingSuggestions || !suggestionsQuery.isFetching || hasPreviousSuggestions) {
       if (!showSuggestionsLoading) {
         return;
       }
       const shownAt = suggestionsLoadingShownAtRef.current;
       const elapsed = shownAt ? Date.now() - shownAt : 0;
-      const remaining = Math.max(0, 350 - elapsed);
+      const remaining = Math.max(0, 450 - elapsed);
       const hideTimer = window.setTimeout(() => {
         setShowSuggestionsLoading(false);
         suggestionsLoadingShownAtRef.current = null;
@@ -200,10 +201,10 @@ export function SearchPage() {
     const timeout = window.setTimeout(() => {
       suggestionsLoadingShownAtRef.current = Date.now();
       setShowSuggestionsLoading(true);
-    }, 360);
+    }, 480);
 
     return () => window.clearTimeout(timeout);
-  }, [debouncedTextQuery, suggestionsQuery.isFetching, displayedSuggestionOptions.length, showSuggestionsLoading]);
+  }, [textQuery, debouncedTextQuery, isDebouncingSuggestions, suggestionsQuery.isFetching, displayedSuggestionOptions.length, showSuggestionsLoading]);
 
   const selectedCategoryDetails = useMemo(
     () => categories.filter((category) => (selectedCategories ?? []).includes(category.name)),

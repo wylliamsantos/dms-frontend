@@ -13,6 +13,8 @@ import {
   useDocumentBase64,
   useDocumentBinary,
   useDocumentInformation,
+  useDocumentInsight,
+  useDocumentRagContext,
   useDocumentVersions
 } from '@/hooks/useDocumentDetails';
 import { chatByDocument } from '@/api/document';
@@ -65,6 +67,8 @@ export function DocumentDetailsPage() {
 
   const informationQuery = useDocumentInformation(documentId, activeVersion);
   const versionsQuery = useDocumentVersions(documentId);
+  const insightQuery = useDocumentInsight(documentId, activeVersion, 30);
+  const ragContextQuery = useDocumentRagContext(documentId, activeVersion);
   const workflowHistoryQuery = useQuery({
     queryKey: ['workflow-history', documentId],
     queryFn: () => listWorkflowHistory(documentId as string),
@@ -240,6 +244,13 @@ export function DocumentDetailsPage() {
     ? `${entry.version}${entry?.versionType ? ` · ${entry.versionType}` : ''}`
     : undefined;
 
+  const persistedMetadataEntries = Object.entries(entry?.importantExtractedMetadata ?? {}).filter(([, value]) => {
+    if (value === null || value === undefined) return false;
+    return String(value).trim().length > 0;
+  });
+  const insight = insightQuery.data;
+  const ragContext = ragContextQuery.data;
+
   return (
     <div className="page-document-details">
       <div style={{ marginBottom: '1rem' }}>
@@ -302,6 +313,56 @@ export function DocumentDetailsPage() {
             <aside className="details-main-section__info" aria-label="Informações e andamento">
               <h2 style={{ marginTop: 0 }}>Informações e andamento</h2>
               <MetadataPanel entry={entry} />
+
+              <div className="card details-ocr-highlight" style={{ marginTop: '1rem' }}>
+                <div className="details-ocr-highlight__header">
+                  <h3 style={{ margin: 0 }}>OCR persistido e metadados extraídos</h3>
+                  <span className="details-ocr-highlight__hint">MVP OCR</span>
+                </div>
+                {entry?.ocrSummary ? <p className="details-ocr-highlight__summary">{entry.ocrSummary}</p> : <p style={{ color: '#64748b' }}>Resumo OCR indisponível para esta versão.</p>}
+                {persistedMetadataEntries.length > 0 ? (
+                  <ul style={{ margin: 0, paddingLeft: '1rem', color: '#0f172a' }}>
+                    {persistedMetadataEntries.slice(0, 8).map(([key, value]) => (
+                      <li key={key}><strong>{key}:</strong> {String(value)}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p style={{ color: '#64748b' }}>Sem metadados importantes extraídos ainda.</p>
+                )}
+              </div>
+
+              <div className="card" style={{ marginTop: '1rem' }}>
+                <h3 style={{ marginTop: 0 }}>Insights de OCR/IA</h3>
+                {insightQuery.isLoading ? <p style={{ color: '#64748b' }}>Carregando insights…</p> : null}
+                {insightQuery.isError ? <p style={{ color: '#b91c1c' }}>Não foi possível carregar insights agora.</p> : null}
+                {insight ? (
+                  <div style={{ display: 'grid', gap: '0.55rem' }}>
+                    {insight.aiExecutiveSummary ? <p style={{ margin: 0 }}>{insight.aiExecutiveSummary}</p> : null}
+                    {insight.importantPersistedMetadataSummary ? <p style={{ margin: 0, color: '#334155' }}>{insight.importantPersistedMetadataSummary}</p> : null}
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {typeof insight.requiredMetadataCoveragePercent === 'number' ? <span className="badge badge--info">Cobertura obrigatória: {insight.requiredMetadataCoveragePercent}%</span> : null}
+                      {typeof insight.importantMetadataCoveragePercent === 'number' ? <span className="badge badge--info">Campos importantes: {insight.importantMetadataCoveragePercent}%</span> : null}
+                      {insight.ocrQualityBand ? <span className="badge badge--neutral">OCR: {insight.ocrQualityBand}</span> : null}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="card details-chat-card" style={{ marginTop: '1rem' }}>
+                <h3 style={{ marginTop: 0 }}>RAG documental (MVP)</h3>
+                {ragContextQuery.isLoading ? <p style={{ color: '#64748b' }}>Verificando estado do RAG…</p> : null}
+                {ragContextQuery.isError ? <p style={{ color: '#b91c1c' }}>Não foi possível consultar o estado do RAG.</p> : null}
+                {ragContext ? (
+                  <div style={{ display: 'grid', gap: '0.45rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span className="badge badge--neutral">Status: {ragContext.status}</span>
+                      {ragContext.rolloutGuard ? <span className="badge badge--warning">Guard: {ragContext.rolloutGuard}</span> : null}
+                      {ragContext.qualityBand ? <span className="badge badge--info">Qualidade: {ragContext.qualityBand}</span> : null}
+                    </div>
+                    <p style={{ margin: 0, color: '#334155' }}>{ragContext.message}</p>
+                  </div>
+                ) : null}
+              </div>
 
               <div className="card" style={{ marginTop: '1rem' }}>
                 <h3 style={{ marginTop: 0 }}>Timeline essencial</h3>
