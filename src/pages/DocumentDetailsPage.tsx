@@ -245,12 +245,13 @@ export function DocumentDetailsPage() {
     ? `${entry.version}${entry?.versionType ? ` · ${entry.versionType}` : ''}`
     : undefined;
 
-  const persistedMetadataEntries = Object.entries(entry?.importantExtractedMetadata ?? {}).filter(([, value]) => {
+  const insight = insightQuery.data;
+  const persistedMetadataSource = entry?.importantExtractedMetadata ?? insight?.importantPersistedMetadata ?? {};
+  const persistedMetadataEntries = Object.entries(persistedMetadataSource).filter(([, value]) => {
     if (value === null || value === undefined) return false;
     return String(value).trim().length > 0;
   });
-  const persistedOcrSummary = resolveOcrSummaryText(entry);
-  const insight = insightQuery.data;
+  const persistedOcrSummary = resolveOcrSummaryText(entry) ?? insight?.persistedOcrExcerpt ?? null;
   const aiExecutiveHighlights = resolveAiExecutiveHighlights(insight);
   const ragContext = ragContextQuery.data;
 
@@ -371,7 +372,7 @@ export function DocumentDetailsPage() {
                     </div>
                     <p style={{ margin: 0, color: '#334155' }}>{ragContext.message}</p>
                     <p style={{ margin: 0, color: '#64748b', fontSize: '0.82rem' }}>
-                      Flags: feature={String(ragContext.featureFlagEnabled ?? false)} · tenant={String(ragContext.tenantAllowed ?? false)} · categoria={String(ragContext.categoryAllowed ?? false)}
+                      Flags: feature={String(ragContext.featureFlagEnabled ?? false)} · tenant={String(ragContext.tenantAllowed ?? false)} · categoria={String(ragContext.categoryAllowed ?? false)} · qualityGate={String(ragContext.qualityGatePassed ?? true)}
                     </p>
                   </div>
                 ) : null}
